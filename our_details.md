@@ -34,7 +34,7 @@ Please download the results `data.zip` from the [google drive](https://drive.goo
 
 In `data/<subarea>` folder, we shared the final results that generate the bar charts in the paper. 
 
-- `data/<subarea>rank*.csv` show the ranking of each variant in our implemention by the performance metric averaged across the environments in each subarea. For example, the instance `td3-gru-64-oa-separate` appears first in the `data/pomdp/rank_return-max_x1500000.csv`, thus it is the best variant.
+- `data/<subarea>/rank*.csv` show the ranking of each variant in our implemention by the performance metric averaged across the environments in each subarea. For example, the instance `td3-gru-64-oa-separate` appears first in the `data/pomdp/rank_return-max_x1500000.csv`, thus it is the best variant.
 
 - `data/<subarea>/<env_name>/run_down*.csv` show the final results of each variant in our implemention and the compared methods in each environment
 
