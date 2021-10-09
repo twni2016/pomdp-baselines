@@ -1,0 +1,8 @@
+*.pyc
+*.egg-info
+*.pdf
+*.png
+*.swp
+*.swo
+__pycache__
+videos

@@ -1,0 +1,18 @@
+seed: 7
+cuda: -1 # use_gpu
+env:
+  env_type: pomdp
+  env_name: HopperBLT-P-v0
+
+  num_eval_tasks: 10 # num of eval episodes
+
+train:
+  # 500*1000=0.5M steps, cost 2 days
+  num_iters: 500 # to match the baseline
+  buffer_size: 15000 # episodes
+
+eval:
+  eval_stochastic: false # also eval stochastic policy
+  log_interval: 4 # 10 num of iters
+  save_interval: 20 # -1
+  log_tensorboard: false

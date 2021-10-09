@@ -1,0 +1,35 @@
+seed: 73
+cuda: 0 # use_gpu
+env:
+  env_type: meta
+  env_name: Wind-v0
+  max_rollouts_per_task: 1 # k. total steps: 25
+
+  num_tasks: 60
+  num_train_tasks: 40
+  num_eval_tasks: 20
+
+train:
+  # 1000*10*75 = 750k steps
+  num_iters: 1000 # number meta-training iterates
+  num_init_rollouts_pool: 100 # before training
+  num_rollouts_per_iter: 10
+  buffer_size: 1e6
+  batch_size: 256
+
+  log_interval: 4 # num of iters
+  save_interval: 100 # -1
+  log_tensorboard: true
+
+policy:
+  arch: mlp
+  dqn_layers: [128, 128]
+  policy_layers: [128, 128]
+  lr: 0.0003
+  gamma: 0.9
+  tau: 0.005
+
+  # sac alpha
+  entropy_alpha: 0.01 # tend to be det policy...
+  automatic_entropy_tuning: true
+  alpha_lr: 0.0003

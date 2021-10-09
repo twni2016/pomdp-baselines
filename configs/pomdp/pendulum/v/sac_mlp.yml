@@ -1,0 +1,36 @@
+seed: 73
+cuda: 0 # use_gpu
+env:
+  env_type: pomdp
+  env_name: Pendulum-V-v0
+
+  num_eval_tasks: 20 # num of eval episodes
+
+train:
+  # 250*200 = 50k steps
+  num_iters: 250 # number meta-training iterates
+  num_init_rollouts_pool: 5 # before training
+  num_rollouts_per_iter: 1
+  buffer_size: 1e6
+  batch_size: 256
+
+eval:
+  eval_stochastic: false # also eval stochastic policy
+  log_interval: 5 # num of iters
+  save_interval: 100 # -1
+  log_tensorboard: true
+
+policy:
+  arch: mlp
+  algo: sac # [td3, sac]
+
+  dqn_layers: [128, 128]
+  policy_layers: [128, 128]
+  lr: 0.0003
+  gamma: 0.9
+  tau: 0.005
+
+  # sac alpha
+  entropy_alpha: 0.01 # tend to be det policy...
+  automatic_entropy_tuning: true
+  alpha_lr: 0.0003
