@@ -1,4 +1,5 @@
 # Recurrent Model-Free RL is a Strong Baseline for Many POMDPs
+Welcome to the POMDP world!
 
 ## Installation
 First download this repo into your local directory (preferably on a cluster or a server) <local_path>. Then we recommend to use a virtual env to install all the dependencies. For example, we install using miniconda:
@@ -42,7 +43,8 @@ For the compared methods, we use their open-sourced implementation with their de
 Please see [run_commands.md](run_commands.md) for details on running our implementation of recurrent model-free RL and also all the compared methods.
 
 ## A Minimal Example to Run Our Implementation
-Here we provide a stand-alone minimal example with the least dependencies (no configuration file, without MuJoCo or roboschool) to run our implementation of recurrent model-free RL! 
+Here we provide a stand-alone minimal example with the least dependencies to run our implementation of recurrent model-free RL! 
+> Only requires PyTorch and PyBullet, no need to install MuJoCo or roboschool, no external configuration file.
 
 Simply open the Jupyter Notebook [example.ipynb](example.ipynb) and it contains the training and evaluation procedure on a toy POMDP environment (Pendulum-V). It only costs < 20 min to run the whole process.
 
@@ -53,4 +55,6 @@ Please see [our_details.md](our_details.md) for more information on:
 - Where is the core class of our recurrent model-free RL and the RAM-efficient replay buffer
 - Our best variants in subarea and numeric results on all the bar charts and learning curves
 
+## Contact
+If you have any questions, please create an issue in this repo or contact Tianwei Ni (twni2016@gmail.com)
 
