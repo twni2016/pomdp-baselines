@@ -64,6 +64,7 @@ Please see [our_details.md](our_details.md) for more information on:
 Please see [acknowledge.md](acknowledge.md) for details.
 
 ## Citation
+If you find our code useful to your work, please consider citing our paper:
 ```
 @article{ni2021recurrentrl,
   title={Recurrent Model-Free RL is a Strong Baseline for Many POMDPs},
