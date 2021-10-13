@@ -1,7 +1,10 @@
 # Recurrent Model-Free RL is a Strong Baseline for Many POMDPs
-Welcome to the POMDP world! This repo provides some simple baselines for POMDPs, specifically the recurrent model-free RL.
+Welcome to the POMDP world! 
+This repo provides some simple baselines for POMDPs, specifically the recurrent model-free RL, for the following paper
 
 Paper: [arXiv](https://arxiv.org/abs/2110.05038) Numeric Results: [google drive](https://drive.google.com/file/d/18l9Y4N8zPRdGBnx8oSELiQcoReF7V4wP/view?usp=sharing)
+
+by Tianwei Ni, Benjamin Eysenbach and Ruslan Salakhutdinov.
 
 ## Installation
 First download this repo into your local directory (preferably on a cluster or a server) <local_path>. Then we recommend to use a virtual env to install all the dependencies. For example, we install using miniconda:
@@ -57,6 +60,17 @@ Please see [our_details.md](our_details.md) for more information on:
 - Where is the core class of our recurrent model-free RL and the RAM-efficient replay buffer
 - Our best variants in subarea and numeric results on all the bar charts and learning curves
 
+## Acknowledgement
+Please see [acknowledge.md](acknowledge.md) for details.
+
+## Citation
+```
+@article{ni2021recurrentrl,
+  title={Recurrent Model-Free RL is a Strong Baseline for Many POMDPs},
+  author={Ni, Tianwei and Eysenbach, Benjamin and Salakhutdinov, Ruslan},
+  year={2021}
+}
+```
 ## Contact
 If you have any questions, please create an issue in this repo or contact Tianwei Ni (twni2016@gmail.com)
 
