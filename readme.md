@@ -1,7 +1,7 @@
 # Recurrent Model-Free RL is a Strong Baseline for Many POMDPs
 Welcome to the POMDP world! This repo provides some simple baselines for POMDPs, specifically the recurrent model-free RL.
 
-Paper: [arXiv](https://arxiv.org/abs/2110.05038)
+Paper: [arXiv](https://arxiv.org/abs/2110.05038) Numeric Results: [google drive](https://drive.google.com/file/d/18l9Y4N8zPRdGBnx8oSELiQcoReF7V4wP/view?usp=sharing)
 
 ## Installation
 First download this repo into your local directory (preferably on a cluster or a server) <local_path>. Then we recommend to use a virtual env to install all the dependencies. For example, we install using miniconda:
