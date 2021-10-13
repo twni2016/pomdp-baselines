@@ -41,7 +41,7 @@ where `algo_name` specifies the algorithm name:
 - `MRPO` correspond to [MRPO](http://proceedings.mlr.press/v139/jiang21c/jiang21c-supp.zip) compared in robust RL
 
 We have merged the prior methods above into our repository (there is no need to install other repositories), so that future work can use this single repository to run a number of baselines besides ours: A2C-GRU, PPO-GRU, VRM, VariBAD, MRPO. 
-Since our code is heavily drawn from those prior works, we encourage authors to cite those prior papers or implementations.
+Since our code is heavily drawn from those prior works, we encourage authors to [cite those prior papers or implementations](acknowledge.md).
 For the compared methods, we use their open-sourced implementation with their default hyperparameters.
 
 ## Specific Running Commands for Each Subarea
