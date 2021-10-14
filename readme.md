@@ -2,7 +2,7 @@
 Welcome to the POMDP world! 
 This repo provides some simple baselines for POMDPs, specifically the recurrent model-free RL, for the following paper
 
-Paper: [arXiv](https://arxiv.org/abs/2110.05038) Numeric Results: [google drive](https://drive.google.com/file/d/18l9Y4N8zPRdGBnx8oSELiQcoReF7V4wP/view?usp=sharing)
+Paper: [arXiv](https://arxiv.org/abs/2110.05038) Numeric Results: [google drive](https://drive.google.com/file/d/18l9Y4N8zPRdGBnx8oSELiQcoReF7V4wP/view?usp=sharing) Web: [Site](https://sites.google.com/view/pomdp-baselines)
 
 by Tianwei Ni, Benjamin Eysenbach and Ruslan Salakhutdinov.
 
