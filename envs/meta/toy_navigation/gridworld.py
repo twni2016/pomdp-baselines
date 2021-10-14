@@ -19,7 +19,7 @@ class GridNavi(gym.Env):
         is_sparse=False,
         return_belief_rewards=False,  # output R+ instead of R
         seed=None,
-        **kwargs,
+        **kwargs
     ):
         super(GridNavi, self).__init__()
 

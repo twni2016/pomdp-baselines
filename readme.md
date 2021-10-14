@@ -19,7 +19,7 @@ The `requirements.txt` file includes all the dependencies (e.g. PyTorch, PyBulle
 - To run Cheetah-Vel in meta RL, you have to install [MuJoCo](https://github.com/openai/mujoco-py) with a license on your own
 - To run robust RL and generalization in RL experiments, you have to install [roboschool](https://github.com/openai/roboschool). 
     - We found it hard to install roboschool from scratch, therefore we provide a docker file `roboschool.sif` in [google drive](https://drive.google.com/file/d/1KpTpVwoU02AI7uQrk2T9hQ6s15EISRTa/view?usp=sharing) that contains roboschool and the other necessary libraries, adapted from [SunBlaze repo](https://github.com/sunblaze-ucb/rl-generalization). 
-    - To download and activate the docker file by singularity on a cluster (on a single server should be similar):
+    - To download and activate the docker file by singularity (tested in v3.7) on a cluster (on a single server should be similar):
     ```bash
     # download roboschool.sif from the google drive to envs/rl-generalization/roboschool.sif
     # then run singularity shell

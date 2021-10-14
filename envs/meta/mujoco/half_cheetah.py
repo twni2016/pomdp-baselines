@@ -47,7 +47,7 @@ class HalfCheetahEnv(HalfCheetahEnv_):
         iter_idx,
         encoder=None,
         image_folder=None,
-        **kwargs,
+        **kwargs
     ):
 
         # TODO: are we going to use the decoders for anything? Some visualisations?

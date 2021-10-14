@@ -48,7 +48,7 @@ class Learner:
         report_eval_tasks=None,
         eval_envs=None,
         worst_percentile=None,
-        **kwargs,
+        **kwargs
     ):
 
         # initialize environment
@@ -63,7 +63,7 @@ class Learner:
                 max_rollouts_per_task,
                 seed=self.seed,
                 n_tasks=num_tasks,
-                **kwargs,
+                **kwargs
             )
             self.eval_env = copy.deepcopy(self.train_env)
             # unwrapped env to get some info about the environment
@@ -187,7 +187,7 @@ class Learner:
             encoder=arch,  # redundant for Policy_MLP
             obs_dim=self.obs_dim,
             action_dim=self.act_dim,
-            **kwargs,
+            **kwargs
         ).to(ptu.device)
         logger.log(self.agent)
 
@@ -201,7 +201,7 @@ class Learner:
         num_updates_per_iter=None,
         sampled_seq_len=None,
         sample_weight_baseline=None,
-        **kwargs,
+        **kwargs
     ):
 
         if num_updates_per_iter is None:
@@ -258,7 +258,7 @@ class Learner:
         log_tensorboard,
         eval_stochastic=False,
         num_episodes_per_task=1,
-        **kwargs,
+        **kwargs
     ):
 
         self.log_interval = log_interval
