@@ -7,15 +7,16 @@ Paper: [arXiv](https://arxiv.org/abs/2110.05038) Numeric Results: [google drive]
 by Tianwei Ni, Benjamin Eysenbach and Ruslan Salakhutdinov.
 
 ## Installation
-First download this repo into your local directory (preferably on a cluster or a server) <local_path>. Then we recommend to use a virtual env to install all the dependencies. For example, we install using miniconda:
+First download this repo into your local directory (preferably on a cluster or a server) <local_path>. Then we recommend to use a virtual env to install all the dependencies. For example, we install using miniconda and pip:
+
 ```bash
-conda env create -f requirements.yml
+conda create -n pomdp python==3.8
 conda activate pomdp
 pip install -r requirements.txt
 ```
 
-The yaml file includes all the dependencies (e.g. PyTorch, PyBullet) used in our experiments (including compared methods), but there are two exceptions:
-- To run Cheetah-Vel in meta RL, you have to install [MuJoCo](https://github.com/openai/mujoco-py) with a license
+The `requirements.txt` file includes all the dependencies (e.g. PyTorch, PyBullet) used in our experiments (including compared methods), but there are two exceptions:
+- To run Cheetah-Vel in meta RL, you have to install [MuJoCo](https://github.com/openai/mujoco-py) with a license on your own
 - To run robust RL and generalization in RL experiments, you have to install [roboschool](https://github.com/openai/roboschool). 
     - We found it hard to install roboschool from scratch, therefore we provide a docker file `roboschool.sif` in [google drive](https://drive.google.com/file/d/1KpTpVwoU02AI7uQrk2T9hQ6s15EISRTa/view?usp=sharing) that contains roboschool and the other necessary libraries, adapted from [SunBlaze repo](https://github.com/sunblaze-ucb/rl-generalization). 
     - To download and activate the docker file by singularity on a cluster (on a single server should be similar):
