@@ -9,8 +9,9 @@ by Tianwei Ni, Benjamin Eysenbach and Ruslan Salakhutdinov.
 ## Installation
 First download this repo into your local directory (preferably on a cluster or a server) <local_path>. Then we recommend to use a virtual env to install all the dependencies. For example, we install using miniconda:
 ```bash
-conda env create -f install.yml
+conda env create -f requirements.yml
 conda activate pomdp
+pip install -r requirements.txt
 ```
 
 The yaml file includes all the dependencies (e.g. PyTorch, PyBullet) used in our experiments (including compared methods), but there are two exceptions:
