@@ -62,6 +62,10 @@ Please see [our_details.md](our_details.md) for more information on:
 - Where is the core class of our recurrent model-free RL and the RAM-efficient replay buffer
 - Our best variants in subarea and numeric results on all the bar charts and learning curves
 
+## TODO List
+- Add documentation on our main code
+- Simplify the code (merge the functions of collection and evaluation, add command-line arguments to change the configuration file)
+
 ## Acknowledgement
 Please see [acknowledge.md](acknowledge.md) for details.
 
