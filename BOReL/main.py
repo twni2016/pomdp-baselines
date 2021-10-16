@@ -36,15 +36,6 @@ else:
     env_name = v["env"]["env_name"]
 exp_id = f"logs/{env_type}/{env_name}/"
 
-if "AntSemiCircle" in env_name:
-    if v["env"]["modify_init_state_dist"] == False:
-        prefix = "fixed"
-    elif v["env"]["on_circle_init_state"] == False:
-        prefix = "exclude_sc"
-    else:
-        prefix = "uniform"
-    exp_id += prefix + "/"
-
 exp_id += "varibad/"
 # exp_id = 'debug'
 

@@ -407,18 +407,9 @@ class Learner:
 
             if self.env_type == "meta":
                 obs = ptu.from_numpy(self.eval_env.reset(task=task))  # reset task
+                observations[task_idx, step, :] = ptu.get_numpy(obs[:obs_size])
             else:
                 obs = ptu.from_numpy(self.eval_env.reset())  # reset
-            # for semicircle goal-reaching tasks, reset position on fixed points
-            if (
-                self.env_type == "meta"
-                and "AntSemiCircle" in self.eval_env.unwrapped.spec.id
-            ):
-                obs = ptu.from_numpy(
-                    self.eval_env.wrap_state_with_done(self.eval_env.reset_pos())
-                )
-            if self.env_type == "meta":
-                observations[task_idx, step, :] = ptu.get_numpy(obs[:obs_size])
 
             obs = obs.reshape(1, obs.shape[-1])
 

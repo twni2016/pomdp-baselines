@@ -313,11 +313,6 @@ class MetaLearner:
                 obs = ptu.from_numpy(self.env.reset(task=task))  # reset meta task
             else:
                 obs = ptu.from_numpy(self.env.reset())  # reset pomdp/mdp
-            # for semicircle goal-reaching tasks, reset position on fixed points
-            if "AntSemiCircle" in self.env.unwrapped.spec.id:
-                obs = ptu.from_numpy(
-                    self.env.wrap_state_with_done(self.env.reset_pos())
-                )
 
             obs = obs.reshape(-1, obs.shape[-1])
             step = 0

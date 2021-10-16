@@ -40,15 +40,6 @@ else:
     env_name = v["env"]["env_name"]
 exp_id += f"{env_type}/{env_name}/"
 
-if "AntSemiCircle" in env_name:
-    if v["env"]["modify_init_state_dist"] == False:
-        prefix = "fixed"
-    elif v["env"]["on_circle_init_state"] == False:
-        prefix = "exclude_sc"
-    else:
-        prefix = "uniform"
-    exp_id += prefix + "/"
-
 arch, algo = v["policy"]["arch"], v["policy"]["algo"]
 assert arch in ["mlp", "lstm", "gru"]
 assert algo in ["td3", "sac"]
