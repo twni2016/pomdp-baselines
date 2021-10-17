@@ -40,7 +40,7 @@ where `algo_name` specifies the algorithm name:
 - `ppo_rnn` and `a2c_rnn` correspond to [(Kostrikov, 2018)](https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail) implementation of recurrent model-free RL
 - `vrm` corresponds to [VRM](https://github.com/oist-cnru/Variational-Recurrent-Models) compared in "standard" POMDPs
 - `varibad` corresponds the [off-policy version](https://github.com/Rondorf/BOReL) of original [VariBAD](https://arxiv.org/abs/1910.08348) compared in meta RL
-- `MRPO` correspond to [MRPO](http://proceedings.mlr.press/v139/jiang21c/jiang21c-supp.zip) compared in robust RL
+- `MRPO` correspond to [MRPO](https://proceedings.mlr.press/v139/jiang21c.html) compared in robust RL
 
 We have merged the prior methods above into our repository (there is no need to install other repositories), so that future work can use this single repository to run a number of baselines besides ours: A2C-GRU, PPO-GRU, VRM, VariBAD, MRPO. 
 Since our code is heavily drawn from those prior works, we encourage authors to [cite those prior papers or implementations](acknowledge.md).

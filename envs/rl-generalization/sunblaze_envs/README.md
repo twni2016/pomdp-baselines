@@ -1,4 +1,4 @@
-## Overview
+## Overview of Generalization Environments
 
 There are six environments, built on top of the corresponding OpenAI Gym and Roboschool implementations:
 * CartPole

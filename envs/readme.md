@@ -1,8 +1,14 @@
-# Env Wrappers
-We make sure every env wrapper has continuous action space [-1, 1]^|A|, 
-and policy should not use `self.action_space.high` or `self.action_space.low`.
+# POMDP Environments
 
-The snipplet for normalizing action space is: 
+## Overview
+- `meta/`: Meta RL environments
+- `pomdp/`: "standard" POMDP environments
+- `rl-generalization`: Generalization in RL and Robust RL environments
+
+## Normalized Action Space
+We make sure every environment has continuous action space [-1, 1]^|A|, exposed to the policy. Policy should not use `self.action_space.high` or `self.action_space.low`.
+
+In Meta RL and "standard" POMDP, we use the snipplet for normalizing the action space:
 ```python 
 class EnvWrapper(gym.Wrapper):
     def step(self, action):
