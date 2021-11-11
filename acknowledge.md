@@ -1,5 +1,6 @@
 ## Acknowledgement
 We acknowledge the following repositories that greatly shaped our implementation:
+- https://github.com/pranz24/pytorch-soft-actor-critic for providing soft actor-critic implementation in PyTorch
 - https://github.com/Rondorf/BOReL for providing the off-policy varibad algorithm and environments
 - http://proceedings.mlr.press/v139/jiang21c/jiang21c-supp.zip for providing the robust RL MRPO algorithm and environments
 - https://github.com/sunblaze-ucb/rl-generalization for providing the SunBlaze roboschool benchmark
