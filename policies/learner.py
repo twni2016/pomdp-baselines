@@ -65,7 +65,7 @@ class Learner:
                 n_tasks=num_tasks,
                 **kwargs
             )
-            self.eval_env = copy.deepcopy(self.train_env)
+            self.eval_env = self.train_env
             # unwrapped env to get some info about the environment
             unwrapped_env = self.train_env.unwrapped
 
@@ -84,7 +84,7 @@ class Learner:
 
             assert num_eval_tasks > 0
             self.train_env = gym.make(env_name)
-            self.eval_env = copy.deepcopy(self.train_env)
+            self.eval_env = self.train_env
 
             self.train_tasks = []
             self.eval_tasks = num_eval_tasks * [None]
@@ -102,7 +102,7 @@ class Learner:
             self.train_env = sunblaze_envs.make(env_name)
             assert np.all(self.train_env.action_space.low == -1)
             assert np.all(self.train_env.action_space.high == 1)
-            self.eval_env = copy.deepcopy(self.train_env)  # same as train_env
+            self.eval_env = self.train_env
             self.worst_percentile = worst_percentile
 
             self.train_tasks = []
