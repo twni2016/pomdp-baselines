@@ -8,10 +8,6 @@ from torchkit.recurrent_actor import Actor_RNN
 
 
 class Critic_RNN(nn.Module):
-    LSTM_name = Actor_RNN.LSTM_name
-    GRU_name = Actor_RNN.GRU_name
-    RNNs = Actor_RNN.RNNs
-
     def __init__(
         self,
         obs_dim,
@@ -22,6 +18,7 @@ class Critic_RNN(nn.Module):
         reward_embedding_size,
         rnn_hidden_size,
         dqn_layers,
+        rnn_num_layers,
         **kwargs
     ):
         super().__init__()
@@ -43,12 +40,13 @@ class Critic_RNN(nn.Module):
         )
         self.rnn_hidden_size = rnn_hidden_size
 
-        assert encoder in [self.LSTM_name, self.GRU_name]
+        assert encoder in Actor_RNN.RNNs
         self.encoder = encoder
-        self.rnn = self.RNNs[encoder](
+            
+        self.rnn = Actor_RNN.RNNs[encoder](
             input_size=rnn_input_size,
             hidden_size=self.rnn_hidden_size,
-            num_layers=1,
+            num_layers=rnn_num_layers,
             batch_first=False,
             bias=True,
         )

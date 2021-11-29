@@ -11,7 +11,10 @@ class Actor_RNN(nn.Module):
     SAC_name = "sac"
     LSTM_name = "lstm"
     GRU_name = "gru"
-    RNNs = {LSTM_name: nn.LSTM, GRU_name: nn.GRU}
+    RNNs = {
+        LSTM_name: nn.LSTM,
+        GRU_name: nn.GRU,
+    }
 
     def __init__(
         self,
@@ -24,6 +27,7 @@ class Actor_RNN(nn.Module):
         reward_embedding_size,
         rnn_hidden_size,
         policy_layers,
+        rnn_num_layers,
         **kwargs
     ):
         super().__init__()
@@ -48,9 +52,10 @@ class Actor_RNN(nn.Module):
         )
         self.rnn_hidden_size = rnn_hidden_size
 
-        assert encoder in [self.LSTM_name, self.GRU_name]
+        assert encoder in self.RNNs
         self.encoder = encoder
-        self.num_layers = 1  # TODO as free param
+        self.num_layers = rnn_num_layers
+
         self.rnn = self.RNNs[encoder](
             input_size=rnn_input_size,
             hidden_size=self.rnn_hidden_size,
@@ -91,7 +96,7 @@ class Actor_RNN(nn.Module):
     def get_hidden_states(
         self, prev_actions, rewards, observs, initial_internal_state=None
     ):
-        # all the input have the shape of (T+1, B, *)
+        # all the input have the shape of (1 or T+1, B, *)
         # get embedding of initial transition
         input_a = self.action_encoder(prev_actions)
         input_r = self.reward_encoder(rewards)
@@ -173,7 +178,7 @@ class Actor_RNN(nn.Module):
         ## NOTE: in T=1 step rollout (and RNN layers = 1), for GRU they are the same,
         # for LSTM, current_internal_state also includes cell state, i.e.
         # hidden state: (1, B, dim)
-        # current_internal_state: (1, B, dim) or ((1, B, dim), (1, B, dim))
+        # current_internal_state: (layers, B, dim) or ((layers, B, dim), (layers, B, dim))
         hidden_state, current_internal_state = self.get_hidden_states(
             prev_actions=prev_action,
             rewards=reward,
