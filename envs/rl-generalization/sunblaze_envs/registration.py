@@ -93,7 +93,7 @@ class EnvSpec(object):
         self._local_only = local_only
         self._kwargs = {} if kwargs is None else kwargs
 
-    def make(self):
+    def make(self, **kwargs):
         """Instantiates an instance of the environment with appropriate kwargs"""
         if self._entry_point is None:
             raise error.Error(
@@ -103,10 +103,10 @@ class EnvSpec(object):
             )
 
         elif callable(self._entry_point):
-            env = self._entry_point()
+            env = self._entry_point(**kwargs)
         else:
             cls = load(self._entry_point)
-            env = cls(**self._kwargs)
+            env = cls(**self._kwargs, **kwargs)
 
         # Make the enviroment aware of which spec it came from.
         env.unwrapped.spec = self
@@ -136,10 +136,10 @@ class EnvRegistry(object):
     def __init__(self):
         self.env_specs = {}
 
-    def make(self, id):
+    def make(self, id, **kwargs):
         logger.info("Making new env: %s", id)
         spec = self.spec(id)
-        env = spec.make()
+        env = spec.make(**kwargs)
         # We used to have people override _reset/_step rather than
         # reset/step. Set _gym_disable_underscore_compat = True on
         # your environment if you use these methods and don't want
@@ -206,8 +206,8 @@ def register(id, **kwargs):
     return registry.register(id, **kwargs)
 
 
-def make(id):
-    return registry.make(id)
+def make(id, **kwargs):
+    return registry.make(id, **kwargs)
 
 
 def spec(id):
