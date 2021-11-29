@@ -50,6 +50,10 @@ class PointEnv(Env):
     def set_goal(self, goal):
         self._goal = np.asarray(goal)
 
+    def get_current_task(self):
+        # for multi-task MDP
+        return self._goal.copy()
+
     def get_all_task_idx(self):
         return range(len(self.goals))
 

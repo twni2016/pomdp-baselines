@@ -6,7 +6,7 @@ from envs.meta.wrappers import VariBadWrapper
 # In BOReL, they use off-policy SAC by single env.
 
 
-def make_env(env_id, episodes_per_task, seed=None, **kwargs):
+def make_env(env_id, episodes_per_task, seed=None, multi_task=False, **kwargs):
     """
     kwargs: include n_tasks=num_tasks
     """
@@ -16,5 +16,6 @@ def make_env(env_id, episodes_per_task, seed=None, **kwargs):
     env = VariBadWrapper(
         env=env,
         episodes_per_task=episodes_per_task,
+        multi_task=multi_task,
     )
     return env

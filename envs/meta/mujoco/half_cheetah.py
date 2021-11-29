@@ -41,13 +41,7 @@ class HalfCheetahEnv(HalfCheetahEnv_):
 
     @staticmethod
     def visualise_behaviour(
-        env,
-        args,
-        policy,
-        iter_idx,
-        encoder=None,
-        image_folder=None,
-        **kwargs
+        env, args, policy, iter_idx, encoder=None, image_folder=None, **kwargs
     ):
 
         # TODO: are we going to use the decoders for anything? Some visualisations?

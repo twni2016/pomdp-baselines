@@ -54,6 +54,10 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
         tasks = [{"velocity": velocity} for velocity in velocities]
         return tasks
 
+    def get_current_task(self):
+        # for multi-task MDP
+        return np.array([self._goal_vel])
+
     def get_all_task_idx(self):
         return range(len(self.tasks))
 

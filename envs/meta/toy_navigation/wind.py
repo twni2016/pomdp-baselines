@@ -48,6 +48,10 @@ class WindEnv(Env):
     def set_goal(self, wind):
         self._wind = np.asarray(wind)
 
+    def get_current_task(self):
+        # for multi-task MDP
+        return self._wind.copy()
+
     def get_all_task_idx(self):
         return range(len(self.winds))
 

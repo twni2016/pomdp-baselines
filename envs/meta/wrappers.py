@@ -16,7 +16,7 @@ class VariBadWrapper(gym.Wrapper):
         self,
         env,
         episodes_per_task: int,
-        add_timestep: bool = False,  # default no
+        multi_task: bool = False,  # default no
     ):
         """
         Wrapper, creates a multi-episode (BA)MDP around a one-episode MDP. Automatically deals with
@@ -36,26 +36,30 @@ class VariBadWrapper(gym.Wrapper):
         else:
             self._normalize_actions = False
 
+        self.multi_task = multi_task
+        if self.multi_task == True:
+            print("WARNING: YOU ARE RUNNING MDP, NOT POMDP!\n")
+            tmp_task = self.env.get_current_task()
+            self.observation_space = spaces.Box(
+                low=np.array(
+                    [*self.observation_space.low, *([0] * len(tmp_task))]
+                ),  # shape will be deduced from this
+                high=np.array([*self.observation_space.high, *([1] * len(tmp_task))]),
+                dtype=np.float32,
+            )
+
         if episodes_per_task > 1:
             self.add_done_info = True
         else:
             self.add_done_info = False
-
         if self.add_done_info:
-            if isinstance(self.observation_space, spaces.Box):
-                if len(self.observation_space.shape) > 1:
-                    raise ValueError  # can't add additional info for obs of more than 1D
-                self.observation_space = spaces.Box(
-                    low=np.array(
-                        [*self.observation_space.low, 0]
-                    ),  # shape will be deduced from this
-                    high=np.array([*self.observation_space.high, 1]),
-                    dtype=np.float32,
-                )
-            else:
-                # TODO: add something simliar for the other possible spaces,
-                # "Space", "Discrete", "MultiDiscrete", "MultiBinary", "Tuple", "Dict", "flatdim", "flatten", "unflatten"
-                raise NotImplementedError
+            self.observation_space = spaces.Box(
+                low=np.array(
+                    [*self.observation_space.low, 0]
+                ),  # shape will be deduced from this
+                high=np.array([*self.observation_space.high, 1]),
+                dtype=np.float32,
+            )
 
         # calculate horizon length H^+
         self.episodes_per_task = episodes_per_task
@@ -74,10 +78,17 @@ class VariBadWrapper(gym.Wrapper):
                 self.episodes_per_task * self.env.unwrapped._max_episode_steps
             )
 
-        self.add_timestep = add_timestep
-
         # this tells us if we have reached the horizon in the underlying MDP
         self.done_mdp = True
+
+    def _get_obs(self, state):
+        if self.multi_task:
+            tmp_task = self.env.get_current_task().copy()
+            state = np.concatenate([state, tmp_task])
+        if self.add_done_info:
+            state = np.concatenate((state, [float(self.done_mdp)]))
+        # print(self.step_count_bamdp, state) # for debugging
+        return state
 
     def reset(self, task=None):
 
@@ -93,12 +104,9 @@ class VariBadWrapper(gym.Wrapper):
         except AttributeError:
             state = self.env.unwrapped.reset()
 
-        if self.add_done_info:
-            state = np.concatenate((state, [0.0]))
-
         self.done_mdp = False
 
-        return state
+        return self._get_obs(state)
 
     def wrap_state_with_done(self, state):
         # for some custom evaluation like semicircle
@@ -108,14 +116,9 @@ class VariBadWrapper(gym.Wrapper):
 
     def reset_mdp(self):
         state = self.env.reset()
-        if self.add_timestep:
-            state = np.concatenate(
-                (state, [self.step_count_bamdp / self.horizon_bamdp])
-            )
-        if self.add_done_info:
-            state = np.concatenate((state, [0.0]))
         self.done_mdp = False
-        return state
+
+        return self._get_obs(state)
 
     def step(self, action):
 
@@ -130,13 +133,7 @@ class VariBadWrapper(gym.Wrapper):
         state, reward, self.done_mdp, info = self.env.step(action)
 
         info["done_mdp"] = self.done_mdp
-
-        if self.add_timestep:
-            state = np.concatenate(
-                (state, [self.step_count_bamdp / self.horizon_bamdp])
-            )
-        if self.add_done_info:
-            state = np.concatenate((state, [float(self.done_mdp)]))
+        state = self._get_obs(state)
 
         self.step_count_bamdp += 1
         # if we want to maximise performance over multiple episodes,

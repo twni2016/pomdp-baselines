@@ -10,7 +10,7 @@ class MultitaskAntEnv(AntEnv):
         self._task = task
         self.tasks = self.sample_tasks(n_tasks)
         self._goal = self.tasks[0]["goal"]
-        super(MultitaskAntEnv, self).__init__(**kwargs)
+        super(MultitaskAntEnv, self).__init__()
 
     """
     def step(self, action):
@@ -27,6 +27,10 @@ class MultitaskAntEnv(AntEnv):
                      reward_ctrl=-ctrl_cost, task=self._task)
         return (observation, reward, done, infos)
     """
+
+    def get_current_task(self):
+        # for multi-task MDP
+        return np.array([self._goal])
 
     def get_all_task_idx(self):
         return range(len(self.tasks))
