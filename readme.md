@@ -2,12 +2,13 @@
 Welcome to the POMDP world! 
 This repo provides some simple baselines for POMDPs, specifically the recurrent model-free RL, for the following paper
 
-Paper: [arXiv](https://arxiv.org/abs/2110.05038) Numeric Results: [google drive](https://drive.google.com/file/d/18l9Y4N8zPRdGBnx8oSELiQcoReF7V4wP/view?usp=sharing) Web: [Site](https://sites.google.com/view/pomdp-baselines)
+Paper: [arXiv](https://arxiv.org/abs/2110.05038) Numeric Results and Figures: [google drive](https://drive.google.com/file/d/18l9Y4N8zPRdGBnx8oSELiQcoReF7V4wP/view?usp=sharing) Web: [Site](https://sites.google.com/view/pomdp-baselines)
 
 by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-eysenbach.github.io/) and [Ruslan Salakhutdinov](http://www.cs.cmu.edu/~rsalakhu/).
 
 ## TODO List
-Note that current repo should be run smoothly. Below todo lists are for more functionalities and more user-friendly, and any suggestions on code refactor are welcome (e.g. via pull request):
+Note that current repo should be run smoothly. 
+Below todo lists are for more functionalities and more user-friendly, and any suggestions on code refactor are welcome (e.g. via pull request):
 - **Add MORE command-line arguments to overwrite the configuration file**
 - Upload more log csv files
 - Add documentation on our main code and log csv files
@@ -17,7 +18,7 @@ Note that current repo should be run smoothly. Below todo lists are for more fun
 Here we provide a stand-alone minimal example with the least dependencies to run our implementation of recurrent model-free RL! 
 > Only requires PyTorch and PyBullet, no need to install MuJoCo or roboschool, no external configuration file.
 
-Simply open the Jupyter Notebook [example.ipynb](example.ipynb) and it contains the training and evaluation procedure on a toy POMDP environment (Pendulum-V). It only costs < 20 min to run the whole process.
+Simply open the Jupyter Notebook [example.ipynb](example.ipynb) and it contains the training and evaluation procedure on a toy POMDP environment (Pendulum-V). It only costs < 20 min to run the whole process on a GPU.
 
 ## Installation
 First download this repo into your local directory (preferably on a cluster or a server) to <local_path>. Then we recommend to use a virtual env to install all the dependencies. For example, we install using miniconda and pip:
