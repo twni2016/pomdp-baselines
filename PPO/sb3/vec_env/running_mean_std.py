@@ -22,14 +22,20 @@ class RunningMeanStd(object):
         batch_count = arr.shape[0]
         self.update_from_moments(batch_mean, batch_var, batch_count)
 
-    def update_from_moments(self, batch_mean: np.ndarray, batch_var: np.ndarray, batch_count: int) -> None:
+    def update_from_moments(
+        self, batch_mean: np.ndarray, batch_var: np.ndarray, batch_count: int
+    ) -> None:
         delta = batch_mean - self.mean
         tot_count = self.count + batch_count
 
         new_mean = self.mean + delta * batch_count / tot_count
         m_a = self.var * self.count
         m_b = batch_var * batch_count
-        m_2 = m_a + m_b + np.square(delta) * self.count * batch_count / (self.count + batch_count)
+        m_2 = (
+            m_a
+            + m_b
+            + np.square(delta) * self.count * batch_count / (self.count + batch_count)
+        )
         new_var = m_2 / (self.count + batch_count)
 
         new_count = batch_count + self.count

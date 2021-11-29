@@ -60,7 +60,9 @@ class VecMonitor(VecEnvWrapper):
 
         if filename:
             self.results_writer = ResultsWriter(
-                filename, header={"t_start": self.t_start, "env_id": env_id}, extra_keys=info_keywords
+                filename,
+                header={"t_start": self.t_start, "env_id": env_id},
+                extra_keys=info_keywords,
             )
         else:
             self.results_writer = None
@@ -82,7 +84,11 @@ class VecMonitor(VecEnvWrapper):
                 info = infos[i].copy()
                 episode_return = self.episode_returns[i]
                 episode_length = self.episode_lengths[i]
-                episode_info = {"r": episode_return, "l": episode_length, "t": round(time.time() - self.t_start, 6)}
+                episode_info = {
+                    "r": episode_return,
+                    "l": episode_length,
+                    "t": round(time.time() - self.t_start, 6),
+                }
                 info["episode"] = episode_info
                 self.episode_count += 1
                 self.episode_returns[i] = 0

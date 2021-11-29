@@ -17,7 +17,13 @@ class VecCheckNan(VecEnvWrapper):
     :param check_inf: Whether or not to check for +inf or -inf as well
     """
 
-    def __init__(self, venv: VecEnv, raise_exception: bool = False, warn_once: bool = True, check_inf: bool = True):
+    def __init__(
+        self,
+        venv: VecEnv,
+        raise_exception: bool = False,
+        warn_once: bool = True,
+        check_inf: bool = True,
+    ):
         VecEnvWrapper.__init__(self, venv)
         self.raise_exception = raise_exception
         self.warn_once = warn_once
@@ -35,7 +41,9 @@ class VecCheckNan(VecEnvWrapper):
     def step_wait(self) -> VecEnvStepReturn:
         observations, rewards, news, infos = self.venv.step_wait()
 
-        self._check_val(async_step=False, observations=observations, rewards=rewards, news=news)
+        self._check_val(
+            async_step=False, observations=observations, rewards=rewards, news=news
+        )
 
         self._observations = observations
         return observations, rewards, news, infos

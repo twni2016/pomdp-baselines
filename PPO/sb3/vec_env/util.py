@@ -19,7 +19,9 @@ def copy_obs_dict(obs: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
     :param obs: a dict of numpy arrays.
     :return: a dict of copied numpy arrays.
     """
-    assert isinstance(obs, OrderedDict), f"unexpected type for observations '{type(obs)}'"
+    assert isinstance(
+        obs, OrderedDict
+    ), f"unexpected type for observations '{type(obs)}'"
     return OrderedDict([(k, np.copy(v)) for k, v in obs.items()])
 
 
@@ -37,14 +39,20 @@ def dict_to_obs(obs_space, obs_dict: Dict[Any, np.ndarray]) -> VecEnvObs:
     if isinstance(obs_space, gym.spaces.Dict):
         return obs_dict
     elif isinstance(obs_space, gym.spaces.Tuple):
-        assert len(obs_dict) == len(obs_space.spaces), "size of observation does not match size of observation space"
+        assert len(obs_dict) == len(
+            obs_space.spaces
+        ), "size of observation does not match size of observation space"
         return tuple((obs_dict[i] for i in range(len(obs_space.spaces))))
     else:
-        assert set(obs_dict.keys()) == {None}, "multiple observation keys for unstructured observation space"
+        assert set(obs_dict.keys()) == {
+            None
+        }, "multiple observation keys for unstructured observation space"
         return obs_dict[None]
 
 
-def obs_space_info(obs_space) -> Tuple[List[str], Dict[Any, Tuple[int, ...]], Dict[Any, np.dtype]]:
+def obs_space_info(
+    obs_space,
+) -> Tuple[List[str], Dict[Any, Tuple[int, ...]], Dict[Any, np.dtype]]:
     """
     Get dict-structured information about a gym.Space.
 
@@ -60,12 +68,16 @@ def obs_space_info(obs_space) -> Tuple[List[str], Dict[Any, Tuple[int, ...]], Di
     """
     check_for_nested_spaces(obs_space)
     if isinstance(obs_space, gym.spaces.Dict):
-        assert isinstance(obs_space.spaces, OrderedDict), "Dict space must have ordered subspaces"
+        assert isinstance(
+            obs_space.spaces, OrderedDict
+        ), "Dict space must have ordered subspaces"
         subspaces = obs_space.spaces
     elif isinstance(obs_space, gym.spaces.Tuple):
         subspaces = {i: space for i, space in enumerate(obs_space.spaces)}
     else:
-        assert not hasattr(obs_space, "spaces"), f"Unsupported structured space '{type(obs_space)}'"
+        assert not hasattr(
+            obs_space, "spaces"
+        ), f"Unsupported structured space '{type(obs_space)}'"
         subspaces = {None: obs_space}
     keys = []
     shapes = {}
