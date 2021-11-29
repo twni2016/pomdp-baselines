@@ -4,7 +4,7 @@ This repo provides some simple baselines for POMDPs, specifically the recurrent 
 
 Paper: [arXiv](https://arxiv.org/abs/2110.05038) Numeric Results: [google drive](https://drive.google.com/file/d/18l9Y4N8zPRdGBnx8oSELiQcoReF7V4wP/view?usp=sharing) Web: [Site](https://sites.google.com/view/pomdp-baselines)
 
-by Tianwei Ni, Benjamin Eysenbach and Ruslan Salakhutdinov.
+by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-eysenbach.github.io/) and [Ruslan Salakhutdinov](http://www.cs.cmu.edu/~rsalakhu/).
 
 ## Installation
 First download this repo into your local directory (preferably on a cluster or a server) <local_path>. Then we recommend to use a virtual env to install all the dependencies. For example, we install using miniconda and pip:
