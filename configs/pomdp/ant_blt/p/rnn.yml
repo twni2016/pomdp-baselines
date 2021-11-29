@@ -1,0 +1,54 @@
+seed: 7
+cuda: 2 # use_gpu
+env:
+  env_type: pomdp
+  env_name: AntBLT-P-v0
+
+  num_eval_tasks: 10 # num of eval episodes
+
+train:
+  # 1500*1000=1.5M steps, cost 2 days
+  num_iters: 1500 # number meta-training iterates
+  num_init_rollouts_pool: 10 # before training
+  num_rollouts_per_iter: 1
+  buffer_size: 1e6 # we should full buffer size as VRM
+
+  num_updates_per_iter: 1.0 # equiv to "equal"
+  # Let's fix len=64 for fair comparison with VRM
+  # VRM uses batch_size=4, which may be too small?
+  batch_size: 64 # to tune based on sampled_seq_len
+  sampled_seq_len: 64 # -1 is all, or positive integer.
+  sample_weight_baseline: 0.0 # VRM adds weight
+
+eval:
+  eval_stochastic: false # also eval stochastic policy
+  log_interval: 4 # 10 num of iters
+  save_interval: 100 # -1
+  log_tensorboard: false
+
+policy:
+  arch: gru # [lstm, gru]
+  algo: sac # [td3, sac]
+
+  action_embedding_size: 16 # 0
+  state_embedding_size: 32
+  reward_embedding_size: 16 # 0
+  rnn_hidden_size: 128 
+
+  dqn_layers: [256, 256]
+  policy_layers: [256, 256]
+  lr: 0.0003
+  gamma: 0.99
+  tau: 0.005
+
+  # sac alpha
+  entropy_alpha: 0.01 # tend to be det policy...
+  automatic_entropy_tuning: true
+  alpha_lr: 0.0003
+
+  # td3 noise 
+  ## since we normalize action space to [-1, 1]
+  ## the noise std is absolute value
+  exploration_noise: 0.1 
+  target_noise: 0.2
+  target_noise_clip: 0.5

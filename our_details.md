@@ -2,11 +2,11 @@
 
 ### Configuration of Decision Factors
 
-The **decision factors** discussed in the method section in our paper, can be found in each yaml file (take `configs/meta/point_robot/sac_rnn.yml` as example, which refers to meta RL environment Semi-Circle)
+The **decision factors** discussed in the method section in our paper, can be found in each yaml file (take `configs/meta/point_robot/rnn.yml` as example, which refers to meta RL environment Semi-Circle)
 
 - Arch: `policy: separate: <True|False>` 
 - Encoder: `policy: arch: <lstm|gru>`
-- RL: `policy: algo: <td3|sac>` please use `*/td3_rnn.yml` instead because they have different set of hparams.
+- RL: `policy: algo: <td3|sac>`
 - Len: `train: sampled_seq_len: <5|64|any positive integer>`
 - Inputs: we use the embedding size to control the inputs. 
     - To use past observations, simply set `policy: state_embedding_size` a positive integer

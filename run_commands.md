@@ -1,4 +1,5 @@
 ## Specific Running Commands for Each Subarea
+In general, we found `td3` works better in `rnn` policy while `sac` works better in `mlp` policy. So we use respective parameters below.
 
 ### "Standard" POMDP
 {Ant,Cheetah,Hopper,Walker}-{P,V} in the paper, corresponding to `configs/pomdp/<ant|cheetah|hopper|walker>_blt/<p|v>`, which requires PyBullet. We also provide Pendulum environments for sanity check.
@@ -6,7 +7,11 @@
 Take Ant-P as example:
 ```bash
 # Run our implemention
-python policies/main.py configs/pomdp/ant_blt/p/sac_rnn.yml
+python policies/main.py --cfg configs/pomdp/ant_blt/p/rnn.yml --algo sac
+# Run Markovian
+python policies/main.py --cfg configs/pomdp/ant_blt/p/mlp.yml --algo sac
+# Oracle: we directly use Table 1 results (SAC w/ unstructured row) in https://arxiv.org/abs/2005.05719 as it is well-tuned
+
 # Run A2C-GRU from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
 python PPO/main.py --config configs/pomdp/ant_blt/p/a2c_rnn.yml \
     --algo a2c --lr 7e-4 --gae-lambda 1.0 --entropy-coef 0.0 \
@@ -20,12 +25,17 @@ python VRM/run_experiment.py configs/pomdp/ant_blt/p/vrm.yml
 ``` 
 
 ### Meta RL 
-{Semi-Circle, Wind, Cheetah-Vel} in the paper, corresponding to `configs/meta/<point_robot|wind|cheetah_vel>`. Among them, Cheetah-Vel requires MuJoCo, and Semi-Circle can serve as a sanity check.
+{Semi-Circle, Wind, Cheetah-Vel, Ant-Dir} in the paper, corresponding to `configs/meta/<point_robot|wind|cheetah_vel|ant_dir>`. Among them, Cheetah-Vel and Ant-Dir require MuJoCo, and Semi-Circle can serve as a sanity check. Wind looks simple but not very easy to solve.
 
 Take Semi-Circle as example:
 ```bash
 # Run our implemention
-python policies/main.py configs/meta/point_robot/td3_rnn.yml
+python policies/main.py --cfg configs/meta/point_robot/rnn.yml --algo td3
+# Run Markovian
+python policies/main.py --cfg configs/meta/point_robot/mlp.yml --algo sac
+# Run Oracle
+python policies/main.py --cfg configs/meta/point_robot/mt/mlp.yml --algo sac
+
 # Run (off-policy version of) VariBAD from https://github.com/Rondorf/BOReL
 python BOReL/main.py configs/meta/point_robot/varibad.yml
 ```
@@ -37,7 +47,16 @@ Take Cheetah-Robust as example:
 ```bash
 ## In the docker environment:
 # Run our implemention
-python3 policies/main.py configs/rmdp/cheetah/td3_rnn.yml
+python3 policies/main.py --cfg configs/rmdp/cheetah/rnn.yml --algo td3
+# Run Markovian
+python3 policies/main.py --cfg configs/rmdp/cheetah/mlp.yml --algo sac
+# Run Oracle
+python3 policies/main.py --cfg configs/rmdp/cheetah/oracle/mlp.yml --algo sac
+
+# Run PPO-GRU from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
+python PPO/main.py --config configs/rmdp/cheetah/ppo_rnn.yml \
+    --algo ppo --lr 2.5e-4 --use-gae --entropy-coef 0.01 \
+    --num-steps 128 --recurrent-policy
 # Run MRPO from http://proceedings.mlr.press/v139/jiang21c/jiang21c-supp.zip
 python3 MRPO/examples/MRPO/train.py configs/rmdp/cheetah/MRPO.yml
 ```
@@ -46,14 +65,19 @@ python3 MRPO/examples/MRPO/train.py configs/rmdp/cheetah/MRPO.yml
 Use roboschool. {Hopper|Cheetah}-Generalize in the paper, corresponding to `configs/generalize/Sunblaze<Hopper|HalfCheetah>/<DD-DR-DE|RD-RR-RE>`. 
 First, activate the roboschool docker env as introduced in the installation section. 
 
-To train on Default environment, use `*DD-DR-DE*.yml`; to train on Random environment, use use `*RD-RR-RE*.yml`. Please see the [SunBlaze paper](https://arxiv.org/abs/1810.12282) for details. 
+To train on Default environment and test on the all environments, use `*DD-DR-DE*.yml`; to train on Random environment and test on the all environments, use use `*RD-RR-RE*.yml`. Please see the [SunBlaze paper](https://arxiv.org/abs/1810.12282) for details. 
 
 Take running on `SunblazeHalfCheetahRandomNormal-v0` as example:
 ```bash
 ## In the docker environment:
 # Run our implemention
-python3 policies/main.py configs/generalize/SunblazeHalfCheetah/RD-RR-REtd3_rnn.yml
-# We use the figures from SunBlaze paper for EPOpt-PPO-FF
+python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/RD-RR-RE/rnn.yml --algo td3
+# Run Markovian
+python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/RD-RR-RE/mlp.yml --algo sac
+# Run Oracle on Random environment
+python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/oracle_R/mlp.yml --algo sac
+
+# For PPO, A2C, EPOpt-PPO-FF, we use the figures from SunBlaze paper
 ```
 
 To run the best variant of our implemention, please refer to [our_details.md](our_details.md), and then change the corresponding hyperparameters in the config files.

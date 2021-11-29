@@ -1,0 +1,46 @@
+# As a baseline (lower bound)
+# all the hyperparams follow RNN policies except that we removed 
+# feature extracters and RNNs in Markovian policies
+# and it only takes current observation as input as common practice
+seed: 73
+cuda: -1 # use_gpu
+env:
+  env_type: pomdp # though it's mdp, just for making coding and comparison easier
+  env_name: WalkerBLT-V-v0
+
+  num_eval_tasks: 10 # num of eval episodes
+
+train:
+  # 1500*1000=1.5M steps
+  num_iters: 1500 # number meta-training iterates
+  num_init_rollouts_pool: 10 # 5 before training
+  num_rollouts_per_iter: 1
+  buffer_size: 1e6
+  batch_size: 64
+
+eval:
+  log_interval: 4 # num of iters
+  save_interval: 100 # -1
+  log_tensorboard: false
+
+policy:
+  arch: mlp
+  algo: sac # [td3, sac]
+
+  dqn_layers: [256, 256]
+  policy_layers: [256, 256]
+  lr: 0.0003
+  gamma: 0.99
+  tau: 0.005
+
+  # sac alpha
+  entropy_alpha: 0.01 # not used
+  automatic_entropy_tuning: true
+  alpha_lr: 0.0003
+
+  # td3 noise 
+  ## since we normalize action space to [-1, 1]
+  ## the noise std is absolute value
+  exploration_noise: 0.1 
+  target_noise: 0.2
+  target_noise_clip: 0.5

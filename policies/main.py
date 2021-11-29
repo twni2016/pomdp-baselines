@@ -6,13 +6,24 @@ import socket
 import numpy as np
 import torch
 from ruamel.yaml import YAML
+from absl import flags
 from utils import system, logger
 
 from torchkit.pytorch_utils import set_gpu_mode
 from policies.learner import Learner
 
+FLAGS = flags.FLAGS
+flags.DEFINE_string("cfg", None, "path to configuration file")
+flags.DEFINE_string("algo", "sac", "[td3, sac]")
+# more arguments
+flags.FLAGS(sys.argv)
+
 yaml = YAML()
-v = yaml.load(open(sys.argv[1]))
+v = yaml.load(open(FLAGS.cfg))
+
+# overwrite config params
+v['policy']['algo'] = FLAGS.algo
+
 
 # system: device, threads, seed, pid
 seed = v["seed"]
@@ -84,8 +95,9 @@ logger.configure(dir=log_folder, format_strs=logger_formats, precision=4)
 logger.log(f"preload cost {time.time() - t0:.2f}s")
 
 os.system(f"cp -r policies/ {log_folder}")
-os.system(f"cp {sys.argv[1]} {log_folder}/variant_{pid}.yml")
-logger.log(sys.argv[1])
+os.system(f"cp {FLAGS.cfg} {log_folder}/variant_{pid}.yml")
+key_flags = FLAGS.get_key_flags_for_module(sys.argv[0])
+logger.log('\n'.join(f.serialize() for f in key_flags) + '\n')
 logger.log("pid", pid, socket.gethostname())
 os.makedirs(os.path.join(logger.get_dir(), "save"))
 
