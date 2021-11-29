@@ -13,6 +13,12 @@ Note that current repo should be run smoothly. Below todo lists are for more fun
 - Add documentation on our main code and log csv files
 - Merge the functions of collection and evaluation?  
 
+## A Minimal Example to Run Our Implementation
+Here we provide a stand-alone minimal example with the least dependencies to run our implementation of recurrent model-free RL! 
+> Only requires PyTorch and PyBullet, no need to install MuJoCo or roboschool, no external configuration file.
+
+Simply open the Jupyter Notebook [example.ipynb](example.ipynb) and it contains the training and evaluation procedure on a toy POMDP environment (Pendulum-V). It only costs < 20 min to run the whole process.
+
 ## Installation
 First download this repo into your local directory (preferably on a cluster or a server) to <local_path>. Then we recommend to use a virtual env to install all the dependencies. For example, we install using miniconda and pip:
 
@@ -34,8 +40,9 @@ The `requirements.txt` file includes all the dependencies (e.g. PyTorch, PyBulle
     ```
     - Then you can test it by `import roboschool` in a `python3` shell.
 
-## General Form to Run Our Implementation of Recurrent Model-Free RL and the Compared Methods
+## Run Our Implementation of Recurrent Model-Free RL and the Compared Methods
 
+### General Form
 **We use `.yml` file in `configs/` folder for each subarea of POMDPs, and then we can overwrite the config file by command-line arguments for our implementation.**
 
 To run our implementation, Markovian, and Oracle, in <local_path> simply
@@ -49,31 +56,22 @@ where `algo_name` specifies the algorithm name:
 - `rnn` correspond to **our implementation** of recurrent model-free RL
 - `{mt|oracle}/mlp` correspond to **Multi-task/Oracle** policies
 
-For the other methods, similarly (without `--cfg`; may be unified later)
-```
-export PYTHONPATH=${PWD}:$PYTHONPATH
-python3 policies/main.py configs/<subarea>/<env_name>/<algo_name>.yml
-```
-where `algo_name` specifies the algorithm name:
+For the other methods, similarly the `algo_name` specifies the algorithm name:
 - `ppo_rnn` and `a2c_rnn` correspond to [(Kostrikov, 2018)](https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail) implementation of recurrent model-free RL
 - `vrm` corresponds to [VRM](https://github.com/oist-cnru/Variational-Recurrent-Models) compared in "standard" POMDPs
 - `varibad` corresponds the [off-policy version](https://github.com/Rondorf/BOReL) of original [VariBAD](https://arxiv.org/abs/1910.08348) compared in meta RL
 - `MRPO` correspond to [MRPO](https://proceedings.mlr.press/v139/jiang21c.html) compared in robust RL
 
 > We have merged the prior methods above into our repository (there is no need to install other repositories), so that future work can use this single repository to run a number of baselines besides ours: A2C-GRU, PPO-GRU, VRM, VariBAD, MRPO. 
+>
 > Since our code is heavily drawn from those prior works, we encourage authors to [cite those prior papers or implementations](acknowledge.md).
+>
 > For the compared methods, we use their open-sourced implementation with their default hyperparameters.
 
-## Specific Running Commands for Each Subarea
+### Specific Running Commands for Each Subarea
 Please see [run_commands.md](run_commands.md) for details on running our implementation of recurrent model-free RL and also all the compared methods.
 
-## A Minimal Example to Run Our Implementation
-Here we provide a stand-alone minimal example with the least dependencies to run our implementation of recurrent model-free RL! 
-> Only requires PyTorch and PyBullet, no need to install MuJoCo or roboschool, no external configuration file.
-
-Simply open the Jupyter Notebook [example.ipynb](example.ipynb) and it contains the training and evaluation procedure on a toy POMDP environment (Pendulum-V). It only costs < 20 min to run the whole process.
-
-## Details of Our Implementation of Recurrent Model-Free RL: Decision Factors, Best Variants, Code Features
+### Details of Our Implementation of Recurrent Model-Free RL: Decision Factors, Best Variants, Code Features
 Please see [our_details.md](our_details.md) for more information on:
 - How to tune the decision factors discussed in the paper in the configuration files
 - How to tune the other hyperparameters that are also important to training
