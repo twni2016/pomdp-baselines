@@ -1,5 +1,5 @@
 seed: 7
-cuda: 3 # use_gpu
+cuda: 0 # use_gpu
 env:
   env_type: pomdp
   env_name: HopperBLT-V-v0

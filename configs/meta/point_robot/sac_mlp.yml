@@ -1,0 +1,45 @@
+seed: 1
+cuda: 0 # use_gpu
+env:
+  env_type: meta
+  env_name: PointRobotSparse-v0
+  max_rollouts_per_task: 2 # k. total steps: 120
+
+  num_tasks: 100
+  num_train_tasks: 80
+  num_eval_tasks: 20
+
+train:
+  # sample complexity: BAMDP horizon * (num_init_rollouts_pool * num_train_tasks
+    #  + num_iters * num_tasks_sample * num_rollouts_per_iter)
+    # original 4k iters -> 12M steps
+    # 1.5k iters -> 4.55M steps (17 gpu hrs, 31 cpu hrs)
+  # original rl training steps: num_iters * updates_per_iter = 1.5M
+    # now makes it same as env steps
+  num_iters: 500 # 38000 # number meta-training iterates
+  num_init_rollouts_pool: 400 # 80 #  before training
+  num_rollouts_per_iter: 25  # 1 #
+  buffer_size: 4e6 # or 1e6? old belief
+
+  num_updates_per_iter: 1000
+  batch_size: 32 # to tune based on sampled_seq_len
+
+eval:
+  log_interval: 5 # 10 num of iters
+  save_interval: 100 # -1
+  log_tensorboard: false
+
+policy:
+  arch: mlp
+  algo: sac # [td3, sac]
+
+  dqn_layers: [128, 128]
+  policy_layers: [128, 128]
+  lr: 0.0003
+  gamma: 0.9
+  tau: 0.005
+
+  # sac alpha
+  entropy_alpha: 0.01 # tend to be det policy...
+  automatic_entropy_tuning: true
+  alpha_lr: 0.0003

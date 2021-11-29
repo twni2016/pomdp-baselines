@@ -4,6 +4,7 @@ env:
   env_type: meta
   env_name: Wind-v0
   max_rollouts_per_task: 1 # k. total steps: 25
+  multi_task: True
 
   num_tasks: 60
   num_train_tasks: 40

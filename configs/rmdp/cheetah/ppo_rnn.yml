@@ -1,0 +1,20 @@
+seed: 7
+cuda: -1 # use cpu is 15% faster
+env:
+  env_type: rmdp
+  env_name: MRPOHalfCheetahRandomNormal-v0
+
+  num_eval_tasks: 100
+  worst_percentile: 0.10
+
+train:
+  # 10000*2048=20M steps, cost ? days
+  num_iters: 10000 # number meta-training iterates
+
+eval:
+  log_interval: 25 # num of iters
+  save_interval: -1 # not 
+  log_tensorboard: false
+
+policy:
+  algo: ppo

@@ -1,0 +1,47 @@
+seed: 1
+cuda: -1 # use_gpu
+env:
+  env_type: meta
+  env_name: HalfCheetahVel-v0
+  max_rollouts_per_task: 2 # k=2, H=200, H^+ =400
+  multi_task: True # WARNING
+
+  num_tasks: 120
+  num_train_tasks: 100
+  num_eval_tasks: 20
+
+train:
+  # sample complexity: BAMDP horizon * (num_init_rollouts_pool * num_train_tasks
+    #  + num_iters * num_tasks_sample * num_rollouts_per_iter)
+    # 0.5k iters -> 5M steps
+  # original rl training steps: num_iters * updates_per_iter = 1M
+    # now makes it same as env steps
+  num_iters: 500 # 38000 # number meta-training iterates
+  num_init_rollouts_pool: 500 # before training
+  num_rollouts_per_iter: 25  #
+  buffer_size: 1e6
+
+  num_updates_per_iter: 1000 # equal, or positive integer, e.g. 20, 200, 1000
+  batch_size: 32 # to tune based on sampled_seq_len
+
+eval:
+  log_interval: 4 # 10 num of iters
+  save_interval: 100 # -1
+  log_tensorboard: true
+
+policy:
+  arch: mlp
+  algo: td3 # [td3, sac]
+
+  dqn_layers: [128, 128, 128]
+  policy_layers: [128, 128, 128]
+  lr: 0.0003
+  gamma: 0.99
+  tau: 0.005
+
+  # td3 noise 
+  ## since we normalize action space to [-1, 1]
+  ## the noise std is absolute value
+  exploration_noise: 0.1 
+  target_noise: 0.2
+  target_noise_clip: 0.5

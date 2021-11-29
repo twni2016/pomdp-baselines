@@ -30,7 +30,7 @@ eval:
 
 policy:
   arch: mlp
-  algo: sac # [td3, sac]
+  algo: td3 # [td3, sac]
 
   dqn_layers: [128, 128]
   policy_layers: [128, 128]
@@ -38,7 +38,10 @@ policy:
   gamma: 0.9
   tau: 0.005
 
-  # sac alpha
-  entropy_alpha: 0.01 # tend to be det policy...
-  automatic_entropy_tuning: true
-  alpha_lr: 0.0003
+  # td3 noise 
+  ## since we normalize action space to [-1, 1]
+  ## the noise std is absolute value
+  exploration_noise: 0.1 
+  target_noise: 0.2
+  target_noise_clip: 0.5
+
