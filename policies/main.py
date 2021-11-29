@@ -40,10 +40,25 @@ else:
     env_name = v["env"]["env_name"]
 exp_id += f"{env_type}/{env_name}/"
 
+if "multi_task" in v["env"] or "oracle" in v["env"]:
+    if "multi_task" in v["env"]:
+        assert v["env"]["multi_task"] == True
+    if "oracle" in v["env"]:
+        assert v["env"]["oracle"] == True
+    exp_id += "oracle/"
+
 arch, algo = v["policy"]["arch"], v["policy"]["algo"]
 assert arch in ["mlp", "lstm", "gru"]
 assert algo in ["td3", "sac"]
-exp_id += f"{algo}_{arch}"
+if "rnn_num_layers" in v["policy"]:
+    rnn_num_layers = v["policy"]["rnn_num_layers"]
+    if rnn_num_layers == 1:
+        rnn_num_layers = ""
+    else:
+        rnn_num_layers = str(rnn_num_layers)
+else:
+    rnn_num_layers = ""
+exp_id += f"{algo}_{rnn_num_layers}{arch}"
 if "separate" in v["policy"] and v["policy"]["separate"] == False:
     exp_id += "_shared"
 exp_id += "/"

@@ -47,6 +47,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         rnn_hidden_size,
         dqn_layers,
         policy_layers,
+        rnn_num_layers=1,
         lr=3e-4,
         gamma=0.99,
         tau=5e-3,
@@ -81,6 +82,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             reward_embedding_size,
             rnn_hidden_size,
             dqn_layers,
+            rnn_num_layers,
         )
 
         # target networks
@@ -97,6 +99,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             reward_embedding_size,
             rnn_hidden_size,
             policy_layers,
+            rnn_num_layers,
         )
 
         if self.algo == self.TD3_name:

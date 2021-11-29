@@ -2,6 +2,7 @@
 import os, sys
 import time
 
+import math
 import numpy as np
 import torch
 import random
@@ -48,7 +49,7 @@ class Learner:
         report_eval_tasks=None,
         eval_envs=None,
         worst_percentile=None,
-        **kwargs
+        **kwargs,
     ):
 
         # initialize environment
@@ -63,9 +64,11 @@ class Learner:
                 max_rollouts_per_task,
                 seed=self.seed,
                 n_tasks=num_tasks,
-                **kwargs
-            )
-            self.eval_env = self.train_env
+                **kwargs,
+            )  # multi_task in kwargs
+            self.eval_env = (
+                self.train_env
+            )  # make it exactly the same as we won't change env data
             # unwrapped env to get some info about the environment
             unwrapped_env = self.train_env.unwrapped
 
@@ -99,10 +102,10 @@ class Learner:
             assert (
                 num_eval_tasks > 0 and worst_percentile > 0.0 and worst_percentile < 1.0
             )
-            self.train_env = sunblaze_envs.make(env_name)
+            self.train_env = sunblaze_envs.make(env_name, **kwargs)  # oracle
             assert np.all(self.train_env.action_space.low == -1)
             assert np.all(self.train_env.action_space.high == 1)
-            self.eval_env = self.train_env
+            self.eval_env = self.train_env  # same as train_env
             self.worst_percentile = worst_percentile
 
             self.train_tasks = []
@@ -126,7 +129,6 @@ class Learner:
                 self.train_env = env_cls()
                 # NOTE: we temporarily assign self.train_env for common interface but won't use it later
                 break
-            # import ipdb; ipdb.set_trace()
             self.num_train_tasks = num_train_tasks
             self.num_eval_tasks = num_eval_tasks
             self.max_rollouts_per_task = 1
@@ -139,7 +141,7 @@ class Learner:
             sys.path.append("envs/rl-generalization")
             import sunblaze_envs
 
-            self.train_env = sunblaze_envs.make(env_name)
+            self.train_env = sunblaze_envs.make(env_name, **kwargs)  # oracle in kwargs
             assert np.all(self.train_env.action_space.low == -1)
             assert np.all(self.train_env.action_space.high == 1)
 
@@ -153,9 +155,12 @@ class Learner:
             self.train_env_name = check_env_class(env_name)
 
             self.eval_envs = {
-                sunblaze_envs.make(env_name): (check_env_class(env_name), num_eval_task)
+                sunblaze_envs.make(env_name, **kwargs): (
+                    check_env_class(env_name),
+                    num_eval_task,
+                )
                 for env_name, num_eval_task in eval_envs.items()
-            }  # several types of evaluation envs
+            }  # several types of evaluation envs # oracle in kwargs
             logger.log(self.train_env_name, self.train_env)
             logger.log(self.eval_envs)
 
@@ -174,20 +179,22 @@ class Learner:
 
     def init_policy(self, arch, separate: bool = True, **kwargs):
         # initialize policy
-        assert arch in ["mlp", "lstm", "gru"]
-        self.policy_arch = arch
         if arch == "mlp":
+            self.policy_arch = "mlp"
             agent_class = Policy_MLP
-        elif separate == True:
-            agent_class = Policy_RNN
         else:
-            agent_class = Policy_Shared_RNN
-            logger.log("WARNING: YOU ARE USING SHARED ACTOR-CRITIC ARCH !!!!!!!")
+            self.policy_arch = "memory"
+            if separate == True:
+                agent_class = Policy_RNN
+            else:
+                agent_class = Policy_Shared_RNN
+                logger.log("WARNING: YOU ARE USING SHARED ACTOR-CRITIC ARCH !!!!!!!")
+
         self.agent = agent_class(
             encoder=arch,  # redundant for Policy_MLP
             obs_dim=self.obs_dim,
             action_dim=self.act_dim,
-            **kwargs
+            **kwargs,
         ).to(ptu.device)
         logger.log(self.agent)
 
@@ -201,7 +208,7 @@ class Learner:
         num_updates_per_iter=None,
         sampled_seq_len=None,
         sample_weight_baseline=None,
-        **kwargs
+        **kwargs,
     ):
 
         if num_updates_per_iter is None:
@@ -258,7 +265,7 @@ class Learner:
         log_tensorboard,
         eval_stochastic=False,
         num_episodes_per_task=1,
-        **kwargs
+        **kwargs,
     ):
 
         self.log_interval = log_interval
@@ -313,8 +320,8 @@ class Learner:
             train_stats = self.update(
                 self.num_updates_per_iter
                 if isinstance(self.num_updates_per_iter, int)
-                else int(self.num_updates_per_iter * env_steps)
-            )
+                else int(math.ceil(self.num_updates_per_iter * env_steps))
+            )  # NOTE: ceil to make sure at least 1 step
             self.log_train_stats(train_stats)
 
             # evaluate and log
@@ -413,7 +420,7 @@ class Learner:
 
             obs = obs.reshape(1, obs.shape[-1])
 
-            if self.policy_arch in ["lstm", "gru"]:
+            if self.policy_arch == "memory":
                 action, reward, internal_state = self.agent.get_initial_info()
 
             for episode_idx in range(num_episodes):
@@ -445,6 +452,9 @@ class Learner:
                             next_obs[0, :obs_size]
                         )
 
+                    # set: obs <- next_obs
+                    obs = next_obs.clone()
+
                     if (
                         self.env_type == "meta"
                         and "is_goal_state" in dir(self.eval_env.unwrapped)
@@ -459,17 +469,12 @@ class Learner:
                     ):
                         success_rate[task_idx] = 1.0  # ever once reach
 
-                    if done_rollout and self.env_type in [
-                        "rmdp",
-                        "pomdp",
-                        "generalize",
-                    ]:
-                        # NOTE: rmdp, pomdp (single episode): early stop (fail), then break;
-                        # meta: fixed horizon, ignore the done
+                    if done_rollout:
+                        # for all env types, same
                         break
-
-                    # set: obs <- next_obs
-                    obs = next_obs.clone()
+                    if self.env_type == "meta" and info["done_mdp"] == True:
+                        # for early stopping meta episode like Ant-Dir
+                        break
 
                 returns_per_episode[task_idx, episode_idx] = running_reward
             total_steps[task_idx] = step
@@ -481,7 +486,7 @@ class Learner:
         for k, v in train_stats.items():
             logger.record_tabular("rl_loss/" + k, v)
         ## gradient norms
-        if self.policy_arch in ["lstm", "gru"]:
+        if self.policy_arch == "memory":
             results = self.agent.report_grad_norm()
             for k, v in results.items():
                 logger.record_tabular("rl_loss/" + k, v)
@@ -780,7 +785,7 @@ class Learner:
             done_rollout = False
 
             # get hidden state at timestep=0, None for mlp
-            if self.policy_arch in ["lstm", "gru"]:
+            if self.policy_arch == "memory":
                 action, reward, internal_state = self.agent.get_initial_info()
                 # temporary storage
                 obs_list, act_list, rew_list, next_obs_list, term_list = (
@@ -859,7 +864,7 @@ class Learner:
                 ):
                     break  # has to manually break
 
-            if self.policy_arch in ["lstm", "gru"]:  # add collected sequence to buffer
+            if self.policy_arch == "memory":  # add collected sequence to buffer
                 self.policy_storage.add_episode(
                     observations=ptu.get_numpy(torch.cat(obs_list, dim=0)),  # (L, dim)
                     actions=ptu.get_numpy(torch.cat(act_list, dim=0)),  # (L, dim)
