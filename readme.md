@@ -52,6 +52,7 @@ We support several benchmarks in different subareas of POMDPs (see `envs/` for d
 * Robust RL: SunBlaze benchmark in Roboschool
 * Generalization in RL: SunBlaze benchmark in Roboschool
 
+See [run_commands.md](run_commands.md) for our estimated difficulty levels of these environments.
 
 ### General Form
 **We use `.yml` file in `configs/` folder for training, and then we can overwrite the config file by command-line arguments for our implementation.**
