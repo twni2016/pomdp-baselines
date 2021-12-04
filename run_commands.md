@@ -2,10 +2,10 @@
 In general, we found `td3` works better in `rnn` policy while `sac` works better in `mlp` policy. So we use respective parameters below.
 
 ### Difficulty Levels of Environments
-Before start running experiments, we suggest to have a good plan of environment series based on difficulty level. As it is hard to analyze and varies from algorithm to algorithm, we provide some rought estimates:
+Before start running any experiments, we suggest to have a good plan of *environment series* based on difficulty level. As it is hard to analyze and varies from algorithm to algorithm, we provide some rough estimates:
 
 1. Extremely Simple as a Sanity Check: Pendulum-V (also shown in our minimal example jupyter notebook)
-2. Simple, Fast, yet non-trivial: Wind (require precise inference and control), Semi-Circle (sparse reward). Both are continuous gridworlds, thus very fast.
+2. Simple, Fast, yet Non-trivial: Wind (require precise inference and control), Semi-Circle (sparse reward). Both are continuous gridworlds, thus very fast.
 3. Medium: Cheetah-Vel (1-dim stationary hidden state), `*`-Robust (2-dim stationary hidden state), `*`-P (could be roughly inferred by 2nd order MDP)
 4. Hard: Ant-Dir (relatively complicated dynamics), `*`-V (long-term inference)
 5. Very Hard: `*`-Generalize (extrapolation)
