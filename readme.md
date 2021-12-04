@@ -43,8 +43,18 @@ The `requirements.txt` file includes all the dependencies (e.g. PyTorch, PyBulle
 
 ## Run Our Implementation of Recurrent Model-Free RL and the Compared Methods
 
+### Benchmarks / Environments
+
+We support several benchmarks in different subareas of POMDPs (see `envs/` for details), including
+
+* "Standard" POMDPs: occlusion benchmark in PyBullet
+* Meta RL: gridworld and MuJoCo benchmark
+* Robust RL: SunBlaze benchmark
+* Generalization in RL: SunBlaze benchmark
+
+
 ### General Form
-**We use `.yml` file in `configs/` folder for each subarea of POMDPs, and then we can overwrite the config file by command-line arguments for our implementation.**
+**We use `.yml` file in `configs/` folder for training, and then we can overwrite the config file by command-line arguments for our implementation.**
 
 To run our implementation, Markovian, and Oracle, in <local_path> simply
 ```
