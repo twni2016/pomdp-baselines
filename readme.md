@@ -10,9 +10,8 @@ by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-e
 Note that current repo should be run smoothly. 
 Below todo lists are for more functionalities and more user-friendly, and any suggestions on code refactor are welcome (e.g. via pull request):
 - **Add MORE command-line arguments to overwrite the configuration file**
-- Upload more log csv files
-- Add documentation on our main code and log csv files
-- Merge the functions of collection and evaluation?  
+- Upload more log csv files and plotting scripts
+- Add documentation on our main code and log csv files 
 
 ## A Minimal Example to Run Our Implementation
 Here we provide a stand-alone minimal example with the least dependencies to run our implementation of recurrent model-free RL! 
@@ -87,8 +86,7 @@ Please see [run_commands.md](run_commands.md) for details on running our impleme
 Please see [our_details.md](our_details.md) for more information on:
 - How to tune the decision factors discussed in the paper in the configuration files
 - How to tune the other hyperparameters that are also important to training
-- Where is the core class of our recurrent model-free RL and the RAM-efficient replay buffer
-- Our best variants in subarea and numeric results on all the bar charts and learning curves
+- Our best variants in each subarea and numeric results of learning curves
 
 ## Acknowledgement
 Please see [acknowledge.md](acknowledge.md) for details.
