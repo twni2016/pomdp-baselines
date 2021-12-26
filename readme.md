@@ -57,7 +57,7 @@ We support several benchmarks in different subareas of POMDPs (see `envs/` for d
 * Robust RL: SunBlaze benchmark in Roboschool
 * Generalization in RL: SunBlaze benchmark in Roboschool
 
-See [run_commands.md](run_commands.md) for our estimated difficulty levels of these environments.
+See [run_commands.md](docs/run_commands.md) for our estimated difficulty levels of these environments.
 
 ### General Form of Commands
 **We use `.yml` file in `configs/` folder for training, and then we can overwrite the config file by command-line arguments for our implementation.**
@@ -79,21 +79,21 @@ where `algo_name` specifies the algorithm name:
 
 > We have merged the prior methods above into our repository (there is no need to install other repositories), so that future work can use this single repository to run a number of baselines besides ours: A2C-GRU, PPO-GRU, VRM, VariBAD, MRPO. 
 >
-> Since our code is heavily drawn from those prior works, we encourage authors to [cite those prior papers or implementations](acknowledge.md).
+> Since our code is heavily drawn from those prior works, we encourage authors to [cite those prior papers or implementations](docs/acknowledge.md).
 >
 > For the compared methods, we use their open-sourced implementation with their default hyperparameters.
 
 ### Specific Running Commands for Each Subarea
-Please see [run_commands.md](run_commands.md) for details on running our implementation of recurrent model-free RL and also all the compared methods.
+Please see [run_commands.md](docs/run_commands.md) for details on running our implementation of recurrent model-free RL and also all the compared methods.
 
 ### Details of Our Implementation of Recurrent Model-Free RL: Decision Factors, Best Variants, Code Features
-Please see [our_details.md](our_details.md) for more information on:
+Please see [our_details.md](docs/our_details.md) for more information on:
 - How to tune the decision factors discussed in the paper in the configuration files
 - How to tune the other hyperparameters that are also important to training
 - Our best variants in each subarea and numeric results of learning curves
 
 ## Acknowledgement
-Please see [acknowledge.md](acknowledge.md) for details.
+Please see [acknowledge.md](docs/acknowledge.md) for details.
 
 ## Citation
 If you find our code useful to your work, please consider citing our paper:

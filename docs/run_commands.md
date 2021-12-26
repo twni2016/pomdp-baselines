@@ -90,4 +90,4 @@ python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/oracle_R/m
 # For PPO, A2C, EPOpt-PPO-FF, we use the figures from SunBlaze paper
 ```
 
-To run the best variant of our implemention, please refer to [our_details.md](our_details.md), and then change the corresponding hyperparameters in the config files.
+To run the best variant of our implemention, please refer to [our_details.md](docs/our_details.md), and then change the corresponding hyperparameters in the config files.
