@@ -513,15 +513,12 @@ class Learner:
 
     def update(self, num_updates):
         rl_losses_agg = {}
-        # print(num_updates)
         for update in range(num_updates):
             # sample random RL batch: in transitions
             batch = self.sample_rl_batch(self.batch_size)
 
             # RL update
-            # t0 = time.time()
             rl_losses = self.agent.update(batch)
-            # print("train", time.time() - t0)
 
             for k, v in rl_losses.items():
                 if update == 0:  # first iterate - create list

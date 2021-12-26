@@ -11,11 +11,11 @@ by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-e
 Note that current repo should be run smoothly.
 
 DONE:
-* Dec 2021: fix [seed reproducibility issue](envs/readme.md) for gym v0.18 (but not for SunBlaze)
+* Dec 2021: add some command-line arguments to overwrite the config file and save the updated one
+* Dec 2021: fix [seed reproducibility issue](envs/readme.md#reproducibilty-issue-in-gym-environments) for gym v0.18 (but not for SunBlaze)
 * Nov 2021: add Markovian and Oracle policies training
 
 TODO:
-- Add MORE command-line arguments to overwrite the configuration file
 - Upload more log csv files and plotting scripts
 - Add documentation on our main code and log csv files 
 
@@ -66,7 +66,7 @@ To run our implementation, Markovian, and Oracle, in <local_path> simply
 ```
 export PYTHONPATH=${PWD}:$PYTHONPATH
 python3 policies/main.py --cfg configs/<subarea>/<env_name>/<algo_name>.yml \
-  [--algo {td3,sac} ] 
+  [--algo {td3,sac} --seed <int> --cuda <int> ]
 ```
 where `algo_name` specifies the algorithm name:
 - `mlp` correspond to **Markovian** policies

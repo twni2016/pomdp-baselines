@@ -175,11 +175,6 @@ def recompute_embeddings(
             return_prior=False,
         )
 
-        # print(i, reset_task.sum())
-        # print(i, (policy_storage.task_mu[i + 1] - tm).sum())
-        # print(i, (policy_storage.task_logvar[i + 1] - tl).sum())
-        # print(i, (policy_storage.hidden_states[i + 1] - h).sum())
-
         task_sample.append(ts)
         task_mean.append(tm)
         task_logvar.append(tl)

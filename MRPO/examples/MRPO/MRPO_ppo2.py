@@ -328,11 +328,9 @@ class MRPORunner(BaseRunner):
             envparam_comp_arr = (
                 wst_percen_params_arr - np.array(n_mb_envparam[N])
             ) / np.array(envparam_normalizatio)
-            # print(envparam_comp_arr)
             envparam_comp = np.sum(
                 envparam_comp_arr, axis=1
             ).__abs__()  # l1 norm distance
-            # print(envparam_comp)
             objs = episode_returns[N] - eps * envparam_comp
             # NOTE: R[i] - eps * max (l1 distances) > R_worst
             if all(objs > episode_returns_percen10) and N not in wst_percen_idx_list:
@@ -354,8 +352,6 @@ class MRPORunner(BaseRunner):
                 mb_dones.extend(next_dones)
                 mb_neglogpacs.extend(next_neglogpacs)
                 epinfos.extend(next_epinfos)
-                # print(next_epinfos)
-                # print('N:{}   return:{}'.format(N, next_epinfos[0]['r']))
 
         total_steps = len(mb_rewards)
         epremean_percentile10 = safemean([epinfo["r"] for epinfo in epinfos_percen10])

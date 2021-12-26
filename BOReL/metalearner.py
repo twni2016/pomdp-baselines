@@ -199,7 +199,6 @@ class MetaLearner:
 
         self._start_training()
         for iter_ in range(self.num_iters):
-            # print(iter_)
             self.training_mode(True)
             # switch to belief reward
             if (
@@ -260,7 +259,6 @@ class MetaLearner:
         vae_losses_agg = {}
         for update in range(multiplier * self.vae_updates_per_iter):
             # sample random vae batch: in trajectories
-            # print("vae mem", torch.cuda.memory_allocated(0))
             batch = self.sample_vae_batch(self.vae_batch_num_rollouts)
 
             # vae update

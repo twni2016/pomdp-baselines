@@ -33,12 +33,8 @@ class RoboschoolTrackDistSuccessMixin(EnvBinarySuccessMixin):
         """
         target_dist = 20
         if self.robot_body.pose().xyz()[0] >= target_dist:
-            # print("[SUCCESS]: xyz is {}, reached x-target {}".format(
-            #      self.robot_body.pose().xyz(), target_dist))
             return True
         else:
-            # print("[NO SUCCESS]: xyz is {}, x-target is {}".format(
-            #      self.robot_body.pose().xyz(), target_dist))
             return False
 
 
@@ -669,7 +665,6 @@ class RandomNormalHalfCheetah_MRPO(
         if self.oracle:
             hidden_states = self.get_hidden_states()
             state = np.concatenate([state, hidden_states])
-            # print(state) # debugging
             return state
         else:
             return state

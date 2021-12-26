@@ -87,7 +87,6 @@ class VariBadWrapper(gym.Wrapper):
             state = np.concatenate([state, tmp_task])
         if self.add_done_info:
             state = np.concatenate((state, [float(self.done_mdp)]))
-        # print(self.step_count_bamdp, state) # for debugging
         return state
 
     def reset(self, task=None):

@@ -140,7 +140,6 @@ if __name__ == "__main__":
         t0 = time.time()
 
         for step in range(args.num_steps):
-            # print(j, step)
             # Sample actions
             with torch.no_grad():
                 (

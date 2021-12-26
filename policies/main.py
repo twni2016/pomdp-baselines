@@ -8,6 +8,7 @@ import torch
 from ruamel.yaml import YAML
 from absl import flags
 from utils import system, logger
+from pathlib import Path
 
 from torchkit.pytorch_utils import set_gpu_mode
 from policies.learner import Learner
@@ -15,15 +16,19 @@ from policies.learner import Learner
 FLAGS = flags.FLAGS
 flags.DEFINE_string("cfg", None, "path to configuration file")
 flags.DEFINE_string("algo", "sac", "[td3, sac]")
-# more arguments
-flags.FLAGS(sys.argv)
+flags.DEFINE_integer("seed", None, "seed")
+flags.DEFINE_integer("cuda", None, "cuda device id")
 
+flags.FLAGS(sys.argv)
 yaml = YAML()
 v = yaml.load(open(FLAGS.cfg))
 
 # overwrite config params
 v["policy"]["algo"] = FLAGS.algo
-
+if FLAGS.seed is not None:
+    v["seed"] = FLAGS.seed
+if FLAGS.cuda is not None:
+    v["cuda"] = FLAGS.cuda
 
 # system: device, threads, seed, pid
 seed = v["seed"]
@@ -97,7 +102,7 @@ logger.configure(dir=log_folder, format_strs=logger_formats, precision=4)
 logger.log(f"preload cost {time.time() - t0:.2f}s")
 
 os.system(f"cp -r policies/ {log_folder}")
-os.system(f"cp {FLAGS.cfg} {log_folder}/variant_{pid}.yml")
+yaml.dump(v, Path(f"{log_folder}/variant_{pid}.yml"))
 key_flags = FLAGS.get_key_flags_for_module(sys.argv[0])
 logger.log("\n".join(f.serialize() for f in key_flags) + "\n")
 logger.log("pid", pid, socket.gethostname())
