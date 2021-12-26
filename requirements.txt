@@ -4,6 +4,7 @@ astunparse==1.6.3
 async-generator==1.10
 attrs==20.3.0
 backcall==0.2.0
+black==21.9b0
 bleach==3.3.0
 brotlipy==0.7.0
 cachetools==4.2.4
