@@ -1,7 +1,7 @@
-## Specific Running Commands for Each Subarea
-In general, we found `td3` works better in `rnn` policy while `sac` works better in `mlp` policy. So we use respective parameters below.
+# Run Experiments
 
-### Difficulty Levels of Environments
+## Difficulty Levels of Environments
+
 Before start running any experiments, we suggest to have a good plan of *environment series* based on difficulty level. As it is hard to analyze and varies from algorithm to algorithm, we provide some rough estimates:
 
 1. Extremely Simple as a Sanity Check: Pendulum-V (also shown in our minimal example jupyter notebook)
@@ -10,6 +10,12 @@ Before start running any experiments, we suggest to have a good plan of *environ
 4. Hard: Ant-Dir (relatively complicated dynamics), `*`-V (long-term inference)
 5. Very Hard: `*`-Generalize (extrapolation)
 
+## Best Configs / Variants
+To run the best variant of our implemention, please refer to [our_details.md](our_details.md), and then change the corresponding hyperparameters in the config files.
+
+
+## Specific Running Commands for Each Subarea
+In general, we found `td3` works better in `rnn` policy while `sac` works better in `mlp` policy. So we use respective parameters below.
 
 ### "Standard" POMDP
 {Ant,Cheetah,Hopper,Walker}-{P,V} in the paper, corresponding to `configs/pomdp/<ant|cheetah|hopper|walker>_blt/<p|v>`, which requires PyBullet. We also provide Pendulum environments for sanity check.
@@ -89,5 +95,3 @@ python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/oracle_R/m
 
 # For PPO, A2C, EPOpt-PPO-FF, we use the figures from SunBlaze paper
 ```
-
-To run the best variant of our implemention, please refer to [our_details.md](docs/our_details.md), and then change the corresponding hyperparameters in the config files.
