@@ -355,7 +355,6 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
             outputs.update(
                 {"policy_entropy": -current_log_probs, "alpha": self.alpha_entropy}
             )
-        # import ipdb; ipdb.set_trace()
         return outputs
 
     def soft_target_update(self):

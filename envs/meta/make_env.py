@@ -13,6 +13,7 @@ def make_env(env_id, episodes_per_task, seed=None, multi_task=False, **kwargs):
     env = gym.make(env_id, **kwargs)
     if seed is not None:
         env.seed(seed)
+        env.action_space.np_random.seed(seed)
     env = VariBadWrapper(
         env=env,
         episodes_per_task=episodes_per_task,

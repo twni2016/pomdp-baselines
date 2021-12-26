@@ -1,15 +1,21 @@
 # Recurrent Model-Free RL is a Strong Baseline for Many POMDPs
 Welcome to the POMDP world! 
+
 This repo provides some simple baselines for POMDPs, specifically the **recurrent model-free RL**, on the benchmarks in **several subareas of POMDPs** (including meta RL, robust RL, and generalization in RL) for the following paper:
 
 Paper: [arXiv](https://arxiv.org/abs/2110.05038) Numeric Results and Figures: [google drive](https://drive.google.com/file/d/18l9Y4N8zPRdGBnx8oSELiQcoReF7V4wP/view?usp=sharing) Web: [Site](https://sites.google.com/view/pomdp-baselines)
 
 by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-eysenbach.github.io/) and [Ruslan Salakhutdinov](http://www.cs.cmu.edu/~rsalakhu/).
 
-## TODO List
-Note that current repo should be run smoothly. 
-Below todo lists are for more functionalities and more user-friendly, and any suggestions on code refactor are welcome (e.g. via pull request):
-- **Add MORE command-line arguments to overwrite the configuration file**
+## CHANGE LOG
+Note that current repo should be run smoothly.
+
+DONE:
+* Dec 2021: fix [seed reproducibility issue](envs/readme.md) for gym v0.18 (but not for SunBlaze)
+* Nov 2021: add Markovian and Oracle policies training
+
+TODO:
+- Add MORE command-line arguments to overwrite the configuration file
 - Upload more log csv files and plotting scripts
 - Add documentation on our main code and log csv files 
 
@@ -53,7 +59,7 @@ We support several benchmarks in different subareas of POMDPs (see `envs/` for d
 
 See [run_commands.md](run_commands.md) for our estimated difficulty levels of these environments.
 
-### General Form
+### General Form of Commands
 **We use `.yml` file in `configs/` folder for training, and then we can overwrite the config file by command-line arguments for our implementation.**
 
 To run our implementation, Markovian, and Oracle, in <local_path> simply
@@ -66,8 +72,6 @@ where `algo_name` specifies the algorithm name:
 - `mlp` correspond to **Markovian** policies
 - `rnn` correspond to **our implementation** of recurrent model-free RL
 - `{mt|oracle}/mlp` correspond to **Multi-task/Oracle** policies
-
-For the other methods, similarly the `algo_name` specifies the algorithm name:
 - `ppo_rnn` and `a2c_rnn` correspond to [(Kostrikov, 2018)](https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail) implementation of recurrent model-free RL
 - `vrm` corresponds to [VRM](https://github.com/oist-cnru/Variational-Recurrent-Models) compared in "standard" POMDPs
 - `varibad` corresponds the [off-policy version](https://github.com/Rondorf/BOReL) of original [VariBAD](https://arxiv.org/abs/1910.08348) compared in meta RL
@@ -101,6 +105,13 @@ If you find our code useful to your work, please consider citing our paper:
   year={2021}
 }
 ```
+
+## Contribution
+Any suggestions on code refactor are welcome. Before pull request, please reformat your code:
+```bash
+black . -t py35 # avoid trailing commas issue after kwargs
+```
+
 ## Contact
 If you have any questions, please create an issue in this repo or contact Tianwei Ni (twni2016@gmail.com)
 

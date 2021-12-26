@@ -35,7 +35,7 @@ class MultiTaskReplayBuffer(object):
                         observation_dim=self._obs_dim,
                         action_dim=utl.get_dim(self._action_space),
                         trajectory_len=trajectory_len,
-                        **kwargs
+                        **kwargs,
                     ),
                 )
                 for idx in tasks

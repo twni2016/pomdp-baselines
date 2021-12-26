@@ -332,11 +332,14 @@ class SAC(nn.Module):
             sampled_u = mu_prob.sample()
             sampled_a = torch.tanh(sampled_u)
 
-            log_pi_exp = torch.sum(
-                mu_prob.log_prob(sampled_u).clamp(LOG_STD_MIN, LOG_STD_MAX),
-                dim=-1,
-                keepdim=True,
-            ) - torch.sum(torch.log(1 - sampled_a.pow(2) + EPS), dim=-1, keepdim=True)
+            log_pi_exp = (
+                torch.sum(
+                    mu_prob.log_prob(sampled_u).clamp(LOG_STD_MIN, LOG_STD_MAX),
+                    dim=-1,
+                    keepdim=True,
+                )
+                - torch.sum(torch.log(1 - sampled_a.pow(2) + EPS), dim=-1, keepdim=True)
+            )
 
             sampled_q = torch.min(
                 self.f_sa2q1(torch.cat((S, sampled_a), dim=-1)).data,
@@ -364,11 +367,14 @@ class SAC(nn.Module):
             sampled_u = mu_prob.rsample()
             sampled_a = torch.tanh(sampled_u)
 
-            log_pi_exp = torch.sum(
-                mu_prob.log_prob(sampled_u).clamp(LOG_STD_MIN, LOG_STD_MAX),
-                dim=-1,
-                keepdim=True,
-            ) - torch.sum(torch.log(1 - sampled_a.pow(2) + EPS), dim=-1, keepdim=True)
+            log_pi_exp = (
+                torch.sum(
+                    mu_prob.log_prob(sampled_u).clamp(LOG_STD_MIN, LOG_STD_MAX),
+                    dim=-1,
+                    keepdim=True,
+                )
+                - torch.sum(torch.log(1 - sampled_a.pow(2) + EPS), dim=-1, keepdim=True)
+            )
 
             loss_a = torch.mean(
                 beta_h * log_pi_exp * V

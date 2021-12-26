@@ -90,7 +90,6 @@ class SeqReplayBuffer:
         self._next_observations[indices] = next_observations
 
         self._valid_starts[indices] = self._compute_valid_starts(seq_len)
-        # import ipdb; ipdb.set_trace()
 
         self._top = (self._top + seq_len) % self._max_replay_buffer_size
         self._size = min(self._size + seq_len, self._max_replay_buffer_size)
@@ -128,7 +127,6 @@ class SeqReplayBuffer:
         # each item has 2D shape (num_episodes * sampled_seq_len, dim)
 
         # generate masks (B, T)
-        # import ipdb; ipdb.set_trace()
         masks = self._generate_masks(indices, batch_size)
         batch["mask"] = masks
 
@@ -182,7 +180,6 @@ class SeqReplayBuffer:
         diff = sampled_seq_valids[:, :-1] - sampled_seq_valids[:, 1:]  # (B, T-1)
         # add 1s into the first column
         diff = np.concatenate([np.ones((batch_size, 1)), diff], axis=1)  # (B, T)
-        # import ipdb; ipdb.set_trace()
 
         # special case: the sampled sequence cannot cross self._top
         indices_array = np.array(indices).reshape(
@@ -190,7 +187,6 @@ class SeqReplayBuffer:
         )  # (B,T)
         # set the top as -1.0 as invalid starts
         diff[indices_array == self._top] = -1.0
-        # import ipdb; ipdb.set_trace()
 
         # now the start of next episode appears at the FIRST -1 in diff
         invalid_starts_b, invalid_starts_t = np.where(
@@ -214,7 +210,6 @@ class SeqReplayBuffer:
             invalid_indices_t += invalid_indices
 
         # set invalids in the masks
-        # import ipdb; ipdb.set_trace()
         masks[invalid_indices_b, invalid_indices_t] = 0.0
 
         return masks

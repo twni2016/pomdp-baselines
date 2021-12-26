@@ -19,3 +19,11 @@ class EnvWrapper(gym.Wrapper):
         action = np.clip(action, lb, ub)
         ...
 ```
+
+## Reproducibilty Issue in Gym Environments
+In current gym version (v0.18), we need to set seed for env and its action space to ensure reproducibilty
+```python
+env.seed(seed)
+env.action_space.np_random.seed(seed)
+```
+However, I have not figured out how to do this for old gym version (v0.10) for SunBlaze envs. Please kindly pull request if you know.

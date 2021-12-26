@@ -558,7 +558,7 @@ def learn(
                     model.train(
                         lrnow,
                         cliprangenow,
-                        *(obs, returns, masks, actions, values, neglogpacs)
+                        *(obs, returns, masks, actions, values, neglogpacs),
                     )
                 )
         else:  # recurrent version

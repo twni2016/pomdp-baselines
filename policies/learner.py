@@ -6,7 +6,6 @@ import math
 import numpy as np
 import torch
 import random
-import copy
 
 import gym
 from .models.policy_rnn import ModelFreeOffPolicy_Separate_RNN as Policy_RNN
@@ -49,7 +48,7 @@ class Learner:
         report_eval_tasks=None,
         eval_envs=None,
         worst_percentile=None,
-        **kwargs,
+        **kwargs
     ):
 
         # initialize environment
@@ -66,9 +65,9 @@ class Learner:
                 n_tasks=num_tasks,
                 **kwargs,
             )  # multi_task in kwargs
-            self.eval_env = (
-                self.train_env
-            )  # make it exactly the same as we won't change env data
+            self.eval_env = self.train_env
+            self.eval_env.seed(self.seed + 1)
+
             # unwrapped env to get some info about the environment
             unwrapped_env = self.train_env.unwrapped
 
@@ -87,7 +86,11 @@ class Learner:
 
             assert num_eval_tasks > 0
             self.train_env = gym.make(env_name)
+            self.train_env.seed(self.seed)
+            self.train_env.action_space.np_random.seed(self.seed)  # crucial
+
             self.eval_env = self.train_env
+            self.eval_env.seed(self.seed + 1)
 
             self.train_tasks = []
             self.eval_tasks = num_eval_tasks * [None]
@@ -103,9 +106,13 @@ class Learner:
                 num_eval_tasks > 0 and worst_percentile > 0.0 and worst_percentile < 1.0
             )
             self.train_env = sunblaze_envs.make(env_name, **kwargs)  # oracle
+            self.train_env.seed(self.seed)
             assert np.all(self.train_env.action_space.low == -1)
             assert np.all(self.train_env.action_space.high == 1)
-            self.eval_env = self.train_env  # same as train_env
+
+            self.eval_env = self.train_env
+            self.eval_env.seed(self.seed + 1)
+
             self.worst_percentile = worst_percentile
 
             self.train_tasks = []
@@ -142,6 +149,7 @@ class Learner:
             import sunblaze_envs
 
             self.train_env = sunblaze_envs.make(env_name, **kwargs)  # oracle in kwargs
+            self.train_env.seed(self.seed)
             assert np.all(self.train_env.action_space.low == -1)
             assert np.all(self.train_env.action_space.high == 1)
 
@@ -154,13 +162,15 @@ class Learner:
 
             self.train_env_name = check_env_class(env_name)
 
-            self.eval_envs = {
-                sunblaze_envs.make(env_name, **kwargs): (
+            self.eval_envs = {}
+            for env_name, num_eval_task in eval_envs.items():
+                eval_env = sunblaze_envs.make(env_name, **kwargs)  # oracle in kwargs
+                eval_env.seed(self.seed + 1)
+                self.eval_envs[eval_env] = (
                     check_env_class(env_name),
                     num_eval_task,
-                )
-                for env_name, num_eval_task in eval_envs.items()
-            }  # several types of evaluation envs # oracle in kwargs
+                )  # several types of evaluation envs
+
             logger.log(self.train_env_name, self.train_env)
             logger.log(self.eval_envs)
 
@@ -208,7 +218,7 @@ class Learner:
         num_updates_per_iter=None,
         sampled_seq_len=None,
         sample_weight_baseline=None,
-        **kwargs,
+        **kwargs
     ):
 
         if num_updates_per_iter is None:
@@ -265,7 +275,7 @@ class Learner:
         log_tensorboard,
         eval_stochastic=False,
         num_episodes_per_task=1,
-        **kwargs,
+        **kwargs
     ):
 
         self.log_interval = log_interval
@@ -273,6 +283,16 @@ class Learner:
         self.log_tensorboard = log_tensorboard
         self.eval_stochastic = eval_stochastic
         self.eval_num_episodes_per_task = num_episodes_per_task
+
+    def _start_training(self):
+        self._n_env_steps_total = 0
+        self._n_env_steps_total_last = 0
+        self._n_rl_update_steps_total = 0
+        self._n_rollouts_total = 0
+        self._successes_in_buffer = 0
+
+        self._start_time = time.time()
+        self._start_time_last = time.time()
 
     def train(self):
         """
@@ -341,6 +361,155 @@ class Learner:
                     # save models in later training stage
                     self.save_model(current_num_iters, perf)
         self.save_model(current_num_iters, perf)
+
+    @torch.no_grad()
+    def collect_rollouts(self, num_rollouts, random_actions=False):
+        """collect num_rollouts of trajectories in task and save into policy buffer
+        :param random_actions: whether to use policy to sample actions, or randomly sample action space
+        """
+        if self.env_type == "metaworld":
+            assert num_rollouts == len(self.benchmark.train_classes)
+            training_envs = []
+            for name, env_cls in self.benchmark.train_classes.items():
+                env = env_cls()
+                # random sample a task for this training env
+                task = random.choice(
+                    [
+                        task
+                        for task in self.benchmark.train_tasks
+                        if task.env_name == name
+                    ]
+                )
+                env.set_task(task)  # must set here
+                training_envs.append(env)
+
+        before_env_steps = self._n_env_steps_total
+        for idx in range(num_rollouts):
+            steps = 0
+
+            if self.env_type == "metaworld":
+                self.train_env = training_envs[idx]
+                print(self.train_env)
+            else:
+                task = self._sample_train_task()  # random sample a training task
+            if self.env_type == "meta":
+                obs = ptu.from_numpy(self.train_env.reset(task=task))  # reset task
+            else:  # pomdp, rmdp, generalize, metaworld
+                obs = ptu.from_numpy(self.train_env.reset())  # reset
+
+            obs = obs.reshape(1, obs.shape[-1])
+            done_rollout = False
+
+            # get hidden state at timestep=0, None for mlp
+            if self.policy_arch == "memory":
+                action, reward, internal_state = self.agent.get_initial_info()
+                # temporary storage
+                obs_list, act_list, rew_list, next_obs_list, term_list = (
+                    [],
+                    [],
+                    [],
+                    [],
+                    [],
+                )
+
+            while not done_rollout:
+                if random_actions:
+                    action = ptu.FloatTensor(
+                        [self.train_env.action_space.sample()]
+                    )  # (1, A)
+                else:  # policy takes hidden state as input for rnn, while takes obs for mlp
+                    if self.policy_arch == "mlp":
+                        action, _, _, _ = self.agent.act(obs, deterministic=False)
+                    else:
+                        (action, _, _, _), internal_state = self.agent.act(
+                            prev_internal_state=internal_state,
+                            prev_action=action,
+                            reward=reward,
+                            obs=obs,
+                            deterministic=False,
+                        )
+
+                # observe reward and next obs (B=1, dim)
+                next_obs, reward, done, info = utl.env_step(
+                    self.train_env, action.squeeze(dim=0)
+                )
+                done_rollout = False if ptu.get_numpy(done[0][0]) == 0.0 else True
+                # update statistics
+                steps += 1
+
+                # add data to policy buffer - (s+, a, r, s'+, term')
+                if self.env_type == "meta" and "is_goal_state" in dir(
+                    self.train_env.unwrapped
+                ):
+                    # NOTE: following varibad practice: for meta env, even if reaching the goal (term=True),
+                    # the episode still continues.
+                    term = self.train_env.unwrapped.is_goal_state()
+                    self._successes_in_buffer += int(term)
+                elif self.env_type == "metaworld":
+                    term = False  # generalize tasks done = False always
+                    # self._successes_in_buffer += int(info['success'])
+                else:
+                    # early stopping env: such as rmdp, pomdp, generalize tasks. term ignores timeout
+                    term = (
+                        False
+                        if "TimeLimit.truncated" in info
+                        or steps >= self.max_trajectory_len
+                        else done_rollout
+                    )
+
+                if self.policy_arch == "mlp":
+                    self.policy_storage.add_sample(
+                        observation=ptu.get_numpy(obs.squeeze(dim=0)),
+                        action=ptu.get_numpy(action.squeeze(dim=0)),
+                        reward=ptu.get_numpy(reward.squeeze(dim=0)),
+                        terminal=np.array([term], dtype=float),
+                        next_observation=ptu.get_numpy(next_obs.squeeze(dim=0)),
+                    )
+                else:  # append tensors to temporary storage
+                    obs_list.append(obs)  # (1, dim)
+                    act_list.append(action)  # (1, dim)
+                    rew_list.append(reward)  # (1, dim)
+                    term_list.append(term)  # bool
+                    next_obs_list.append(next_obs)  # (1, dim)
+
+                # set: obs <- next_obs
+                obs = next_obs.clone()
+                if (
+                    self.env_type == "metaworld"
+                    and steps >= self.train_env.max_path_length
+                ):
+                    break  # has to manually break
+
+            if self.policy_arch == "memory":  # add collected sequence to buffer
+                self.policy_storage.add_episode(
+                    observations=ptu.get_numpy(torch.cat(obs_list, dim=0)),  # (L, dim)
+                    actions=ptu.get_numpy(torch.cat(act_list, dim=0)),  # (L, dim)
+                    rewards=ptu.get_numpy(torch.cat(rew_list, dim=0)),  # (L, dim)
+                    terminals=np.array(term_list).reshape(-1, 1),  # (L, 1)
+                    next_observations=ptu.get_numpy(
+                        torch.cat(next_obs_list, dim=0)
+                    ),  # (L, dim)
+                )
+
+            print(
+                f"steps: {steps} term: {term} ret: {torch.cat(rew_list, dim=0).sum().item():.2f}"
+            )
+            self._n_env_steps_total += steps
+            self._n_rollouts_total += 1
+        return self._n_env_steps_total - before_env_steps
+
+    def _sample_train_task(self):
+        if len(self.train_tasks) > 0:
+            return self.train_tasks[np.random.randint(len(self.train_tasks))]
+        return None
+
+    def sample_rl_batch(self, batch_size):
+        """sample batch of episodes for vae training"""
+        if self.policy_arch == "mlp":
+            batch = self.policy_storage.random_batch(batch_size)
+        else:  # rnn: # all items are (sampled_seq_len, B, dim)
+            batch = self.policy_storage.random_episodes(batch_size)
+        return ptu.np_to_pytorch_batch(batch)
 
     def update(self, num_updates):
         rl_losses_agg = {}
@@ -725,7 +894,6 @@ class Learner:
 
         logger.dump_tabular()
 
-        # import ipdb; ipdb.set_trace()
         if self.env_type == "metaworld":
             return np.mean(success_rate_eval)  # succ is more important
         elif self.env_type == "generalize":
@@ -740,161 +908,3 @@ class Learner:
             logger.get_dir(), "save", f"agent_{iter}_perf{perf:.3f}.pt"
         )
         torch.save(self.agent.state_dict(), save_path)
-
-    def _sample_train_task(self):
-        if len(self.train_tasks) > 0:
-            return self.train_tasks[np.random.randint(len(self.train_tasks))]
-        return None
-
-    @torch.no_grad()
-    def collect_rollouts(self, num_rollouts, random_actions=False):
-        """collect num_rollouts of trajectories in task and save into policy buffer
-        :param random_actions: whether to use policy to sample actions, or randomly sample action space
-        """
-        if self.env_type == "metaworld":
-            assert num_rollouts == len(self.benchmark.train_classes)
-            training_envs = []
-            for name, env_cls in self.benchmark.train_classes.items():
-                env = env_cls()
-                # random sample a task for this training env
-                task = random.choice(
-                    [
-                        task
-                        for task in self.benchmark.train_tasks
-                        if task.env_name == name
-                    ]
-                )
-                env.set_task(task)  # must set here
-                training_envs.append(env)
-
-        before_env_steps = self._n_env_steps_total
-        for idx in range(num_rollouts):
-            steps = 0
-
-            if self.env_type == "metaworld":
-                self.train_env = training_envs[idx]
-                print(self.train_env)
-            else:
-                task = self._sample_train_task()  # random sample a training task
-            if self.env_type == "meta":
-                obs = ptu.from_numpy(self.train_env.reset(task=task))  # reset task
-            else:  # pomdp, rmdp, generalize, metaworld
-                obs = ptu.from_numpy(self.train_env.reset())  # reset
-
-            obs = obs.reshape(1, obs.shape[-1])
-            done_rollout = False
-
-            # get hidden state at timestep=0, None for mlp
-            if self.policy_arch == "memory":
-                action, reward, internal_state = self.agent.get_initial_info()
-                # temporary storage
-                obs_list, act_list, rew_list, next_obs_list, term_list = (
-                    [],
-                    [],
-                    [],
-                    [],
-                    [],
-                )
-
-            while not done_rollout:
-                if random_actions:
-                    action = ptu.FloatTensor(
-                        [self.train_env.action_space.sample()]
-                    )  # (1, A)
-                else:  # policy takes hidden state as input for rnn, while takes obs for mlp
-                    if self.policy_arch == "mlp":
-                        action, _, _, _ = self.agent.act(obs, deterministic=False)
-                    else:
-                        (action, _, _, _), internal_state = self.agent.act(
-                            prev_internal_state=internal_state,
-                            prev_action=action,
-                            reward=reward,
-                            obs=obs,
-                            deterministic=False,
-                        )
-
-                # observe reward and next obs (B=1, dim)
-                next_obs, reward, done, info = utl.env_step(
-                    self.train_env, action.squeeze(dim=0)
-                )
-                done_rollout = False if ptu.get_numpy(done[0][0]) == 0.0 else True
-                # update statistics
-                steps += 1
-
-                # add data to policy buffer - (s+, a, r, s'+, term')
-                if self.env_type == "meta" and "is_goal_state" in dir(
-                    self.train_env.unwrapped
-                ):
-                    # NOTE: following varibad practice: for meta env, even if reaching the goal (term=True),
-                    # the episode still continues.
-                    term = self.train_env.unwrapped.is_goal_state()
-                    self._successes_in_buffer += int(term)
-                elif self.env_type == "metaworld":
-                    term = False  # generalize tasks done = False always
-                    # self._successes_in_buffer += int(info['success'])
-                else:
-                    # early stopping env: such as rmdp, pomdp, generalize tasks. term ignores timeout
-                    term = (
-                        False
-                        if "TimeLimit.truncated" in info
-                        or steps >= self.max_trajectory_len
-                        else done_rollout
-                    )
-
-                if self.policy_arch == "mlp":
-                    self.policy_storage.add_sample(
-                        observation=ptu.get_numpy(obs.squeeze(dim=0)),
-                        action=ptu.get_numpy(action.squeeze(dim=0)),
-                        reward=ptu.get_numpy(reward.squeeze(dim=0)),
-                        terminal=np.array([term], dtype=float),
-                        next_observation=ptu.get_numpy(next_obs.squeeze(dim=0)),
-                    )
-                else:  # append tensors to temporary storage
-                    obs_list.append(obs)  # (1, dim)
-                    act_list.append(action)  # (1, dim)
-                    rew_list.append(reward)  # (1, dim)
-                    term_list.append(term)  # bool
-                    next_obs_list.append(next_obs)  # (1, dim)
-
-                # set: obs <- next_obs
-                obs = next_obs.clone()
-                if (
-                    self.env_type == "metaworld"
-                    and steps >= self.train_env.max_path_length
-                ):
-                    break  # has to manually break
-
-            if self.policy_arch == "memory":  # add collected sequence to buffer
-                self.policy_storage.add_episode(
-                    observations=ptu.get_numpy(torch.cat(obs_list, dim=0)),  # (L, dim)
-                    actions=ptu.get_numpy(torch.cat(act_list, dim=0)),  # (L, dim)
-                    rewards=ptu.get_numpy(torch.cat(rew_list, dim=0)),  # (L, dim)
-                    terminals=np.array(term_list).reshape(-1, 1),  # (L, 1)
-                    next_observations=ptu.get_numpy(
-                        torch.cat(next_obs_list, dim=0)
-                    ),  # (L, dim)
-                )
-
-            print(steps, "term", term)
-            self._n_env_steps_total += steps
-            self._n_rollouts_total += 1
-        return self._n_env_steps_total - before_env_steps
-
-    def sample_rl_batch(self, batch_size):
-        """sample batch of episodes for vae training"""
-        if self.policy_arch == "mlp":
-            batch = self.policy_storage.random_batch(batch_size)
-        else:  # rnn: # all items are (sampled_seq_len, B, dim)
-            batch = self.policy_storage.random_episodes(batch_size)
-        # import ipdb; ipdb.set_trace()
-        return ptu.np_to_pytorch_batch(batch)
-
-    def _start_training(self):
-        self._n_env_steps_total = 0
-        self._n_env_steps_total_last = 0
-        self._n_rl_update_steps_total = 0
-        self._n_rollouts_total = 0
-        self._successes_in_buffer = 0
-
-        self._start_time = time.time()
-        self._start_time_last = time.time()

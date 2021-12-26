@@ -42,7 +42,7 @@ class Critic_RNN(nn.Module):
 
         assert encoder in Actor_RNN.RNNs
         self.encoder = encoder
-            
+
         self.rnn = Actor_RNN.RNNs[encoder](
             input_size=rnn_input_size,
             hidden_size=self.rnn_hidden_size,

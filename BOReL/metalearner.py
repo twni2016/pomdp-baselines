@@ -53,7 +53,7 @@ class MetaLearner:
                 max_rollouts_per_task,
                 seed=self.seed,
                 n_tasks=num_tasks,
-                **kwargs
+                **kwargs,
             )
 
             # unwrapped env to get some info about the environment
@@ -135,7 +135,7 @@ class MetaLearner:
             algo=self.policy_type,
             obs_dim=self._get_augmented_obs_dim(),
             action_dim=self.act_dim,
-            **kwargs
+            **kwargs,
         ).to(ptu.device)
         logger.log(self.agent)
         logger.log("augmented obs dim (obs+belief)", self._get_augmented_obs_dim())

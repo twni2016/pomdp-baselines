@@ -120,7 +120,6 @@ class SimpleReplayBuffer(ReplayBuffer):
 
     def random_episodes(self, num_episodes, sub_traj_len=-1, replace=False):
         """NOTE: return each item has 3D shape (sub_traj_len, num_episodes, dim)"""
-        # import ipdb; ipdb.set_trace()
         # assert self.can_sample_episodes(num_episodes) # to make sure no replacement
         episode_indices = np.random.choice(
             range(self.num_complete_episodes()), num_episodes, replace=replace

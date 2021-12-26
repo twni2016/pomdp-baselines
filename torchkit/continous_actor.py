@@ -26,7 +26,7 @@ class DeterministicPolicy(Mlp):
             input_size=obs_dim,
             output_size=action_dim,
             init_w=init_w,
-            **kwargs
+            **kwargs,
         )
         self.obs_dim = obs_dim
         self.action_dim = action_dim
@@ -70,7 +70,7 @@ class TanhGaussianPolicy(Mlp):
             input_size=obs_dim,
             output_size=action_dim,
             init_w=init_w,
-            **kwargs
+            **kwargs,
         )
         self.obs_dim = obs_dim
         self.action_dim = action_dim

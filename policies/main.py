@@ -22,15 +22,17 @@ yaml = YAML()
 v = yaml.load(open(FLAGS.cfg))
 
 # overwrite config params
-v['policy']['algo'] = FLAGS.algo
+v["policy"]["algo"] = FLAGS.algo
 
 
 # system: device, threads, seed, pid
 seed = v["seed"]
+system.reproduce(seed)
+
 torch.set_num_threads(1)
 np.set_printoptions(precision=3, suppress=True)
 torch.set_printoptions(precision=3, sci_mode=False)
-system.reproduce(seed)
+
 pid = str(os.getpid())
 if "SLURM_JOB_ID" in os.environ:
     pid += "_" + str(os.environ["SLURM_JOB_ID"])  # use job id
@@ -97,7 +99,7 @@ logger.log(f"preload cost {time.time() - t0:.2f}s")
 os.system(f"cp -r policies/ {log_folder}")
 os.system(f"cp {FLAGS.cfg} {log_folder}/variant_{pid}.yml")
 key_flags = FLAGS.get_key_flags_for_module(sys.argv[0])
-logger.log('\n'.join(f.serialize() for f in key_flags) + '\n')
+logger.log("\n".join(f.serialize() for f in key_flags) + "\n")
 logger.log("pid", pid, socket.gethostname())
 os.makedirs(os.path.join(logger.get_dir(), "save"))
 

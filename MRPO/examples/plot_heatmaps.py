@@ -135,7 +135,7 @@ if __name__ == "__main__":
                     max=np.max(rewards),
                     grid_size=args.grid_size,
                     cell_aggregation=args.cell_aggregation,
-                    **experiment
+                    **experiment,
                 )
             )
             plt.savefig(
