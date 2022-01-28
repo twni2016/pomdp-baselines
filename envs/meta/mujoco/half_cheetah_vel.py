@@ -70,7 +70,7 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
 
     def reward(self, state, action):
         """Here, state is previous state! r_t = r(s_{t-1}, a_t)
-        NOTE: I think it should be r(st-1, at, st) though det dynamics
+        NOTE: it should be r(st-1, at, st) though det dynamics
         """
         qpos = np.concatenate([np.array([0.0]), state[:8]])
         qvel = state[8:17]

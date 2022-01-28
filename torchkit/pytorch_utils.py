@@ -120,7 +120,6 @@ def from_numpy(*args, **kwargs):
 
 
 def get_numpy(tensor):
-    # not sure if I should do detach or not here
     return tensor.to("cpu").detach().numpy()
 
 
