@@ -31,11 +31,11 @@ def get_args(rest_args):
     )
     parser.add_argument("--max-rollouts-per-task", type=int, default=2)
     parser.add_argument(
-        "--num-tasks", type=int, default=100, help="number of goals in environment"
+        "--num-tasks", type=int, default=120, help="number of goals in environment"
     )
     # parser.add_argument('--num-tasks', type=int, default=2, help='number of goals in environment')
     parser.add_argument(
-        "--num-train-tasks", type=int, default=80, help="number of tasks for train"
+        "--num-train-tasks", type=int, default=100, help="number of tasks for train"
     )
     # parser.add_argument('--num-train-tasks', type=int, default=1, help='number of tasks for train')
     parser.add_argument(
@@ -312,7 +312,7 @@ def get_args(rest_args):
     parser.add_argument(
         "--log-interval",
         type=int,
-        default=10,
+        default=4,
         help="log interval, one log per n iterations (default: 10)",
     )
     parser.add_argument(
@@ -356,7 +356,7 @@ def get_args(rest_args):
     parser.add_argument(
         "--use-gpu", type=boolean_argument, default=True, help="whether to use gpu"
     )
-    parser.add_argument("--gpu-id", type=int, default=1, help="gpu number to use")
+    parser.add_argument("--gpu-id", type=int, default=0, help="gpu number to use")
     args = parser.parse_args(rest_args)
 
     args.cuda = torch.cuda.is_available()

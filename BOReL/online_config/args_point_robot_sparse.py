@@ -66,7 +66,7 @@ def get_args(rest_args):
     )
 
     parser.add_argument(
-        "--num-iters", type=int, default=4000, help="number meta-training iterates"
+        "--num-iters", type=int, default=3000, help="number meta-training iterates"
     )
     parser.add_argument(
         "--rl-updates-per-iter",
@@ -313,7 +313,7 @@ def get_args(rest_args):
     parser.add_argument(
         "--log-interval",
         type=int,
-        default=10,
+        default=5,
         help="log interval, one log per n iterations (default: 20)",
     )
     parser.add_argument(
@@ -355,8 +355,9 @@ def get_args(rest_args):
 
     # gpu settings
     parser.add_argument(
-        "--use-gpu", type=boolean_argument, default=False, help="whether to use gpu"
+        "--use-gpu", type=boolean_argument, default=True, help="whether to use gpu"
     )
+    parser.add_argument("--gpu-id", type=int, default=0, help="gpu number to use")
     args = parser.parse_args(rest_args)
 
     args.cuda = torch.cuda.is_available()

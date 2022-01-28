@@ -53,7 +53,7 @@ python policies/main.py --cfg configs/meta/point_robot/mlp.yml --algo sac
 python policies/main.py --cfg configs/meta/point_robot/mt/mlp.yml --algo sac
 
 # Run off-policy variBAD from https://github.com/Rondorf/BOReL
-python BOReL/main.py configs/meta/point_robot/varibad.yml
+cd BOReL; python online_training.py --env-type point_robot_sparse
 ```
 
 {Ant, Cheetah, Humanoid}-Dir in the paper, corresponding to `configs/meta/<ant_dir|cheetah_dir|humanoid_dir>`. They require MuJoCo and are hard to solve.
