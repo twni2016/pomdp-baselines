@@ -1,4 +1,4 @@
-# Recurrent Model-Free RL is a Strong Baseline for Many POMDPs
+# Recurrent Model-Free RL can be a Strong Baseline for Many POMDPs
 Welcome to the POMDP world! 
 
 This repo provides some simple baselines for POMDPs, specifically the **recurrent model-free RL**, on the benchmarks in **several subareas of POMDPs** (including meta RL, robust RL, and generalization in RL) for the following paper:
