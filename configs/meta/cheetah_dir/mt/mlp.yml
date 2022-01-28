@@ -2,9 +2,10 @@ seed: 1
 cuda: -1 # use_gpu
 env:
   env_type: meta
-  env_name: AntDir-v0
+  env_name: CheetahDir-v0
   max_rollouts_per_task: 2 # k=2, H=200, H^+ =400
-
+  multi_task: True # WARNING
+  
   num_tasks: null
   num_eval_tasks: 20
 
@@ -14,12 +15,12 @@ train:
     # 0.5k iters -> 5M steps
   # original rl training steps: num_iters * updates_per_iter = 1M
     # now makes it same as env steps
-  num_iters: 3000
+  num_iters: 2000
   num_init_rollouts_pool: 500 # before training
   num_rollouts_per_iter: 25  #
   buffer_size: 1e6
 
-  num_updates_per_iter: 0.1 # equal, or positive integer
+  num_updates_per_iter: 1000 # equal, or positive integer, e.g. 20, 200, 1000
   batch_size: 32 # to tune based on sampled_seq_len
 
 eval:

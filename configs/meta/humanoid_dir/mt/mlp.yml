@@ -2,9 +2,10 @@ seed: 1
 cuda: -1 # use_gpu
 env:
   env_type: meta
-  env_name: AntDir-v0
+  env_name: HumanoidDir-v0
   max_rollouts_per_task: 2 # k=2, H=200, H^+ =400
-
+  multi_task: True # WARNING
+  
   num_tasks: null
   num_eval_tasks: 20
 
@@ -31,8 +32,8 @@ policy:
   arch: mlp
   algo: sac # [td3, sac]
 
-  dqn_layers: [128, 128, 128]
-  policy_layers: [128, 128, 128]
+  dqn_layers: [256, 128, 128] # raw dim is around 300
+  policy_layers: [256, 128, 128] # raw dim is around 300
   lr: 0.0003
   gamma: 0.99
   tau: 0.005

@@ -68,14 +68,23 @@ class Learner:
             self.eval_env = self.train_env
             self.eval_env.seed(self.seed + 1)
 
-            # unwrapped env to get some info about the environment
-            unwrapped_env = self.train_env.unwrapped
-
-            # split to train/eval tasks
-            assert num_train_tasks >= num_eval_tasks > 0
-            shuffled_tasks = np.random.permutation(unwrapped_env.get_all_task_idx())
-            self.train_tasks = shuffled_tasks[:num_train_tasks]
-            self.eval_tasks = shuffled_tasks[-num_eval_tasks:]
+            if self.train_env.n_tasks is not None:
+                # NOTE: This is off-policy varibad's setting, i.e. limited training tasks
+                # split to train/eval tasks
+                assert num_train_tasks >= num_eval_tasks > 0
+                shuffled_tasks = np.random.permutation(
+                    self.train_env.unwrapped.get_all_task_idx()
+                )
+                self.train_tasks = shuffled_tasks[:num_train_tasks]
+                self.eval_tasks = shuffled_tasks[-num_eval_tasks:]
+            else:
+                # NOTE: This is on-policy varibad's setting, i.e. unlimited training tasks
+                assert num_tasks == num_train_tasks == None
+                assert (
+                    num_eval_tasks > 0
+                )  # to specify how many tasks to be evaluated each time
+                self.train_tasks = []
+                self.eval_tasks = num_eval_tasks * [None]
 
             # calculate what the maximum length of the trajectories is
             self.max_rollouts_per_task = max_rollouts_per_task
@@ -355,7 +364,8 @@ class Learner:
                 last_eval_num_iters = current_num_iters
                 perf = self.log()
                 if (
-                    self._n_env_steps_total > 0.75 * self.n_env_steps_total
+                    self.save_interval > 0
+                    and self._n_env_steps_total > 0.75 * self.n_env_steps_total
                     and current_num_iters % self.save_interval == 0
                 ):
                     # save models in later training stage
@@ -390,11 +400,11 @@ class Learner:
             if self.env_type == "metaworld":
                 self.train_env = training_envs[idx]
                 print(self.train_env)
-            else:
-                task = self._sample_train_task()  # random sample a training task
-            if self.env_type == "meta":
+
+            if self.env_type == "meta" and self.train_env.n_tasks is not None:
+                task = self.train_tasks[np.random.randint(len(self.train_tasks))]
                 obs = ptu.from_numpy(self.train_env.reset(task=task))  # reset task
-            else:  # pomdp, rmdp, generalize, metaworld
+            else:
                 obs = ptu.from_numpy(self.train_env.reset())  # reset
 
             obs = obs.reshape(1, obs.shape[-1])
@@ -447,9 +457,8 @@ class Learner:
                     self._successes_in_buffer += int(term)
                 elif self.env_type == "metaworld":
                     term = False  # generalize tasks done = False always
-                    # self._successes_in_buffer += int(info['success'])
                 else:
-                    # early stopping env: such as rmdp, pomdp, generalize tasks. term ignores timeout
+                    # term ignore time-out scenarios, but record early stopping
                     term = (
                         False
                         if "TimeLimit.truncated" in info
@@ -490,18 +499,12 @@ class Learner:
                         torch.cat(next_obs_list, dim=0)
                     ),  # (L, dim)
                 )
-
-            print(
-                f"steps: {steps} term: {term} ret: {torch.cat(rew_list, dim=0).sum().item():.2f}"
-            )
+                print(
+                    f"steps: {steps} term: {term} ret: {torch.cat(rew_list, dim=0).sum().item():.2f}"
+                )
             self._n_env_steps_total += steps
             self._n_rollouts_total += 1
         return self._n_env_steps_total - before_env_steps
-
-    def _sample_train_task(self):
-        if len(self.train_tasks) > 0:
-            return self.train_tasks[np.random.randint(len(self.train_tasks))]
-        return None
 
     def sample_rl_batch(self, batch_size):
         """sample batch of episodes for vae training"""
@@ -578,7 +581,7 @@ class Learner:
                 self.eval_env = task
                 print(self.eval_env)
 
-            if self.env_type == "meta":
+            if self.env_type == "meta" and self.eval_env.n_tasks is not None:
                 obs = ptu.from_numpy(self.eval_env.reset(task=task))  # reset task
                 observations[task_idx, step, :] = ptu.get_numpy(obs[:obs_size])
             else:
@@ -668,12 +671,12 @@ class Learner:
 
         # --- evaluation ----
         if self.env_type == "meta":
-            (
-                returns_train,
-                success_rate_train,
-                observations,
-                total_steps_train,
-            ) = self.evaluate(self.train_tasks[: len(self.eval_tasks)])
+            # (
+            #     returns_train,
+            #     success_rate_train,
+            #     observations,
+            #     total_steps_train,
+            # ) = self.evaluate(self.train_tasks[: len(self.eval_tasks)])
             (
                 returns_eval,
                 success_rate_eval,
@@ -736,10 +739,10 @@ class Learner:
                     )
 
             for episode_idx in range(self.max_rollouts_per_task):
-                logger.record_tabular(
-                    "metrics/return_train_episode_{}".format(episode_idx + 1),
-                    np.mean(returns_train[:, episode_idx]),
-                )
+                # logger.record_tabular(
+                #     "metrics/return_train_episode_{}".format(episode_idx + 1),
+                #     np.mean(returns_train[:, episode_idx]),
+                # )
                 logger.record_tabular(
                     "metrics/return_eval_episode_{}".format(episode_idx + 1),
                     np.mean(returns_eval[:, episode_idx]),
@@ -750,12 +753,12 @@ class Learner:
                         np.mean(returns_eval_sto[:, episode_idx]),
                     )
 
-            logger.record_tabular(
-                "metrics/total_steps_train", np.mean(total_steps_train)
-            )
-            logger.record_tabular(
-                "metrics/return_train_total", np.mean(np.sum(returns_train, axis=-1))
-            )
+            # logger.record_tabular(
+            #     "metrics/total_steps_train", np.mean(total_steps_train)
+            # )
+            # logger.record_tabular(
+            #     "metrics/return_train_total", np.mean(np.sum(returns_train, axis=-1))
+            # )
             logger.record_tabular("metrics/total_steps_eval", np.mean(total_steps_eval))
             logger.record_tabular(
                 "metrics/return_eval_total", np.mean(np.sum(returns_eval, axis=-1))

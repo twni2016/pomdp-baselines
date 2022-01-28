@@ -22,6 +22,7 @@ class PointEnv(Env):
         **kwargs
     ):
 
+        self.n_tasks = n_tasks
         self._max_episode_steps = max_episode_steps
         self.step_count = 0
         self.modify_init_state_dist = modify_init_state_dist

@@ -65,9 +65,3 @@ class AntEnv(MujocoEnv):
 
     def viewer_setup(self):
         self.viewer.cam.distance = self.model.stat.extent * 0.5
-
-    def reset_task(self, task):
-        if task is None:
-            task = self.sample_tasks(1)[0]
-        self.set_task(task)
-        self.reset()

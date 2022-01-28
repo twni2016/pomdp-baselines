@@ -20,6 +20,7 @@ class WindEnv(Env):
         **kwargs
     ):
 
+        self.n_tasks = n_tasks
         self._max_episode_steps = max_episode_steps
         self.step_count = 0
 

@@ -22,6 +22,7 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
 
     def __init__(self, task={}, n_tasks=2, max_episode_steps=200, **kwargs):
         self._task = task
+        self.n_tasks = n_tasks
         self.tasks = self.sample_tasks(n_tasks)
         self._goal_vel = self.tasks[0].get("velocity", 0.0)
         self._goal = self._goal_vel

@@ -26,6 +26,7 @@ class GridNavi(gym.Env):
         if seed is not None:
             self.seed(seed)
 
+        self.n_tasks = n_tasks
         self.num_cells = num_cells
         self.num_states = num_cells ** 2
         self.grid_size = (num_cells, num_cells)

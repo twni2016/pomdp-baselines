@@ -4,12 +4,17 @@ from .ant_multitask_base import MultitaskAntEnv
 
 
 class AntDirEnv(MultitaskAntEnv):
+    """
+    AntDir: forward_backward=True (unlimited tasks) from on-policy varibad code
+    AntDir2D: forward_backward=False (limited tasks) from off-policy varibad code
+    """
+
     def __init__(
         self,
         task={},
-        n_tasks=2,
+        n_tasks=None,
         max_episode_steps=200,
-        forward_backward=False,
+        forward_backward=True,
         **kwargs
     ):
         self.forward_backward = forward_backward
@@ -50,11 +55,14 @@ class AntDirEnv(MultitaskAntEnv):
             ),
         )
 
-    def sample_tasks(self, num_tasks):
-        if self.forward_backward:
-            assert num_tasks == 2
-            velocities = np.array([0.0, np.pi])
-        else:
-            velocities = np.random.uniform(0.0, 2.0 * np.pi, size=(num_tasks,))
+    def sample_tasks(self, num_tasks: int):
+        assert self.forward_backward == False
+        velocities = np.random.uniform(0.0, 2.0 * np.pi, size=(num_tasks,))
         tasks = [{"goal": velocity} for velocity in velocities]
         return tasks
+
+    def _sample_raw_task(self):
+        assert self.forward_backward == True
+        velocity = np.random.choice([-1.0, 1.0])  # not 180 degree
+        task = {"goal": velocity}
+        return task

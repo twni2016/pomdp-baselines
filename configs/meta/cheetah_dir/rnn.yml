@@ -2,7 +2,7 @@ seed: 1
 cuda: -1 # use_gpu
 env:
   env_type: meta
-  env_name: AntDir-v0
+  env_name: CheetahDir-v0
   max_rollouts_per_task: 2 # k=2, H=200, H^+ =400
 
   num_tasks: null
@@ -11,25 +11,33 @@ env:
 train:
   # sample complexity: BAMDP horizon * (num_init_rollouts_pool * num_train_tasks
     #  + num_iters * num_tasks_sample * num_rollouts_per_iter)
-    # 0.5k iters -> 5M steps
+    # 2k iters -> 20M steps
   # original rl training steps: num_iters * updates_per_iter = 1M
     # now makes it same as env steps
-  num_iters: 3000
+  num_iters: 2000
   num_init_rollouts_pool: 500 # before training
   num_rollouts_per_iter: 25  #
   buffer_size: 1e6
 
-  num_updates_per_iter: 0.1 # equal, or positive integer
+  num_updates_per_iter: 200 # equal, or positive integer, e.g. 20, 200, 1000
   batch_size: 32 # to tune based on sampled_seq_len
+  sampled_seq_len: -1 # -1 is all, or positive integer
+  sample_weight_baseline: 0.0
 
 eval:
-  log_interval: 4 # 10 num of iters
+  eval_stochastic: false # also eval stochastic policy
+  log_interval: 4 # num of iters
   save_interval: -1
   log_tensorboard: false
 
 policy:
-  arch: mlp
+  arch: gru # [lstm, gru]
   algo: sac # [td3, sac]
+
+  action_embedding_size: 16
+  state_embedding_size: 32
+  reward_embedding_size: 16
+  rnn_hidden_size: 128
 
   dqn_layers: [128, 128, 128]
   policy_layers: [128, 128, 128]

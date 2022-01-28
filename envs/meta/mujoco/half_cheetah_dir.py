@@ -23,8 +23,10 @@ class HalfCheetahDirEnv(HalfCheetahEnv):
         (https://homes.cs.washington.edu/~todorov/papers/TodorovIROS12.pdf)
     """
 
-    def __init__(self, max_episode_steps):
-        self.set_task(self.sample_tasks(1)[0])
+    def __init__(self, n_tasks=None, max_episode_steps=200):
+        self.n_tasks = n_tasks
+        assert n_tasks == None
+        self._goal = self._sample_raw_task()["goal"]
         self._max_episode_steps = max_episode_steps
         super(HalfCheetahDirEnv, self).__init__()
 
@@ -34,36 +36,30 @@ class HalfCheetahDirEnv(HalfCheetahEnv):
         xposafter = self.sim.data.qpos[0]
 
         forward_vel = (xposafter - xposbefore) / self.dt
-        forward_reward = self.goal_direction * forward_vel
+        forward_reward = self._goal * forward_vel
         ctrl_cost = 0.5 * 1e-1 * np.sum(np.square(action))
 
         observation = self._get_obs()
         reward = forward_reward - ctrl_cost
         done = False
-        infos = dict(
-            reward_forward=forward_reward, reward_ctrl=-ctrl_cost, task=self.get_task()
-        )
+        infos = dict(reward_forward=forward_reward, reward_ctrl=-ctrl_cost)
         return observation, reward, done, infos
 
-    def sample_tasks(self, n_tasks):
+    def get_current_task(self):
+        # for multi-task MDP
+        return np.array([self._goal])
+
+    def _sample_raw_task(self):
         # for fwd/bwd env, goal direc is backwards if - 1.0, forwards if + 1.0
-        return [
-            random.choice([-1.0, 1.0])
-            for _ in range(
-                n_tasks,
-            )
-        ]
+        direction = np.random.choice([-1.0, 1.0])  # 180 degree
+        task = {"goal": direction}
+        return task
 
-    def set_task(self, task):
-        self.goal_direction = task
-
-    def get_task(self):
-        return self.goal_direction
-
-    def reset_task(self, task=None):
-        if task is None:
-            task = self.sample_tasks(1)[0]
-        self.set_task(task)
+    def reset_task(self, task_info):
+        assert task_info is None
+        self._goal = self._sample_raw_task()[
+            "goal"
+        ]  # assume parameterization of task by single vector
         self.reset()
 
 
@@ -75,7 +71,7 @@ class HalfCheetahRandDirOracleEnv(HalfCheetahDirEnv):
                     self.sim.data.qpos.flat[1:],
                     self.sim.data.qvel.flat,
                     self.get_body_com("torso").flat,
-                    [self.goal_direction],
+                    [self._goal],
                 ]
             )
             .astype(np.float32)

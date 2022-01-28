@@ -1,14 +1,22 @@
 from gym.envs.registration import register
 
-# # ----------- Mujoco ----------- # #
+## off-policy varibad benchmark
+
 register(
-    "HalfCheetahDir-v0",
-    entry_point="envs.meta.wrappers:mujoco_wrapper",
-    kwargs={
-        "entry_point": "envs.meta.mujoco.half_cheetah_dir:HalfCheetahDirEnv",
-        "max_episode_steps": 200,
-    },
-    max_episode_steps=200,
+    "PointRobot-v0",
+    entry_point="envs.meta.toy_navigation.point_robot:PointEnv",
+    kwargs={"max_episode_steps": 60, "n_tasks": 2},
+)
+
+register(
+    "PointRobotSparse-v0",
+    entry_point="envs.meta.toy_navigation.point_robot:SparsePointEnv",
+    kwargs={"max_episode_steps": 60, "n_tasks": 2, "goal_radius": 0.2},
+)
+
+register(
+    "Wind-v0",
+    entry_point="envs.meta.toy_navigation.wind:WindEnv",
 )
 
 register(
@@ -21,69 +29,49 @@ register(
     max_episode_steps=200,
 )
 
+# register(
+#     'AntDir2D-v0',
+#     entry_point='envs.meta.wrappers:mujoco_wrapper',
+#     kwargs={'entry_point': 'envs.meta.mujoco.ant_dir:AntDirEnv',
+#             'max_episode_steps': 200,
+#             'forward_backward': False,
+#             },
+#     max_episode_steps=200
+# )
+
+
+## on-policy varibad benchmark
+
 register(
     "AntDir-v0",
     entry_point="envs.meta.wrappers:mujoco_wrapper",
     kwargs={
         "entry_point": "envs.meta.mujoco.ant_dir:AntDirEnv",
         "max_episode_steps": 200,
+        "forward_backward": True,
+        "n_tasks": None,
     },
     max_episode_steps=200,
 )
 
 register(
-    "AntSemiCircleDense-v0",
+    "CheetahDir-v0",
     entry_point="envs.meta.wrappers:mujoco_wrapper",
     kwargs={
-        "entry_point": "envs.meta.mujoco.ant_semicircle:AntSemiCircleEnv",
+        "entry_point": "envs.meta.mujoco.half_cheetah_dir:HalfCheetahDirEnv",
         "max_episode_steps": 200,
+        "n_tasks": None,
     },
     max_episode_steps=200,
 )
 
 register(
-    "AntSemiCircleSparse-v0",
+    "HumanoidDir-v0",
     entry_point="envs.meta.wrappers:mujoco_wrapper",
     kwargs={
-        "entry_point": "envs.meta.mujoco.ant_semicircle:SparseAntSemiCircleEnv",
+        "entry_point": "envs.meta.mujoco.humanoid_dir:HumanoidDirEnv",
         "max_episode_steps": 200,
-        "goal_radius": 0.2,
+        "n_tasks": None,
     },
     max_episode_steps=200,
-)
-
-# # ----------- GridWorld ----------- # #
-
-register(
-    "GridNavi-v2",
-    entry_point="envs.meta.toy_navigation.gridworld:GridNavi",
-    kwargs={
-        "num_cells": 5,
-        "num_steps": 15,
-        "n_tasks": 2,
-        "is_sparse": False,
-        "return_belief_rewards": True,
-        "seed": None,
-    },
-    # kwargs={'num_cells': 5, 'num_steps': 30, 'n_tasks': 2},
-)
-
-# # ----------- Point Robot ----------- # #
-register(
-    "PointRobot-v0",
-    entry_point="envs.meta.toy_navigation.point_robot:PointEnv",
-    kwargs={"max_episode_steps": 60, "n_tasks": 2},
-)
-
-
-register(
-    "PointRobotSparse-v0",
-    entry_point="envs.meta.toy_navigation.point_robot:SparsePointEnv",
-    kwargs={"max_episode_steps": 60, "n_tasks": 2, "goal_radius": 0.2},
-)
-
-# # ----------- Wind ----------- # #
-register(
-    "Wind-v0",
-    entry_point="envs.meta.toy_navigation.wind:WindEnv",
 )
