@@ -26,7 +26,7 @@ The **decision factors** discussed in the method section in our paper, can be fo
 - Enable tensorboard: set `eval: log_tensorboard: True`
 - GPU usage: set `cuda: <int>` as the CUDA device number, if `-1` then disable GPU usage to purely use CPU.
 
-## Code-level Details
+## Code-Level Details
 - Replay buffer: check [`SeqReplayBuffer`](../buffers/seq_replay_buffer.py) to see the implementation of 2-dim replay buffer that supports sequence storage and sampling.
 - Our implemention: check [`ModelFreeOffPolicy_Separate_RNN`](../policies/models/policy_rnn.py) for (separate) recurrent model-free RL architecture
 

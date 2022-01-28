@@ -7,7 +7,7 @@ We acknowledge the following repositories that greatly shaped our implementation
 - https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail for providing the on-policy recurrent RL baselines
 - https://github.com/oist-cnru/Variational-Recurrent-Models for providing the pomdp VRM algorithm and environments
 - https://github.com/quantumiracle/Popular-RL-Algorithms for inspiring the recurrent policies design
-- https://github.com/lmzintgraf/varibad for inspiring the recurrent policies design
+- https://github.com/lmzintgraf/varibad for inspiring the recurrent policies design and providing learning curve data
 
 Please cite their work if you also find their code useful to your project:
 ```

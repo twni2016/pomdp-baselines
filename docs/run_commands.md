@@ -7,8 +7,7 @@ Before start running any experiments, we suggest to have a good plan of *environ
 1. Extremely Simple as a Sanity Check: Pendulum-V (also shown in our minimal example jupyter notebook)
 2. Simple, Fast, yet Non-trivial: Wind (require precise inference and control), Semi-Circle (sparse reward). Both are continuous gridworlds, thus very fast.
 3. Medium: Cheetah-Vel (1-dim stationary hidden state), `*`-Robust (2-dim stationary hidden state), `*`-P (could be roughly inferred by 2nd order MDP)
-4. Hard: Ant-Dir (relatively complicated dynamics), `*`-V (long-term inference)
-5. Very Hard: `*`-Generalize (extrapolation)
+4. Hard: `*`-Dir (relatively complicated dynamics), `*`-V (long-term inference), `*`-Generalize (extrapolation)
 
 ## Best Configs / Variants
 To run the best variant of our implemention, please refer to [our_details.md](our_details.md), and then change the corresponding hyperparameters in the config files.
@@ -41,7 +40,8 @@ python VRM/run_experiment.py configs/pomdp/ant_blt/p/vrm.yml
 ``` 
 
 ### Meta RL 
-{Semi-Circle, Wind, Cheetah-Vel, Ant-Dir} in the paper, corresponding to `configs/meta/<point_robot|wind|cheetah_vel|ant_dir>`. Among them, Cheetah-Vel and Ant-Dir require MuJoCo, and Semi-Circle can serve as a sanity check. Wind looks simple but not very easy to solve.
+
+{Semi-Circle, Wind, Cheetah-Vel} in the paper, corresponding to `configs/meta/<point_robot|wind|cheetah_vel|ant_dir>`. Among them, Cheetah-Vel requires MuJoCo, and Semi-Circle can serve as a sanity check. Wind looks simple but not very easy to solve.
 
 Take Semi-Circle as example:
 ```bash
@@ -52,8 +52,21 @@ python policies/main.py --cfg configs/meta/point_robot/mlp.yml --algo sac
 # Run Oracle
 python policies/main.py --cfg configs/meta/point_robot/mt/mlp.yml --algo sac
 
-# Run (off-policy version of) VariBAD from https://github.com/Rondorf/BOReL
+# Run off-policy variBAD from https://github.com/Rondorf/BOReL
 python BOReL/main.py configs/meta/point_robot/varibad.yml
+```
+
+{Ant, Cheetah, Humanoid}-Dir in the paper, corresponding to `configs/meta/<ant_dir|cheetah_dir|humanoid_dir>`. They require MuJoCo and are hard to solve.
+Take Ant-Dir as example:
+```bash
+# Run our implemention
+python policies/main.py --cfg configs/meta/ant_dir/rnn.yml --algo sac
+# Run Markovian
+python policies/main.py --cfg configs/meta/ant_dir/mlp.yml --algo sac
+# Run Oracle
+python policies/main.py --cfg configs/meta/ant_dir/mt/mlp.yml --algo sac
+
+# For on-policy variBAD and RL2, we use the data from https://github.com/lmzintgraf/varibad
 ```
 
 ### Robust RL

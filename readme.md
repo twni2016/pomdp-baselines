@@ -11,6 +11,7 @@ by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-e
 Note that current repo should be run smoothly.
 
 DONE:
+* Jan 2022: introduce new meta RL environments (*-Dir)
 * Dec 2021: add some command-line arguments to overwrite the config file and save the updated one
 * Dec 2021: fix [seed reproducibility issue](envs/readme.md#reproducibilty-issue-in-gym-environments) for gym v0.18 (but not for SunBlaze)
 * Nov 2021: add Markovian and Oracle policies training
@@ -74,10 +75,10 @@ where `algo_name` specifies the algorithm name:
 - `{mt|oracle}/mlp` correspond to **Multi-task/Oracle** policies
 - `ppo_rnn` and `a2c_rnn` correspond to [(Kostrikov, 2018)](https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail) implementation of recurrent model-free RL
 - `vrm` corresponds to [VRM](https://github.com/oist-cnru/Variational-Recurrent-Models) compared in "standard" POMDPs
-- `varibad` corresponds the [off-policy version](https://github.com/Rondorf/BOReL) of original [VariBAD](https://arxiv.org/abs/1910.08348) compared in meta RL
+- `varibad` corresponds the [off-policy version of variBAD](https://github.com/Rondorf/BOReL) compared in meta RL
 - `MRPO` correspond to [MRPO](https://proceedings.mlr.press/v139/jiang21c.html) compared in robust RL
 
-> We have merged the prior methods above into our repository (there is no need to install other repositories), so that future work can use this single repository to run a number of baselines besides ours: A2C-GRU, PPO-GRU, VRM, VariBAD, MRPO. 
+> We have merged the prior methods above into our repository (there is no need to install other repositories), so that future work can use this single repository to run a number of baselines besides ours: A2C-GRU, PPO-GRU, VRM, off-policy variBAD, MRPO. 
 >
 > Since our code is heavily drawn from those prior works, we encourage authors to [cite those prior papers or implementations](docs/acknowledge.md).
 >
