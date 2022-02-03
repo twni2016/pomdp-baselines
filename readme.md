@@ -17,7 +17,7 @@ Moreover, in RL research, there are many problems that can be cast as POMDPs: me
 ### Why using recurrent model-free RL for POMDP? What about other methods? 
 It is an open research area on deep RL algorithms for POMDPs. Among them, recurrent model-free RL, developed with a long history, is simple to implement, easy to understand, and trained end-to-end. Nonetheless, there is a popular belief that it performs poorly in practice. This repo revisits it and provides some guildlines on the design of its key components, to make it stronger. 
 
-There are many other (more complicated or specialized) methods for POMDPs and its subareas. We show recurrent model-free RL, if well designed, can _often_ outperform _some_ of these methods in their benchmarks. Please see the paper for details. 
+There are many other (more complicated or specialized) methods for POMDPs and its subareas. We show recurrent model-free RL, if well designed, can _often_ outperform _some_ of these methods in their benchmarks. It could be served as a strong baseline to incentivize future work. 
 
 
 ## CHANGE LOG
