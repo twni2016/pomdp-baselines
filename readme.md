@@ -7,6 +7,19 @@ This repo provides some simple baselines for POMDPs, specifically the **recurren
 
 by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-eysenbach.github.io/) and [Ruslan Salakhutdinov](http://www.cs.cmu.edu/~rsalakhu/).
 
+## Motivation
+
+### RL mostly studies on MDP, why POMDP?
+While MDP prevails in RL research, POMDP prevails in real world and life. In many real problems (robotics, healthcare, finance, human interaction), we inevitably face with partial observability, e.g. noisy sensors and lack of sensors. Can we really observe the "states"? Where do "states" come from? 
+
+Moreover, in RL research, there are many problems that can be cast as POMDPs: meta RL, robust RL, and generalization in RL. Within a more suitable framework, we can develop better RL algorithms. 
+
+### Why using recurrent model-free RL for POMDP? What about other methods? 
+It is an open research area on deep RL algorithms for POMDPs. Among them, recurrent model-free RL, developed with a long history, is simple to implement, easy to understand, and trained end-to-end. Nonetheless, there is a popular belief that it performs poorly in practice. This repo revisits it and provides some guildlines on the design of its key components, to make it stronger. 
+
+There are many other (more complicated or specialized) methods for POMDPs and its subareas. We show recurrent model-free RL, if well designed, can _often_ outperform _some_ of these methods in their benchmarks. Please see the paper for details. 
+
+
 ## CHANGE LOG
 Note that current repo should be run smoothly.
 
@@ -19,19 +32,6 @@ DONE:
 TODO:
 - Upload more log csv files and plotting scripts
 - Add documentation on our main code and log csv files 
-
-## Motivation
-
-### RL mostly studies on MDP, why POMDP?
-While MDP prevails in RL research, POMDP prevails in real world and life. In many real problems (robotics, healthcare, finance, human interaction), we face with partial observability inevitably, e.g. noisy sensors and lack of sensors. Can we really observe the "states"? Where do "states" come from? 
-
-Moreover, in RL research, there are many problems that can be casted as POMDPs: meta RL, robust RL, and generalization in RL. Within a suitable framework, we can develop good RL algorithms. 
-
-### Why using recurrent model-free RL for POMDP? What about other methods? 
-It is an open research area on deep RL algorithms for POMDPs. Among them, recurrent model-free RL is simple to implement, easy to understand, trained end-to-end, and has a long history. However, there is a popular belief that it performs poorly in practice. This repo revisits it and provides some guildlines on the design of its key components, to make it stronger. 
-
-There are many other (more complicated or specialized) methods for POMDPs and its subareas. We show recurrent model-free RL, if well designed, can _often_ outperform _some_ of these methods in their benchmarks. Please see related work section in the paper for details. 
-
 
 ## A Minimal Example to Run Our Implementation
 Here we provide a stand-alone minimal example with the least dependencies to run our implementation of recurrent model-free RL! 
