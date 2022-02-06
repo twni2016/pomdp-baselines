@@ -80,12 +80,11 @@ To run our implementation, Markovian, and Oracle, in <local_path> simply
 ```
 export PYTHONPATH=${PWD}:$PYTHONPATH
 python3 policies/main.py --cfg configs/<subarea>/<env_name>/<algo_name>.yml \
-  [--algo {td3,sac} --seed <int> --cuda <int> ]
+  [--algo {td3,sac} --seed <int> --cuda <int> --oracle]
 ```
 where `algo_name` specifies the algorithm name:
 - `mlp` correspond to **Markovian** policies
 - `rnn` correspond to **our implementation** of recurrent model-free RL
-- `{mt|oracle}/mlp` correspond to **Multi-task/Oracle** policies
 - `ppo_rnn` and `a2c_rnn` correspond to [(Kostrikov, 2018)](https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail) implementation of recurrent model-free RL
 - `vrm` corresponds to [VRM](https://github.com/oist-cnru/Variational-Recurrent-Models) compared in "standard" POMDPs
 - `MRPO` correspond to [MRPO](https://proceedings.mlr.press/v139/jiang21c.html) compared in robust RL

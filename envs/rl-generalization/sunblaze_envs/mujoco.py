@@ -14,6 +14,8 @@ from roboschool.gym_mujoco_walkers import (
     RoboschoolWalker2d,
 )
 
+# check details https://github.com/openai/roboschool/blob/master/roboschool/gym_mujoco_walkers.py
+
 from .base import EnvBinarySuccessMixin
 from .classic_control import uniform_exclude_inner
 
@@ -33,8 +35,12 @@ class RoboschoolTrackDistSuccessMixin(EnvBinarySuccessMixin):
         """
         target_dist = 20
         if self.robot_body.pose().xyz()[0] >= target_dist:
+            # print("[SUCCESS]: xyz is {}, reached x-target {}".format(
+            #      self.robot_body.pose().xyz(), target_dist))
             return True
         else:
+            # print("[NO SUCCESS]: xyz is {}, x-target is {}".format(
+            #      self.robot_body.pose().xyz(), target_dist))
             return False
 
 
@@ -83,36 +89,30 @@ class ModifiableRoboschoolHalfCheetah(
     RoboschoolHalfCheetah, RoboschoolTrackDistSuccessMixin
 ):
 
+    DEFAULT_DENSITY = 1000
     RANDOM_LOWER_DENSITY = 750
     RANDOM_UPPER_DENSITY = 1250
     EXTREME_LOWER_DENSITY = 500
     EXTREME_UPPER_DENSITY = 1500
 
+    DEFAULT_FRICTION = 0.8
     RANDOM_LOWER_FRICTION = 0.5
     RANDOM_UPPER_FRICTION = 1.1
     EXTREME_LOWER_FRICTION = 0.2
     EXTREME_UPPER_FRICTION = 1.4
 
+    DEFAULT_POWER = 0.9
     RANDOM_LOWER_POWER = 0.7
     RANDOM_UPPER_POWER = 1.1
     EXTREME_LOWER_POWER = 0.5
     EXTREME_UPPER_POWER = 1.3
 
-    def _reset(self, new=True):
-        return super(ModifiableRoboschoolHalfCheetah, self)._reset()
-
-    @property
-    def parameters(self):
-        return {
-            "id": self.spec.id,
-        }
-
-
-class RandomNormalHalfCheetah(
-    RoboschoolXMLModifierMixin, ModifiableRoboschoolHalfCheetah
-):
     def __init__(self, oracle: bool = False, **kwargs):
         super().__init__(**kwargs)
+        self.density = self.DEFAULT_DENSITY
+        self.friction = self.DEFAULT_FRICTION
+        self.power = self.DEFAULT_POWER
+
         self.oracle = oracle
         if oracle == True:
             print("WARNING! YOU ARE USING MDP, NOT POMDP!\n")
@@ -127,7 +127,46 @@ class RandomNormalHalfCheetah(
                 ),
                 dtype=np.float32,
             )
+            print(tmp_hidden_states)
+            print(self.observation_space.shape[0])
 
+    def get_obs(self, state):
+        if self.oracle:
+            hidden_states = self.get_hidden_states()
+            state = np.concatenate([state, hidden_states])
+            return state
+        else:
+            return state
+
+    def _reset(self, new=True):
+        state = super()._reset()
+        return self.get_obs(state)
+
+    def _step(self, a):
+        state, reward, done, info = super()._step(a)
+        return self.get_obs(state), reward, done, info
+
+    @property
+    def parameters(self):
+        return {
+            "id": self.spec.id,
+        }
+
+    def get_hidden_states(self):
+        # normalize
+        hidden_states = np.array(
+            [
+                self.density / self.DEFAULT_DENSITY,
+                self.friction / self.DEFAULT_FRICTION,
+                self.power / self.DEFAULT_POWER,
+            ]
+        )
+        return hidden_states.copy()
+
+
+class RandomNormalHalfCheetah(
+    RoboschoolXMLModifierMixin, ModifiableRoboschoolHalfCheetah
+):
     def randomize_env(self):
         self.density = self.np_random.uniform(
             self.RANDOM_LOWER_DENSITY, self.RANDOM_UPPER_DENSITY
@@ -145,27 +184,14 @@ class RandomNormalHalfCheetah(
             for elem in tree.iterfind("default/geom"):
                 elem.set("friction", str(self.friction) + " .1 .1")
 
-    def get_obs(self, state):
-        if self.oracle:
-            hidden_states = self.get_hidden_states()
-            state = np.concatenate([state, hidden_states])
-            return state
-        else:
-            return state
-
     def _reset(self, new=True):
         if new:
             self.randomize_env()
-        state = super(RandomNormalHalfCheetah, self)._reset(new)
-        return self.get_obs(state)
-
-    def _step(self, a):
-        state, reward, done, info = super(RandomNormalHalfCheetah, self)._step(a)
-        return self.get_obs(state), reward, done, info
+        return super()._reset(new)
 
     @property
     def parameters(self):
-        parameters = super(RandomNormalHalfCheetah, self).parameters
+        parameters = super().parameters
         parameters.update(
             {
                 "power": self.power,
@@ -175,40 +201,10 @@ class RandomNormalHalfCheetah(
         )
         return parameters
 
-    def get_hidden_states(self):
-        hidden_states = np.array(
-            [
-                (self.density - self.RANDOM_LOWER_DENSITY)
-                / (self.RANDOM_UPPER_DENSITY - self.RANDOM_LOWER_DENSITY),
-                (self.friction - self.RANDOM_LOWER_FRICTION)
-                / (self.RANDOM_UPPER_FRICTION - self.RANDOM_LOWER_FRICTION),
-                (self.power - self.RANDOM_LOWER_POWER)
-                / (self.RANDOM_UPPER_POWER - self.RANDOM_LOWER_POWER),
-            ]
-        )
-        return hidden_states.copy()
-
 
 class RandomExtremeHalfCheetah(
     RoboschoolXMLModifierMixin, ModifiableRoboschoolHalfCheetah
 ):
-    def __init__(self, oracle: bool = False, **kwargs):
-        super().__init__(**kwargs)
-        self.oracle = oracle
-        if oracle == True:
-            print("WARNING! YOU ARE USING MDP, NOT POMDP!\n")
-            self._reset()
-            tmp_hidden_states = self.get_hidden_states()
-            self.observation_space = spaces.Box(
-                low=np.array(
-                    [*self.observation_space.low, *([0] * len(tmp_hidden_states))]
-                ),  # shape will be deduced from this
-                high=np.array(
-                    [*self.observation_space.high, *([1] * len(tmp_hidden_states))]
-                ),
-                dtype=np.float32,
-            )
-
     def randomize_env(self):
         """
         # self.armature = self.np_random.uniform(0.2, 0.5)
@@ -245,27 +241,14 @@ class RandomExtremeHalfCheetah(
             for elem in tree.iterfind("default/geom"):
                 elem.set("friction", str(self.friction) + " .1 .1")
 
-    def get_obs(self, state):
-        if self.oracle:
-            hidden_states = self.get_hidden_states()
-            state = np.concatenate([state, hidden_states])
-            return state
-        else:
-            return state
-
     def _reset(self, new=True):
         if new:
             self.randomize_env()
-        state = super(RandomExtremeHalfCheetah, self)._reset(new)
-        return self.get_obs(state)
-
-    def _step(self, a):
-        state, reward, done, info = super(RandomExtremeHalfCheetah, self)._step(a)
-        return self.get_obs(state), reward, done, info
+        return super()._reset(new)
 
     @property
     def parameters(self):
-        parameters = super(RandomExtremeHalfCheetah, self).parameters
+        parameters = super().parameters
         parameters.update(
             {
                 "power": self.power,
@@ -275,53 +258,38 @@ class RandomExtremeHalfCheetah(
         )
         return parameters
 
-    def get_hidden_states(self):
-        hidden_states = np.array(
-            [
-                (self.density - self.EXTREME_LOWER_DENSITY)
-                / (self.EXTREME_UPPER_DENSITY - self.EXTREME_LOWER_DENSITY),
-                (self.friction - self.EXTREME_LOWER_FRICTION)
-                / (self.EXTREME_UPPER_FRICTION - self.EXTREME_LOWER_FRICTION),
-                (self.power - self.EXTREME_LOWER_POWER)
-                / (self.EXTREME_UPPER_POWER - self.EXTREME_LOWER_POWER),
-            ]
-        )
-        return hidden_states.copy()
-
 
 # Hopper (Packer 2018)
 
 
 class ModifiableRoboschoolHopper(RoboschoolHopper, RoboschoolTrackDistSuccessMixin):
+    # https://github.com/openai/roboschool/blob/master/roboschool/mujoco_assets/hopper.xml
+    # https://mujoco.readthedocs.io/en/latest/XMLreference.html
 
+    DEFAULT_DENSITY = 1000
     RANDOM_LOWER_DENSITY = 750
     RANDOM_UPPER_DENSITY = 1250
     EXTREME_LOWER_DENSITY = 500
     EXTREME_UPPER_DENSITY = 1500
 
+    DEFAULT_FRICTION = 0.8
     RANDOM_LOWER_FRICTION = 0.5
     RANDOM_UPPER_FRICTION = 1.1
     EXTREME_LOWER_FRICTION = 0.2
     EXTREME_UPPER_FRICTION = 1.4
 
+    DEFAULT_POWER = 0.75
     RANDOM_LOWER_POWER = 0.6
     RANDOM_UPPER_POWER = 0.9
     EXTREME_LOWER_POWER = 0.4
     EXTREME_UPPER_POWER = 1.1
 
-    def _reset(self, new=True):
-        return super(ModifiableRoboschoolHopper, self)._reset()
-
-    @property
-    def parameters(self):
-        return {
-            "id": self.spec.id,
-        }
-
-
-class RandomNormalHopper(RoboschoolXMLModifierMixin, ModifiableRoboschoolHopper):
     def __init__(self, oracle: bool = False, **kwargs):
         super().__init__(**kwargs)
+        self.density = self.DEFAULT_DENSITY
+        self.friction = self.DEFAULT_FRICTION
+        self.power = self.DEFAULT_POWER
+
         self.oracle = oracle
         if oracle == True:
             print("WARNING! YOU ARE USING MDP, NOT POMDP!\n")
@@ -337,6 +305,41 @@ class RandomNormalHopper(RoboschoolXMLModifierMixin, ModifiableRoboschoolHopper)
                 dtype=np.float32,
             )
 
+    def get_obs(self, state):
+        if self.oracle:
+            hidden_states = self.get_hidden_states()
+            state = np.concatenate([state, hidden_states])
+            return state
+        else:
+            return state
+
+    def _reset(self, new=True):
+        state = super()._reset()
+        return self.get_obs(state)
+
+    def _step(self, a):
+        state, reward, done, info = super()._step(a)
+        return self.get_obs(state), reward, done, info
+
+    @property
+    def parameters(self):
+        return {
+            "id": self.spec.id,
+        }
+
+    def get_hidden_states(self):
+        # normalize
+        hidden_states = np.array(
+            [
+                self.density / self.DEFAULT_DENSITY,
+                self.friction / self.DEFAULT_FRICTION,
+                self.power / self.DEFAULT_POWER,
+            ]
+        )
+        return hidden_states.copy()
+
+
+class RandomNormalHopper(RoboschoolXMLModifierMixin, ModifiableRoboschoolHopper):
     def randomize_env(self):
         self.density = self.np_random.uniform(
             self.RANDOM_LOWER_DENSITY, self.RANDOM_UPPER_DENSITY
@@ -347,33 +350,22 @@ class RandomNormalHopper(RoboschoolXMLModifierMixin, ModifiableRoboschoolHopper)
         self.power = self.np_random.uniform(
             self.RANDOM_LOWER_POWER, self.RANDOM_UPPER_POWER
         )
+        # self.power is directly set, and it will changes the torque
+        # https://github.com/openai/roboschool/blob/d32bcb2b35b94168b5ce27233ca62f3c8678886f/roboschool/gym_forward_walker.py#L43
         with self.modify_xml("hopper.xml") as tree:
             for elem in tree.iterfind("worldbody/body/geom"):
                 elem.set("density", str(self.density))
             for elem in tree.iterfind("default/geom"):
                 elem.set("friction", str(self.friction) + " .1 .1")
 
-    def get_obs(self, state):
-        if self.oracle:
-            hidden_states = self.get_hidden_states()
-            state = np.concatenate([state, hidden_states])
-            return state
-        else:
-            return state
-
     def _reset(self, new=True):
         if new:
             self.randomize_env()
-        state = super(RandomNormalHopper, self)._reset(new)
-        return self.get_obs(state)
-
-    def _step(self, a):
-        state, reward, done, info = super(RandomNormalHopper, self)._step(a)
-        return self.get_obs(state), reward, done, info
+        return super()._reset(new)
 
     @property
     def parameters(self):
-        parameters = super(RandomNormalHopper, self).parameters
+        parameters = super().parameters
         parameters.update(
             {
                 "power": self.power,
@@ -383,38 +375,8 @@ class RandomNormalHopper(RoboschoolXMLModifierMixin, ModifiableRoboschoolHopper)
         )
         return parameters
 
-    def get_hidden_states(self):
-        hidden_states = np.array(
-            [
-                (self.density - self.RANDOM_LOWER_DENSITY)
-                / (self.RANDOM_UPPER_DENSITY - self.RANDOM_LOWER_DENSITY),
-                (self.friction - self.RANDOM_LOWER_FRICTION)
-                / (self.RANDOM_UPPER_FRICTION - self.RANDOM_LOWER_FRICTION),
-                (self.power - self.RANDOM_LOWER_POWER)
-                / (self.RANDOM_UPPER_POWER - self.RANDOM_LOWER_POWER),
-            ]
-        )
-        return hidden_states.copy()
-
 
 class RandomExtremeHopper(RoboschoolXMLModifierMixin, ModifiableRoboschoolHopper):
-    def __init__(self, oracle: bool = False, **kwargs):
-        super().__init__(**kwargs)
-        self.oracle = oracle
-        if oracle == True:
-            print("WARNING! YOU ARE USING MDP, NOT POMDP!\n")
-            self._reset()
-            tmp_hidden_states = self.get_hidden_states()
-            self.observation_space = spaces.Box(
-                low=np.array(
-                    [*self.observation_space.low, *([0] * len(tmp_hidden_states))]
-                ),  # shape will be deduced from this
-                high=np.array(
-                    [*self.observation_space.high, *([1] * len(tmp_hidden_states))]
-                ),
-                dtype=np.float32,
-            )
-
     def randomize_env(self):
         """
         self.density = self.np_random.uniform(self.LOWER_DENSITY, self.UPPER_DENSITY)
@@ -450,27 +412,14 @@ class RandomExtremeHopper(RoboschoolXMLModifierMixin, ModifiableRoboschoolHopper
             for elem in tree.iterfind("default/geom"):
                 elem.set("friction", str(self.friction) + " .1 .1")
 
-    def get_obs(self, state):
-        if self.oracle:
-            hidden_states = self.get_hidden_states()
-            state = np.concatenate([state, hidden_states])
-            return state
-        else:
-            return state
-
     def _reset(self, new=True):
         if new:
             self.randomize_env()
-        state = super(RandomExtremeHopper, self)._reset(new)
-        return self.get_obs(state)
-
-    def _step(self, a):
-        state, reward, done, info = super(RandomExtremeHopper, self)._step(a)
-        return self.get_obs(state), reward, done, info
+        return super()._reset(new)
 
     @property
     def parameters(self):
-        parameters = super(RandomExtremeHopper, self).parameters
+        parameters = super().parameters
         parameters.update(
             {
                 "power": self.power,
@@ -479,19 +428,6 @@ class RandomExtremeHopper(RoboschoolXMLModifierMixin, ModifiableRoboschoolHopper
             }
         )
         return parameters
-
-    def get_hidden_states(self):
-        hidden_states = np.array(
-            [
-                (self.density - self.EXTREME_LOWER_DENSITY)
-                / (self.EXTREME_UPPER_DENSITY - self.EXTREME_LOWER_DENSITY),
-                (self.friction - self.EXTREME_LOWER_FRICTION)
-                / (self.EXTREME_UPPER_FRICTION - self.EXTREME_LOWER_FRICTION),
-                (self.power - self.EXTREME_LOWER_POWER)
-                / (self.EXTREME_UPPER_POWER - self.EXTREME_LOWER_POWER),
-            ]
-        )
-        return hidden_states.copy()
 
 
 # Walker2d (Jiang 2021)
@@ -665,6 +601,7 @@ class RandomNormalHalfCheetah_MRPO(
         if self.oracle:
             hidden_states = self.get_hidden_states()
             state = np.concatenate([state, hidden_states])
+            # print(state) # debugging
             return state
         else:
             return state

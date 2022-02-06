@@ -18,6 +18,11 @@ flags.DEFINE_string("cfg", None, "path to configuration file")
 flags.DEFINE_string("algo", "sac", "[td3, sac]")
 flags.DEFINE_integer("seed", None, "seed")
 flags.DEFINE_integer("cuda", None, "cuda device id")
+flags.DEFINE_boolean(
+    "oracle",
+    False,
+    "whether observe the privileged information of POMDP, reduced to MDP",
+)
 
 flags.FLAGS(sys.argv)
 yaml = YAML()
@@ -29,6 +34,8 @@ if FLAGS.seed is not None:
     v["seed"] = FLAGS.seed
 if FLAGS.cuda is not None:
     v["cuda"] = FLAGS.cuda
+if FLAGS.oracle:
+    v["env"]["oracle"] = True
 
 # system: device, threads, seed, pid
 seed = v["seed"]
@@ -58,27 +65,34 @@ else:
     env_name = v["env"]["env_name"]
 exp_id += f"{env_type}/{env_name}/"
 
-if "multi_task" in v["env"] or "oracle" in v["env"]:
-    if "multi_task" in v["env"]:
-        assert v["env"]["multi_task"] == True
-    if "oracle" in v["env"]:
-        assert v["env"]["oracle"] == True
-    exp_id += "oracle/"
+if "oracle" in v["env"] and v["env"]["oracle"] == True:
+    oracle = True
+else:
+    oracle = False
 
 arch, algo = v["policy"]["arch"], v["policy"]["algo"]
 assert arch in ["mlp", "lstm", "gru"]
 assert algo in ["td3", "sac"]
-if "rnn_num_layers" in v["policy"]:
-    rnn_num_layers = v["policy"]["rnn_num_layers"]
-    if rnn_num_layers == 1:
-        rnn_num_layers = ""
+if arch == "mlp":
+    if oracle:
+        algo_name = f"oracle_{algo}"
     else:
-        rnn_num_layers = str(rnn_num_layers)
-else:
-    rnn_num_layers = ""
-exp_id += f"{algo}_{rnn_num_layers}{arch}"
-if "separate" in v["policy"] and v["policy"]["separate"] == False:
-    exp_id += "_shared"
+        algo_name = f"Markovian_{algo}"
+    exp_id += algo_name
+else:  # rnn
+    if oracle:
+        exp_id += "oracle_"
+    if "rnn_num_layers" in v["policy"]:
+        rnn_num_layers = v["policy"]["rnn_num_layers"]
+        if rnn_num_layers == 1:
+            rnn_num_layers = ""
+        else:
+            rnn_num_layers = str(rnn_num_layers)
+    else:
+        rnn_num_layers = ""
+    exp_id += f"{algo}_{rnn_num_layers}{arch}"
+    if "separate" in v["policy"] and v["policy"]["separate"] == False:
+        exp_id += "_shared"
 exp_id += "/"
 
 if arch in ["lstm", "gru"]:

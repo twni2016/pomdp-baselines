@@ -64,7 +64,7 @@ class Learner:
                 seed=self.seed,
                 n_tasks=num_tasks,
                 **kwargs,
-            )  # multi_task in kwargs
+            )  # oracle in kwargs
             self.eval_env = self.train_env
             self.eval_env.seed(self.seed + 1)
 

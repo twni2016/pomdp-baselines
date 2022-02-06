@@ -16,7 +16,7 @@ class VariBadWrapper(gym.Wrapper):
         self,
         env,
         episodes_per_task: int,
-        multi_task: bool = False,  # default no
+        oracle: bool = False,  # default no
     ):
         """
         Wrapper, creates a multi-episode (BA)MDP around a one-episode MDP. Automatically deals with
@@ -36,8 +36,8 @@ class VariBadWrapper(gym.Wrapper):
         else:
             self._normalize_actions = False
 
-        self.multi_task = multi_task
-        if self.multi_task == True:
+        self.oracle = oracle
+        if self.oracle == True:
             print("WARNING: YOU ARE RUNNING MDP, NOT POMDP!\n")
             tmp_task = self.env.get_current_task()
             self.observation_space = spaces.Box(
@@ -82,7 +82,7 @@ class VariBadWrapper(gym.Wrapper):
         self.done_mdp = True
 
     def _get_obs(self, state):
-        if self.multi_task:
+        if self.oracle:
             tmp_task = self.env.get_current_task().copy()
             state = np.concatenate([state, tmp_task])
         if self.add_done_info:

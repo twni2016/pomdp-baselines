@@ -14,7 +14,12 @@ To run the best variant of our implemention, please refer to [our_details.md](ou
 
 
 ## Specific Running Commands for Each Subarea
-In general, we found `td3` works better in `rnn` policy while `sac` works better in `mlp` policy. So we use respective parameters below.
+General form:
+```
+export PYTHONPATH=${PWD}:$PYTHONPATH
+python3 policies/main.py --cfg configs/<subarea>/<env_name>/<algo_name>.yml \
+  [--algo {td3,sac} --seed <int> --cuda <int> --oracle]
+```
 
 ### "Standard" POMDP
 {Ant,Cheetah,Hopper,Walker}-{P,V} in the paper, corresponding to `configs/pomdp/<ant|cheetah|hopper|walker>_blt/<p|v>`, which requires PyBullet. We also provide Pendulum environments for sanity check.
@@ -50,7 +55,7 @@ python policies/main.py --cfg configs/meta/point_robot/rnn.yml --algo td3
 # Run Markovian
 python policies/main.py --cfg configs/meta/point_robot/mlp.yml --algo sac
 # Run Oracle
-python policies/main.py --cfg configs/meta/point_robot/mt/mlp.yml --algo sac
+python policies/main.py --cfg configs/meta/point_robot/mlp.yml --algo sac --oracle
 
 # Run off-policy variBAD from https://github.com/Rondorf/BOReL
 cd BOReL; python online_training.py --env-type point_robot_sparse
@@ -64,7 +69,7 @@ python policies/main.py --cfg configs/meta/ant_dir/rnn.yml --algo sac
 # Run Markovian
 python policies/main.py --cfg configs/meta/ant_dir/mlp.yml --algo sac
 # Run Oracle
-python policies/main.py --cfg configs/meta/ant_dir/mt/mlp.yml --algo sac
+python policies/main.py --cfg configs/meta/ant_dir/mlp.yml --algo sac --oracle
 
 # For on-policy variBAD and RL2, we use the data from https://github.com/lmzintgraf/varibad
 ```
@@ -80,7 +85,7 @@ python3 policies/main.py --cfg configs/rmdp/cheetah/rnn.yml --algo td3
 # Run Markovian
 python3 policies/main.py --cfg configs/rmdp/cheetah/mlp.yml --algo sac
 # Run Oracle
-python3 policies/main.py --cfg configs/rmdp/cheetah/oracle/mlp.yml --algo sac
+python3 policies/main.py --cfg configs/rmdp/cheetah/mlp.yml --algo sac --oracle
 
 # Run PPO-GRU from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
 python PPO/main.py --config configs/rmdp/cheetah/ppo_rnn.yml \
@@ -104,7 +109,7 @@ python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/RD-RR-RE/r
 # Run Markovian
 python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/RD-RR-RE/mlp.yml --algo sac
 # Run Oracle on Random environment
-python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/oracle_R/mlp.yml --algo sac
+python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/RD-RR-RE/mlp.yml --algo sac --oracle
 
 # For PPO, A2C, EPOpt-PPO-FF, we use the figures from SunBlaze paper
 ```
