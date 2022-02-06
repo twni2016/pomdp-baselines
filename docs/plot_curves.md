@@ -25,6 +25,11 @@ python scripts/plot_single_factor.py --csv_path results/data/<subarea>/<env_name
     --factors <RL,Encoder,Len,Inputs>
 ```
 
+After collecting all the log data for one benchmark, we can generate the ranking on average normalized return `rank*.csv`:
+```bash
+python scripts/show_ranking.py --base_path results/data/<subarea>
+```
+
 For adding new methods or environments, please register them in [constants.py](../scripts/constants.py).
 
 **Finally, we provide the running script to generate all the plots in the paper in [eval.sh](../scripts/eval.sh). Please check that script for details on the optional arguments.**
@@ -36,7 +41,7 @@ Please download the results `data.zip` from the [google drive](https://drive.goo
 
 - `results/data/<subarea>/rank*.csv` show the ranking of each variant in our implemention by the performance metric averaged across the environments in each subarea. For example, the instance `td3-gru-64-oa-separate` appears first in the `results/data/pomdp/rank_return-max_x1500000.csv`, thus it is the best variant.
 
-- `results/data/<subarea>/<env_name>/run_down*.csv` show the final results of each variant in our implemention and the compared methods in each environment
+- `results/data/<subarea>/<env_name>/rundown*.csv` show the final results of each variant in our implemention and the compared methods in each environment
 
 - `results/data/<subarea>/<env_name>/final.csv` show the learning curve data
 
