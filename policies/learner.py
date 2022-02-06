@@ -671,12 +671,13 @@ class Learner:
 
         # --- evaluation ----
         if self.env_type == "meta":
-            # (
-            #     returns_train,
-            #     success_rate_train,
-            #     observations,
-            #     total_steps_train,
-            # ) = self.evaluate(self.train_tasks[: len(self.eval_tasks)])
+            if self.train_env.n_tasks is not None:
+                (
+                    returns_train,
+                    success_rate_train,
+                    observations,
+                    total_steps_train,
+                ) = self.evaluate(self.train_tasks[: len(self.eval_tasks)])
             (
                 returns_eval,
                 success_rate_eval,
@@ -691,9 +692,10 @@ class Learner:
                     total_steps_eval_sto,
                 ) = self.evaluate(self.eval_tasks, deterministic=False)
 
-            if "plot_behavior" in dir(
+            if self.train_env.n_tasks is not None and "plot_behavior" in dir(
                 self.eval_env.unwrapped
-            ):  # plot goal-reaching trajs
+            ):
+                # plot goal-reaching trajs
                 for i, task in enumerate(
                     self.train_tasks[: min(5, len(self.eval_tasks))]
                 ):
@@ -727,9 +729,10 @@ class Learner:
                     "metrics/successes_in_buffer",
                     self._successes_in_buffer / self._n_env_steps_total,
                 )
-                logger.record_tabular(
-                    "metrics/success_rate_train", np.mean(success_rate_train)
-                )
+                if self.train_env.n_tasks is not None:
+                    logger.record_tabular(
+                        "metrics/success_rate_train", np.mean(success_rate_train)
+                    )
                 logger.record_tabular(
                     "metrics/success_rate_eval", np.mean(success_rate_eval)
                 )
@@ -739,10 +742,11 @@ class Learner:
                     )
 
             for episode_idx in range(self.max_rollouts_per_task):
-                # logger.record_tabular(
-                #     "metrics/return_train_episode_{}".format(episode_idx + 1),
-                #     np.mean(returns_train[:, episode_idx]),
-                # )
+                if self.train_env.n_tasks is not None:
+                    logger.record_tabular(
+                        "metrics/return_train_episode_{}".format(episode_idx + 1),
+                        np.mean(returns_train[:, episode_idx]),
+                    )
                 logger.record_tabular(
                     "metrics/return_eval_episode_{}".format(episode_idx + 1),
                     np.mean(returns_eval[:, episode_idx]),
@@ -753,12 +757,14 @@ class Learner:
                         np.mean(returns_eval_sto[:, episode_idx]),
                     )
 
-            # logger.record_tabular(
-            #     "metrics/total_steps_train", np.mean(total_steps_train)
-            # )
-            # logger.record_tabular(
-            #     "metrics/return_train_total", np.mean(np.sum(returns_train, axis=-1))
-            # )
+            if self.train_env.n_tasks is not None:
+                logger.record_tabular(
+                    "metrics/total_steps_train", np.mean(total_steps_train)
+                )
+                logger.record_tabular(
+                    "metrics/return_train_total",
+                    np.mean(np.sum(returns_train, axis=-1)),
+                )
             logger.record_tabular("metrics/total_steps_eval", np.mean(total_steps_eval))
             logger.record_tabular(
                 "metrics/return_eval_total", np.mean(np.sum(returns_eval, axis=-1))
