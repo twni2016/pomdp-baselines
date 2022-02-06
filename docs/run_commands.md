@@ -108,7 +108,7 @@ Take running on `SunblazeHalfCheetahRandomNormal-v0` as example:
 python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/RD-RR-RE/rnn.yml --algo td3
 # Run Markovian
 python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/RD-RR-RE/mlp.yml --algo sac
-# Run Oracle on Random environment
+# Run Oracle
 python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/RD-RR-RE/mlp.yml --algo sac --oracle
 
 # For PPO, A2C, EPOpt-PPO-FF, we use the figures from SunBlaze paper

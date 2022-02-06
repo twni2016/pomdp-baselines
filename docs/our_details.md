@@ -29,16 +29,3 @@ The **decision factors** discussed in the method section in our paper, can be fo
 ## Code-Level Details
 - Replay buffer: check [`SeqReplayBuffer`](../buffers/seq_replay_buffer.py) to see the implementation of 2-dim replay buffer that supports sequence storage and sampling.
 - Our implemention: check [`ModelFreeOffPolicy_Separate_RNN`](../policies/models/policy_rnn.py) for (separate) recurrent model-free RL architecture
-
-
-## Final Results that Generate the Learning Curves in the Paper
-Please download the results `data.zip` from the [google drive](https://drive.google.com/file/d/1dfulN8acol-qaNR2h4PDpIaWBg9Ck4pY/view?usp=sharing) and decompress into `data` folder.
-
-In `data/<subarea>` folder, we shared the final results that generate the learning curves in the paper. 
-
-- `data/<subarea>/rank*.csv` show the ranking of each variant in our implemention by the performance metric averaged across the environments in each subarea. For example, the instance `td3-gru-64-oa-separate` appears first in the `data/pomdp/rank_return-max_x1500000.csv`, thus it is the best variant.
-
-- `data/<subarea>/<env_name>/run_down*.csv` show the final results of each variant in our implemention and the compared methods in each environment
-
-We also provide all the raw learning curves results in `data/<subarea>/<env_name>/final.csv` for reproducibility and usage in future work.
-

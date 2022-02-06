@@ -24,13 +24,13 @@ There are many other (more complicated or specialized) methods for POMDPs and it
 Note that current repo should be run smoothly.
 
 DONE:
+* Feb 2022: simplify `--oracle` commands, and upload the plotting scripts
 * Jan 2022: introduce new meta RL environments (*-Dir), and replace re-implementation of off-policy variBAD with original implementation
 * Dec 2021: add some command-line arguments to overwrite the config file and save the updated one
 * Dec 2021: fix [seed reproducibility issue](envs/readme.md#reproducibilty-issue-in-gym-environments) for gym v0.18 (but not for SunBlaze)
 * Nov 2021: add Markovian and Oracle policies training
 
 TODO:
-- Upload more log csv files and plotting scripts
 - Add documentation on our main code and log csv files 
 
 ## A Minimal Example to Run Our Implementation
@@ -97,6 +97,9 @@ where `algo_name` specifies the algorithm name:
 
 ### Specific Running Commands for Each Subarea
 Please see [run_commands.md](docs/run_commands.md) for details on running our implementation of recurrent model-free RL and also all the compared methods.
+
+### Draw and Download the Learning Curves 
+Please see [plot_curves.md](docs/plot_curves.md) for details on plotting. 
 
 ### Details of Our Implementation of Recurrent Model-Free RL: Decision Factors, Best Variants, Code Features
 Please see [our_details.md](docs/our_details.md) for more information on:
