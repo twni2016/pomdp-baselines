@@ -128,5 +128,5 @@ black . -t py35 # avoid trailing commas issue after kwargs
 ```
 
 ## Contact
-If you have any questions, please create an issue in this repo or contact Tianwei Ni (twni2016@gmail.com)
+If you have any questions, please create an issue in this repo or contact Tianwei Ni (tianwei.ni@mila.quebec)
 
