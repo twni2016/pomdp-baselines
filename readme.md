@@ -114,7 +114,7 @@ Please see [acknowledge.md](docs/acknowledge.md) for details.
 If you find our code useful to your work, please consider citing our paper:
 ```
 @article{ni2021recurrent,
-  title={Recurrent Model-Free RL is a Strong Baseline for Many POMDPs},
+  title={Recurrent Model-Free RL can be a Strong Baseline for Many POMDPs},
   author={Ni, Tianwei and Eysenbach, Benjamin and Salakhutdinov, Ruslan},
   journal={arXiv preprint arXiv:2110.05038},
   year={2021}
