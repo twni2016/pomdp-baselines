@@ -5,6 +5,7 @@ import time
 import math
 import numpy as np
 import torch
+from torch.nn import functional as F
 import random
 
 import gym
@@ -191,8 +192,14 @@ class Learner:
             raise ValueError
 
         # get action / observation dimensions
-        assert self.train_env.action_space.__class__.__name__ == "Box"
-        self.act_dim = self.train_env.action_space.shape[0]
+        if self.train_env.action_space.__class__.__name__ == "Box":
+            # continuous action space
+            self.act_dim = self.train_env.action_space.shape[0]
+            self.act_continuous = True
+        else:
+            assert self.train_env.action_space.__class__.__name__ == "Discrete"
+            self.act_dim = self.train_env.action_space.n
+            self.act_continuous = False
         self.obs_dim = self.train_env.observation_space.shape[0]  # include 1-dim done
         logger.log("obs_dim", self.obs_dim, "act_dim", self.act_dim)
 
@@ -242,7 +249,7 @@ class Learner:
             self.policy_storage = SimpleReplayBuffer(
                 max_replay_buffer_size=int(buffer_size),
                 observation_dim=self.obs_dim,
-                action_dim=self.act_dim,
+                action_dim=self.act_dim if self.act_continuous else 1,  # save memory
                 max_trajectory_len=self.max_trajectory_len,
                 add_timeout=False,  # no timeout storage
             )
@@ -254,7 +261,7 @@ class Learner:
             self.policy_storage = SeqReplayBuffer(
                 max_replay_buffer_size=int(buffer_size),
                 observation_dim=self.obs_dim,
-                action_dim=self.act_dim,
+                action_dim=self.act_dim if self.act_continuous else 1,  # save memory
                 sampled_seq_len=sampled_seq_len,
                 sample_weight_baseline=sample_weight_baseline,
             )
@@ -426,7 +433,11 @@ class Learner:
                 if random_actions:
                     action = ptu.FloatTensor(
                         [self.train_env.action_space.sample()]
-                    )  # (1, A)
+                    )  # (1, A) for continuous action, (1) for discrete action
+                    if not self.act_continuous:
+                        action = F.one_hot(
+                            action.long(), num_classes=self.act_dim
+                        ).float()  # (1, A)
                 else:  # policy takes hidden state as input for rnn, while takes obs for mlp
                     if self.policy_arch == "mlp":
                         action, _, _, _ = self.agent.act(obs, deterministic=False)
@@ -469,7 +480,13 @@ class Learner:
                 if self.policy_arch == "mlp":
                     self.policy_storage.add_sample(
                         observation=ptu.get_numpy(obs.squeeze(dim=0)),
-                        action=ptu.get_numpy(action.squeeze(dim=0)),
+                        action=ptu.get_numpy(
+                            action.squeeze(dim=0)
+                            if self.act_continuous
+                            else torch.argmax(
+                                action.squeeze(dim=0), dim=-1, keepdims=True
+                            )  # (1,)
+                        ),
                         reward=ptu.get_numpy(reward.squeeze(dim=0)),
                         terminal=np.array([term], dtype=float),
                         next_observation=ptu.get_numpy(next_obs.squeeze(dim=0)),
@@ -490,9 +507,15 @@ class Learner:
                     break  # has to manually break
 
             if self.policy_arch == "memory":  # add collected sequence to buffer
+                act_buffer = torch.cat(act_list, dim=0)  # (L, dim)
+                if not self.act_continuous:
+                    act_buffer = torch.argmax(
+                        act_buffer, dim=-1, keepdims=True
+                    )  # (L, 1)
+
                 self.policy_storage.add_episode(
                     observations=ptu.get_numpy(torch.cat(obs_list, dim=0)),  # (L, dim)
-                    actions=ptu.get_numpy(torch.cat(act_list, dim=0)),  # (L, dim)
+                    actions=ptu.get_numpy(act_buffer),  # (L, dim)
                     rewards=ptu.get_numpy(torch.cat(rew_list, dim=0)),  # (L, dim)
                     terminals=np.array(term_list).reshape(-1, 1),  # (L, 1)
                     next_observations=ptu.get_numpy(

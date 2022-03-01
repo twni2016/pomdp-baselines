@@ -8,6 +8,7 @@ We acknowledge the following repositories that greatly shaped our implementation
 - https://github.com/oist-cnru/Variational-Recurrent-Models for providing the pomdp VRM algorithm and environments
 - https://github.com/quantumiracle/Popular-RL-Algorithms for inspiring the recurrent policies design
 - https://github.com/lmzintgraf/varibad for inspiring the recurrent policies design and providing learning curve data
+- https://github.com/ku2482/sac-discrete.pytorch for providing the SAC-discrete code
 
 Please cite their work if you also find their code useful to your project:
 ```
@@ -57,5 +58,11 @@ Please cite their work if you also find their code useful to your project:
  publisher={Springer Nature},
  note={\url{http://www.deepreinforcementlearningbook.org}},
  year={2020}
+}
+@article{christodoulou2019soft,
+  title={Soft actor-critic for discrete action settings},
+  author={Christodoulou, Petros},
+  journal={arXiv preprint arXiv:1910.07207},
+  year={2019}
 }
 ```

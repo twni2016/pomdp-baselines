@@ -16,9 +16,13 @@ class POMDPWrapper(gym.Wrapper):
             dtype=np.float32,
         )
 
-        # if continuous actions, make sure in [-1, 1]
-        # NOTE: policy won't use action_space.low/high, just set [-1,1]
-        # this is a bad practice...
+        if self.env.action_space.__class__.__name__ == "Box":
+            self.act_continuous = True
+            # if continuous actions, make sure in [-1, 1]
+            # NOTE: policy won't use action_space.low/high, just set [-1,1]
+            # this is a bad practice...
+        else:
+            self.act_continuous = False
 
     def get_obs(self, state):
         return state[self.partially_obs_dims].copy()
@@ -28,12 +32,13 @@ class POMDPWrapper(gym.Wrapper):
         return self.get_obs(state)
 
     def step(self, action):
-        # recover the action
-        action = np.clip(action, -1, 1)  # first clip into [-1, 1]
-        lb = self.env.action_space.low
-        ub = self.env.action_space.high
-        action = lb + (action + 1.0) * 0.5 * (ub - lb)
-        action = np.clip(action, lb, ub)
+        if self.act_continuous:
+            # recover the action
+            action = np.clip(action, -1, 1)  # first clip into [-1, 1]
+            lb = self.env.action_space.low
+            ub = self.env.action_space.high
+            action = lb + (action + 1.0) * 0.5 * (ub - lb)
+            action = np.clip(action, lb, ub)
 
         state, reward, done, info = self.env.step(action)
 

@@ -4,7 +4,7 @@
 
 Before start running any experiments, we suggest to have a good plan of *environment series* based on difficulty level. As it is hard to analyze and varies from algorithm to algorithm, we provide some rough estimates:
 
-1. Extremely Simple as a Sanity Check: Pendulum-V (also shown in our minimal example jupyter notebook)
+1. Extremely Simple as a Sanity Check: Pendulum-V (also shown in our minimal example jupyter notebook) and CartPole-V (for discrete action space)
 2. Simple, Fast, yet Non-trivial: Wind (require precise inference and control), Semi-Circle (sparse reward). Both are continuous gridworlds, thus very fast.
 3. Medium: Cheetah-Vel (1-dim stationary hidden state), `*`-Robust (2-dim stationary hidden state), `*`-P (could be roughly inferred by 2nd order MDP)
 4. Hard: `*`-Dir (relatively complicated dynamics), `*`-V (long-term inference), `*`-Generalize (extrapolation)
@@ -43,6 +43,12 @@ python PPO/main.py --config configs/pomdp/ant_blt/p/ppo_rnn.yml \
 # Run VRM from https://github.com/oist-cnru/Variational-Recurrent-Models
 python VRM/run_experiment.py configs/pomdp/ant_blt/p/vrm.yml
 ``` 
+
+Mar 2022: we support recurrent SAC-discrete for POMDPs with **discrete action space**. Take CartPole-V as example:
+```
+python policies/main.py --cfg configs/pomdp/cartpole/v/rnn.yml --target_entropy 0.7
+```
+See [this PR for detailed instructions](https://github.com/twni2016/pomdp-baselines/pull/1).
 
 ### Meta RL 
 

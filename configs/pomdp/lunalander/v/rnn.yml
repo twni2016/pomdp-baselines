@@ -1,0 +1,49 @@
+seed: 73
+cuda: 0 # use_gpu
+env:
+  env_type: pomdp
+  env_name: LunarLander-V-v0
+
+  num_eval_tasks: 20 # num of eval episodes
+
+train:
+  # 200*1000 = 200k steps
+  num_iters: 200 # number meta-training iterates
+  num_init_rollouts_pool: 5 # before training
+  num_rollouts_per_iter: 1
+
+  num_updates_per_iter: 0.2
+  # buffer params
+  buffer_size: 1e6
+  batch_size: 32 # to tune based on sampled_seq_len
+  sampled_seq_len: -1 # -1 is all, or positive integer
+  sample_weight_baseline: 0.0
+
+eval:
+  eval_stochastic: false # also eval stochastic policy
+  log_interval: 4 # num of iters
+  save_interval: -1
+  log_tensorboard: true
+
+policy:
+  separate: True
+  arch: lstm # [lstm, gru]
+  algo: sacd # only support sac-discrete
+
+  action_embedding_size: 8 # no action input
+  state_embedding_size: 32
+  reward_embedding_size: 8
+  rnn_hidden_size: 128
+
+  dqn_layers: [128, 128]
+  policy_layers: [128, 128]
+  lr: 0.0003
+  gamma: 0.99
+  tau: 0.005
+
+  # sacd alpha
+  entropy_alpha: null
+  automatic_entropy_tuning: true
+  target_entropy: 0.7 # the ratio: target_entropy = ratio * log(|A|)
+  alpha_lr: 0.0003
+

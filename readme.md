@@ -24,6 +24,7 @@ There are many other (more complicated or specialized) methods for POMDPs and it
 Note that current repo should be run smoothly.
 
 DONE:
+* Mar 2022: introduce recurrent [SAC-discrete](https://arxiv.org/abs/1910.07207) for **discrete action** space and see [this PR for instructions](https://github.com/twni2016/pomdp-baselines/pull/1)
 * Feb 2022: simplify `--oracle` commands, and upload the plotting scripts
 * Jan 2022: introduce new meta RL environments (*-Dir), and replace re-implementation of off-policy variBAD with original implementation
 * Dec 2021: add some command-line arguments to overwrite the config file and save the updated one
@@ -49,7 +50,7 @@ pip install -r requirements.txt
 ```
 
 The `requirements.txt` file includes all the dependencies (e.g. PyTorch, PyBullet) used in our experiments (including the compared methods), but there are two exceptions:
-- To run Cheetah-Vel and Ant-Dir in meta RL, you have to install [MuJoCo](https://github.com/openai/mujoco-py) on your own (it is free now!)
+- To run Cheetah-Vel and Ant-Dir in meta RL, you have to install [MuJoCo](https://github.com/openai/mujoco-py) (>=2.0.2) on your own (it is free now!)
 - To run robust RL and generalization in RL experiments, you have to install [Roboschool](https://github.com/openai/roboschool). 
     - We found it hard to install Roboschool from scratch, therefore we provide a docker file `roboschool.sif` in [google drive](https://drive.google.com/file/d/1KpTpVwoU02AI7uQrk2T9hQ6s15EISRTa/view?usp=sharing) that contains Roboschool and the other necessary libraries, adapted from [SunBlaze repo](https://github.com/sunblaze-ucb/rl-generalization). 
     - To download and activate the docker file by singularity (tested in v3.7) on a cluster (on a single server should be similar):
@@ -80,7 +81,7 @@ To run our implementation, Markovian, and Oracle, in <local_path> simply
 ```
 export PYTHONPATH=${PWD}:$PYTHONPATH
 python3 policies/main.py --cfg configs/<subarea>/<env_name>/<algo_name>.yml \
-  [--algo {td3,sac} --seed <int> --cuda <int> --oracle]
+  [--algo {td3,sac,sacd} --seed <int> --cuda <int> --oracle]
 ```
 where `algo_name` specifies the algorithm name:
 - `mlp` correspond to **Markovian** policies

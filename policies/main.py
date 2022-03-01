@@ -15,7 +15,8 @@ from policies.learner import Learner
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("cfg", None, "path to configuration file")
-flags.DEFINE_string("algo", "sac", "[td3, sac]")
+flags.DEFINE_string("algo", None, "[td3, sac, sacd]")
+flags.DEFINE_float("target_entropy", None, "for [sac, sacd]")
 flags.DEFINE_integer("seed", None, "seed")
 flags.DEFINE_integer("cuda", None, "cuda device id")
 flags.DEFINE_boolean(
@@ -29,7 +30,10 @@ yaml = YAML()
 v = yaml.load(open(FLAGS.cfg))
 
 # overwrite config params
-v["policy"]["algo"] = FLAGS.algo
+if FLAGS.algo is not None:
+    v["policy"]["algo"] = FLAGS.algo
+if FLAGS.target_entropy is not None:
+    v["policy"]["target_entropy"] = FLAGS.target_entropy
 if FLAGS.seed is not None:
     v["seed"] = FLAGS.seed
 if FLAGS.cuda is not None:
@@ -72,7 +76,7 @@ else:
 
 arch, algo = v["policy"]["arch"], v["policy"]["algo"]
 assert arch in ["mlp", "lstm", "gru"]
-assert algo in ["td3", "sac"]
+assert algo in ["td3", "sac", "sacd"]
 if arch == "mlp":
     if oracle:
         algo_name = f"oracle_{algo}"
@@ -94,6 +98,9 @@ else:  # rnn
     if "separate" in v["policy"] and v["policy"]["separate"] == False:
         exp_id += "_shared"
 exp_id += "/"
+
+if algo in ["sac", "sacd"] and "target_entropy" in v["policy"]:
+    exp_id += f"ent-{v['policy']['target_entropy']}/"
 
 if arch in ["lstm", "gru"]:
     exp_id += f"len-{v['train']['sampled_seq_len']}/bs-{v['train']['batch_size']}/"

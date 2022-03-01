@@ -1,0 +1,38 @@
+seed: 73
+cuda: -1 # use_gpu
+env:
+  env_type: pomdp
+  env_name: CartPole-F-v0
+
+  num_eval_tasks: 20 # num of eval episodes
+
+train:
+  # 500*200 = 100k steps
+  num_iters: 500 # number meta-training iterates
+  num_init_rollouts_pool: 5 # before training
+  num_rollouts_per_iter: 1
+  buffer_size: 1e6
+  batch_size: 256
+
+eval:
+  eval_stochastic: false # also eval stochastic policy
+  log_interval: 1 # num of iters
+  save_interval: -1
+  log_tensorboard: true
+
+policy:
+  arch: mlp
+  algo: sacd # only support sac-discrete
+
+  dqn_layers: [128, 128]
+  policy_layers: [128, 128]
+  lr: 0.0003
+  gamma: 0.99
+  tau: 0.005
+
+  # sac alpha
+  entropy_alpha: null
+  automatic_entropy_tuning: true
+  target_entropy: 0.7 # the ratio: target_entropy = ratio * log(|A|)
+  alpha_lr: 0.0003
+

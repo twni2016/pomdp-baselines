@@ -34,6 +34,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
 
     TD3_name = Actor_RNN.TD3_name
     SAC_name = Actor_RNN.SAC_name
+    SACD_name = Actor_RNN.SACD_name
 
     def __init__(
         self,
@@ -69,7 +70,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         self.gamma = gamma
         self.tau = tau
 
-        assert algo in [self.TD3_name, self.SAC_name]
+        assert algo in [self.TD3_name, self.SAC_name, self.SACD_name]
         self.algo = algo
 
         # Critics
@@ -77,6 +78,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             obs_dim,
             action_dim,
             encoder,
+            algo,
             action_embedding_size,
             state_embedding_size,
             reward_embedding_size,
@@ -114,8 +116,12 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             self.automatic_entropy_tuning = automatic_entropy_tuning
             if self.automatic_entropy_tuning:
                 if target_entropy is not None:
-                    self.target_entropy = float(target_entropy)
+                    if self.algo == self.SAC_name:
+                        self.target_entropy = float(target_entropy)
+                    else:  # sac-discrete: beta * log(|A|)
+                        self.target_entropy = float(target_entropy) * np.log(action_dim)
                 else:
+                    assert self.algo == self.SAC_name
                     self.target_entropy = -float(action_dim)
                 self.log_alpha_entropy = torch.zeros(
                     1, requires_grad=True, device=ptu.device
@@ -128,8 +134,6 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         # use separate optimizers
         self.critic_optimizer = Adam(self.critic.parameters(), lr=lr)
         self.actor_optimizer = Adam(self.actor.parameters(), lr=lr)
-        logger.log(self.critic)
-        logger.log(self.actor)
 
     @torch.no_grad()
     def get_initial_info(self):
@@ -202,8 +206,12 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
                     torch.randn_like(new_actions) * self.target_noise
                 ).clamp(-self.target_noise_clip, self.target_noise_clip)
                 new_actions = (new_actions + action_noise).clamp(-1, 1)  # NOTE
-            else:
+            elif self.algo == self.SAC_name:
                 new_actions, new_log_probs = self.actor(
+                    prev_actions=actions, rewards=rewards, observs=observs
+                )
+            else:
+                new_probs, new_log_probs = self.actor(
                     prev_actions=actions, rewards=rewards, observs=observs
                 )
 
@@ -211,14 +219,22 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
                 prev_actions=actions,
                 rewards=rewards,
                 observs=observs,
-                current_actions=new_actions,
-            )  # (T+1, B, 1)
+                current_actions=new_actions
+                if self.algo in [self.TD3_name, self.SAC_name]
+                else new_probs,
+            )  # (T+1, B, 1 or A)
+
             min_next_q_target = torch.min(next_q1, next_q2)
 
-            if self.algo == self.SAC_name:
+            if self.algo in [self.SAC_name, self.SACD_name]:
                 min_next_q_target += self.alpha_entropy * (
                     -new_log_probs
-                )  # (T+1, B, 1)
+                )  # (T+1, B, 1 or A)
+
+            if self.algo == self.SACD_name:  # E_{a'\sim \pi}[Q(h',a')], (T+1, B, 1)
+                min_next_q_target = (new_probs * min_next_q_target).sum(
+                    dim=-1, keepdims=True
+                )
 
             # q_target: (T, B, 1)
             q_target = (
@@ -231,8 +247,20 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             prev_actions=actions,
             rewards=rewards,
             observs=observs,
-            current_actions=actions[1:],  # (T, B, 1)
-        )  # (T, B, 1)
+            current_actions=actions[1:],
+        )  # (T, B, 1 or A)
+
+        if self.algo == self.SACD_name:
+            stored_actions = actions[1:]  # (T, B, A)
+            stored_actions = torch.argmax(
+                stored_actions, dim=-1, keepdims=True
+            )  # (T, B, 1)
+            q1_pred = q1_pred.gather(
+                dim=-1, index=stored_actions
+            )  # (T, B, A) -> (T, B, 1)
+            q2_pred = q2_pred.gather(
+                dim=-1, index=stored_actions
+            )  # (T, B, A) -> (T, B, 1)
 
         # masked Bellman error: masks (T,B,1) ignore the invalid error
         # this is not equal to masks * q1_pred, cuz the denominator in mean()
@@ -250,23 +278,37 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         if self.algo == self.TD3_name:
             new_actions, _ = self.actor(
                 prev_actions=actions, rewards=rewards, observs=observs
-            )  # (T+1, B, dim)
-        else:
+            )  # (T+1, B, A)
+        elif self.algo == self.SAC_name:
             new_actions, log_probs = self.actor(
                 prev_actions=actions, rewards=rewards, observs=observs
-            )  # (T+1, B, dim)
+            )  # (T+1, B, A)
+        else:
+            new_probs, log_probs = self.actor(
+                prev_actions=actions, rewards=rewards, observs=observs
+            )  # (T+1, B, A)
 
         q1, q2 = self.critic(
             prev_actions=actions,
             rewards=rewards,
             observs=observs,
-            current_actions=new_actions,
-        )  # (T+1, B, 1)
-        min_q_new_actions = torch.min(q1, q2)  # (T+1,B,1)
+            current_actions=new_actions
+            if self.algo in [self.TD3_name, self.SAC_name]
+            else new_probs,
+        )  # (T+1, B, 1 or A)
+        min_q_new_actions = torch.min(q1, q2)  # (T+1,B,1 or A)
 
         policy_loss = -min_q_new_actions
-        if self.algo == self.SAC_name:  # Q(h(t), pi(h(t))) + H[pi(h(t))]
+        if self.algo in [
+            self.SAC_name,
+            self.SACD_name,
+        ]:  # Q(h(t), pi(h(t))) + H[pi(h(t))]
             policy_loss += self.alpha_entropy * log_probs
+
+        if self.algo == self.SACD_name:  # E_{a\sim \pi}[Q(h,a)]
+            policy_loss = (new_probs * policy_loss).sum(
+                axis=-1, keepdims=True
+            )  # (T+1,B,1)
 
         policy_loss = policy_loss[:-1]  # (T,B,1) remove the last obs
         # masked policy_loss
@@ -280,11 +322,14 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         self.soft_target_update()
 
         ### 4. update alpha
-        if self.algo == self.SAC_name:
+        if self.algo in [self.SAC_name, self.SACD_name]:
             # extract valid log_probs
+            if self.algo == self.SACD_name:  # -> negative entropy (T+1, B, 1)
+                log_probs = (new_probs * log_probs).sum(axis=-1, keepdims=True)
             with torch.no_grad():
                 current_log_probs = (log_probs[:-1] * masks).sum() / num_valid
                 current_log_probs = current_log_probs.item()
+
             if self.automatic_entropy_tuning:
                 alpha_entropy_loss = -self.log_alpha_entropy.exp() * (
                     current_log_probs + self.target_entropy
@@ -301,7 +346,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             "qf2_loss": qf2_loss.item(),
             "policy_loss": policy_loss.item(),
         }
-        if self.algo == self.SAC_name:
+        if self.algo in [self.SAC_name, self.SACD_name]:
             outputs.update(
                 {"policy_entropy": -current_log_probs, "alpha": self.alpha_entropy}
             )
@@ -325,6 +370,12 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         # all are 3D tensor (T,B,dim)
         actions, rewards, dones = batch["act"], batch["rew"], batch["term"]
         _, batch_size, _ = actions.shape
+        if self.algo == self.SACD_name:
+            # for discrete action space, convert to one-hot vectors
+            actions = F.one_hot(
+                actions.squeeze(-1).long(), num_classes=self.action_dim
+            ).float()  # (T, B, A)
+
         masks = batch["mask"]
         obs, next_obs = batch["obs"], batch["obs2"]  # (T, B, dim)
 

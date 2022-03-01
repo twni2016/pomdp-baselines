@@ -2,13 +2,14 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from utils import helpers as utl
-from torchkit.continous_actor import DeterministicPolicy, TanhGaussianPolicy
+from torchkit.actor import DeterministicPolicy, TanhGaussianPolicy, CategoricalPolicy
 import torchkit.pytorch_utils as ptu
 
 
 class Actor_RNN(nn.Module):
     TD3_name = "td3"
     SAC_name = "sac"
+    SACD_name = "sacd"
     LSTM_name = "lstm"
     GRU_name = "gru"
     RNNs = {
@@ -35,7 +36,7 @@ class Actor_RNN(nn.Module):
         self.obs_dim = obs_dim
         self.action_dim = action_dim
 
-        assert algo in [self.TD3_name, self.SAC_name]
+        assert algo in [self.TD3_name, self.SAC_name, self.SACD_name]
         self.algo = algo
 
         ### Build Model
@@ -86,8 +87,14 @@ class Actor_RNN(nn.Module):
                 action_dim=self.action_dim,
                 hidden_sizes=policy_layers,
             )
-        else:
+        elif self.algo == self.SAC_name:
             self.policy = TanhGaussianPolicy(
+                obs_dim=self.rnn_hidden_size + state_embedding_size,
+                action_dim=self.action_dim,
+                hidden_sizes=policy_layers,
+            )
+        else:  # SAC-Discrete
+            self.policy = CategoricalPolicy(
                 obs_dim=self.rnn_hidden_size + state_embedding_size,
                 action_dim=self.action_dim,
                 hidden_sizes=policy_layers,
@@ -136,12 +143,16 @@ class Actor_RNN(nn.Module):
 
         # 4. Actor
         if self.algo == self.TD3_name:
-            new_actions, log_probs = self.policy(joint_embeds), None
-        else:  # SAC
+            new_actions = self.policy(joint_embeds)
+            return new_actions, None  # (T+1, B, dim), None
+        elif self.algo == self.SAC_name:
             new_actions, _, _, log_probs = self.policy(
                 joint_embeds, return_log_prob=True
             )
-        return new_actions, log_probs  # (T+1, B, dim), (T+1, B, 1) or None
+            return new_actions, log_probs  # (T+1, B, dim), (T+1, B, 1)
+        else:  # sac-d
+            _, probs, log_probs = self.policy(joint_embeds, return_log_prob=True)
+            return probs, log_probs  # (T+1, B, dim), (T+1, B, dim)
 
     @torch.no_grad()
     def get_initial_info(self):
@@ -203,10 +214,14 @@ class Actor_RNN(nn.Module):
                     -1, 1
                 )  # NOTE
                 action_tuple = (action, mean, None, None)
-        else:
-            # sac
+        elif self.algo == self.SAC_name:
             action_tuple = self.policy(
                 joint_embeds, False, deterministic, return_log_prob
             )
-
+        else:
+            # sac-discrete
+            action, prob, log_prob = self.policy(
+                joint_embeds, deterministic, return_log_prob
+            )
+            action_tuple = (action, prob, log_prob, None)
         return action_tuple, current_internal_state
