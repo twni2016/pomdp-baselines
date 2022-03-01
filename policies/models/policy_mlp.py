@@ -124,14 +124,6 @@ class ModelFreeOffPolicy_MLP(nn.Module):
 
         self.policy_optim = Adam(self.policy.parameters(), lr=lr)
 
-    def forward(self, obs):
-        if self.algo == self.TD3_name:
-            action = self.policy(obs)
-        else:
-            action, _, _, _ = self.policy(obs)
-        q1, q2 = self.qf1(obs, action), self.qf2(obs, action)
-        return action, q1, q2
-
     def act(
         self, obs, deterministic=False, return_log_prob=False, use_target_policy=False
     ):
@@ -272,7 +264,7 @@ class ModelFreeOffPolicy_MLP(nn.Module):
                 alpha_entropy_loss.backward()
                 self.alpha_entropy_optim.step()
 
-                self.alpha_entropy = self.log_alpha_entropy.exp().detach().item()
+                self.alpha_entropy = self.log_alpha_entropy.exp().item()
 
         outputs = {
             "qf1_loss": qf1_loss.item(),

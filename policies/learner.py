@@ -484,8 +484,8 @@ class Learner:
                             action.squeeze(dim=0)
                             if self.act_continuous
                             else torch.argmax(
-                                action.squeeze(dim=0), keepdims=True
-                            )  # (1)
+                                action.squeeze(dim=0), dim=-1, keepdims=True
+                            )  # (1,)
                         ),
                         reward=ptu.get_numpy(reward.squeeze(dim=0)),
                         terminal=np.array([term], dtype=float),
