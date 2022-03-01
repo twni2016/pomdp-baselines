@@ -7,12 +7,12 @@ env:
   num_eval_tasks: 20 # num of eval episodes
 
 train:
-  # 500*1000 = 500k steps
-  num_iters: 500 # number meta-training iterates
+  # 200*1000 = 200k steps
+  num_iters: 200 # number meta-training iterates
   num_init_rollouts_pool: 5 # before training
   num_rollouts_per_iter: 1
 
-  num_updates_per_iter: 1.0
+  num_updates_per_iter: 0.2
   # buffer params
   buffer_size: 1e6
   batch_size: 32 # to tune based on sampled_seq_len
