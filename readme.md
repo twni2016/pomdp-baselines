@@ -24,6 +24,7 @@ There are many other (more complicated or specialized) methods for POMDPs and it
 Note that current repo should be run smoothly.
 
 DONE:
+* Mar 2022: introduce recurrent [SAC-discrete](https://arxiv.org/abs/1910.07207) for **discrete action** space and see [this PR for instructions](https://github.com/twni2016/pomdp-baselines/pull/1)
 * Feb 2022: simplify `--oracle` commands, and upload the plotting scripts
 * Jan 2022: introduce new meta RL environments (*-Dir), and replace re-implementation of off-policy variBAD with original implementation
 * Dec 2021: add some command-line arguments to overwrite the config file and save the updated one
@@ -80,7 +81,7 @@ To run our implementation, Markovian, and Oracle, in <local_path> simply
 ```
 export PYTHONPATH=${PWD}:$PYTHONPATH
 python3 policies/main.py --cfg configs/<subarea>/<env_name>/<algo_name>.yml \
-  [--algo {td3,sac} --seed <int> --cuda <int> --oracle]
+  [--algo {td3,sac,sacd} --seed <int> --cuda <int> --oracle]
 ```
 where `algo_name` specifies the algorithm name:
 - `mlp` correspond to **Markovian** policies

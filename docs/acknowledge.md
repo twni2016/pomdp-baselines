@@ -59,4 +59,10 @@ Please cite their work if you also find their code useful to your project:
  note={\url{http://www.deepreinforcementlearningbook.org}},
  year={2020}
 }
+@article{christodoulou2019soft,
+  title={Soft actor-critic for discrete action settings},
+  author={Christodoulou, Petros},
+  journal={arXiv preprint arXiv:1910.07207},
+  year={2019}
+}
 ```
