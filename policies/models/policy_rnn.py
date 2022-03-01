@@ -118,7 +118,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
                 if target_entropy is not None:
                     if self.algo == self.SAC_name:
                         self.target_entropy = float(target_entropy)
-                    else: # sac-discrete: beta * log(|A|)
+                    else:  # sac-discrete: beta * log(|A|)
                         self.target_entropy = float(target_entropy) * np.log(action_dim)
                 else:
                     assert self.algo == self.SAC_name
@@ -219,7 +219,9 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
                 prev_actions=actions,
                 rewards=rewards,
                 observs=observs,
-                current_actions=new_actions if self.algo in [self.TD3_name, self.SAC_name] else new_probs,
+                current_actions=new_actions
+                if self.algo in [self.TD3_name, self.SAC_name]
+                else new_probs,
             )  # (T+1, B, 1 or A)
 
             min_next_q_target = torch.min(next_q1, next_q2)
@@ -228,9 +230,11 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
                 min_next_q_target += self.alpha_entropy * (
                     -new_log_probs
                 )  # (T+1, B, 1 or A)
-            
-            if self.algo == self.SACD_name: # E_{a'\sim \pi}[Q(h',a')], (T+1, B, 1)
-                min_next_q_target = (new_probs * min_next_q_target).sum(dim=-1, keepdims=True)
+
+            if self.algo == self.SACD_name:  # E_{a'\sim \pi}[Q(h',a')], (T+1, B, 1)
+                min_next_q_target = (new_probs * min_next_q_target).sum(
+                    dim=-1, keepdims=True
+                )
 
             # q_target: (T, B, 1)
             q_target = (
@@ -247,10 +251,16 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         )  # (T, B, 1 or A)
 
         if self.algo == self.SACD_name:
-            stored_actions = actions[1:] # (T, B, A)
-            stored_actions = torch.argmax(stored_actions, dim=-1, keepdims=True) # (T, B, 1)
-            q1_pred = q1_pred.gather(dim=-1, index=stored_actions) # (T, B, A) -> (T, B, 1)
-            q2_pred = q2_pred.gather(dim=-1, index=stored_actions) # (T, B, A) -> (T, B, 1)
+            stored_actions = actions[1:]  # (T, B, A)
+            stored_actions = torch.argmax(
+                stored_actions, dim=-1, keepdims=True
+            )  # (T, B, 1)
+            q1_pred = q1_pred.gather(
+                dim=-1, index=stored_actions
+            )  # (T, B, A) -> (T, B, 1)
+            q2_pred = q2_pred.gather(
+                dim=-1, index=stored_actions
+            )  # (T, B, A) -> (T, B, 1)
 
         # masked Bellman error: masks (T,B,1) ignore the invalid error
         # this is not equal to masks * q1_pred, cuz the denominator in mean()
@@ -282,16 +292,23 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             prev_actions=actions,
             rewards=rewards,
             observs=observs,
-            current_actions=new_actions if self.algo in [self.TD3_name, self.SAC_name] else new_probs,
+            current_actions=new_actions
+            if self.algo in [self.TD3_name, self.SAC_name]
+            else new_probs,
         )  # (T+1, B, 1 or A)
         min_q_new_actions = torch.min(q1, q2)  # (T+1,B,1 or A)
 
         policy_loss = -min_q_new_actions
-        if self.algo in [self.SAC_name, self.SACD_name]:  # Q(h(t), pi(h(t))) + H[pi(h(t))]
+        if self.algo in [
+            self.SAC_name,
+            self.SACD_name,
+        ]:  # Q(h(t), pi(h(t))) + H[pi(h(t))]
             policy_loss += self.alpha_entropy * log_probs
 
         if self.algo == self.SACD_name:  # E_{a\sim \pi}[Q(h,a)]
-            policy_loss = (new_probs * policy_loss).sum(axis=-1, keepdims=True) # (T+1,B,1)
+            policy_loss = (new_probs * policy_loss).sum(
+                axis=-1, keepdims=True
+            )  # (T+1,B,1)
 
         policy_loss = policy_loss[:-1]  # (T,B,1) remove the last obs
         # masked policy_loss
@@ -305,14 +322,14 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         self.soft_target_update()
 
         ### 4. update alpha
-        if self.algo in [self.SAC_name, self.SACD_name]: 
+        if self.algo in [self.SAC_name, self.SACD_name]:
             # extract valid log_probs
-            if self.algo == self.SACD_name: # -> negative entropy (T+1, B, 1)
+            if self.algo == self.SACD_name:  # -> negative entropy (T+1, B, 1)
                 log_probs = (new_probs * log_probs).sum(axis=-1, keepdims=True)
             with torch.no_grad():
                 current_log_probs = (log_probs[:-1] * masks).sum() / num_valid
                 current_log_probs = current_log_probs.item()
-            
+
             if self.automatic_entropy_tuning:
                 alpha_entropy_loss = -self.log_alpha_entropy.exp() * (
                     current_log_probs + self.target_entropy
@@ -355,8 +372,10 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         _, batch_size, _ = actions.shape
         if self.algo == self.SACD_name:
             # for discrete action space, convert to one-hot vectors
-            actions = F.one_hot(actions.squeeze(-1).long(), num_classes=self.action_dim).float() # (T, B, A)
-        
+            actions = F.one_hot(
+                actions.squeeze(-1).long(), num_classes=self.action_dim
+            ).float()  # (T, B, A)
+
         masks = batch["mask"]
         obs, next_obs = batch["obs"], batch["obs2"]  # (T, B, dim)
 

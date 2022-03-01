@@ -35,24 +35,20 @@ register(
     kwargs=dict(
         env=gym.make("CartPole-v0"), partially_obs_dims=[0, 1, 2, 3]
     ),  # angle & velocity
-    max_episode_steps=200, # reward threshold for solving the task: 195
+    max_episode_steps=200,  # reward threshold for solving the task: 195
 )
 
 register(
     "CartPole-P-v0",
     entry_point="envs.pomdp.wrappers:POMDPWrapper",
-    kwargs=dict(
-        env=gym.make("CartPole-v0"), partially_obs_dims=[0, 2]
-    ),
+    kwargs=dict(env=gym.make("CartPole-v0"), partially_obs_dims=[0, 2]),
     max_episode_steps=200,
 )
 
 register(
     "CartPole-V-v0",
     entry_point="envs.pomdp.wrappers:POMDPWrapper",
-    kwargs=dict(
-        env=gym.make("CartPole-v0"), partially_obs_dims=[1, 3]
-    ),
+    kwargs=dict(env=gym.make("CartPole-v0"), partially_obs_dims=[1, 3]),
     max_episode_steps=200,
 )
 

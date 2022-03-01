@@ -60,17 +60,21 @@ class ModelFreeOffPolicy_MLP(nn.Module):
         if self.algo in [self.TD3_name, self.SAC_name]:
             extra_input_size = action_dim
             output_size = 1
-        else: # sac-discrete
+        else:  # sac-discrete
             extra_input_size = 0
             output_size = action_dim
 
         self.qf1 = FlattenMlp(
-            input_size=obs_dim + extra_input_size, output_size=output_size, hidden_sizes=dqn_layers
+            input_size=obs_dim + extra_input_size,
+            output_size=output_size,
+            hidden_sizes=dqn_layers,
         )
         self.qf1_optim = Adam(self.qf1.parameters(), lr=lr)
 
         self.qf2 = FlattenMlp(
-            input_size=obs_dim + extra_input_size, output_size=output_size, hidden_sizes=dqn_layers
+            input_size=obs_dim + extra_input_size,
+            output_size=output_size,
+            hidden_sizes=dqn_layers,
         )
         self.qf2_optim = Adam(self.qf2.parameters(), lr=lr)
 
@@ -94,18 +98,18 @@ class ModelFreeOffPolicy_MLP(nn.Module):
                 obs_dim=obs_dim, action_dim=action_dim, hidden_sizes=policy_layers
             )
 
-        else: # sac-discrete
+        else:  # sac-discrete
             self.policy = CategoricalPolicy(
                 obs_dim=obs_dim, action_dim=action_dim, hidden_sizes=policy_layers
             )
-        
+
         if self.algo in [self.SAC_name, self.SACD_name]:
             self.automatic_entropy_tuning = automatic_entropy_tuning
             if self.automatic_entropy_tuning:
                 if target_entropy is not None:
                     if self.algo == self.SAC_name:
                         self.target_entropy = float(target_entropy)
-                    else: # sac-discrete: beta * log(|A|)
+                    else:  # sac-discrete: beta * log(|A|)
                         self.target_entropy = float(target_entropy) * np.log(action_dim)
                 else:
                     assert self.algo == self.SAC_name
@@ -157,7 +161,7 @@ class ModelFreeOffPolicy_MLP(nn.Module):
     def update(self, batch):
         obs, next_obs = batch["obs"], batch["obs2"]  # (B, dim)
         action, reward, done = batch["act"], batch["rew"], batch["term"]  # (B, dim)
-        
+
         # computation of critic loss
         with torch.no_grad():
             if self.algo == self.TD3_name:
@@ -175,13 +179,13 @@ class ModelFreeOffPolicy_MLP(nn.Module):
             else:
                 _, next_prob, next_log_prob, _ = self.act(
                     next_obs, return_log_prob=True
-                ) # (B, A), (B, A)
+                )  # (B, A), (B, A)
 
             if self.algo in [self.TD3_name, self.SAC_name]:
-                next_q1 = self.qf1_target(next_obs, next_action) # (B, 1)
+                next_q1 = self.qf1_target(next_obs, next_action)  # (B, 1)
                 next_q2 = self.qf2_target(next_obs, next_action)
             else:
-                next_q1 = self.qf1_target(next_obs) # (B, A)
+                next_q1 = self.qf1_target(next_obs)  # (B, A)
                 next_q2 = self.qf2_target(next_obs)
 
             min_next_q_target = torch.min(next_q1, next_q2)
@@ -189,17 +193,18 @@ class ModelFreeOffPolicy_MLP(nn.Module):
             if self.algo in [self.SAC_name, self.SACD_name]:
                 min_next_q_target += self.alpha_entropy * (-next_log_prob)
 
-            if self.algo == self.SACD_name: # E_{a'\sim \pi}[Q(s',a')], (B, 1)
-                min_next_q_target = (next_prob * min_next_q_target).sum(dim=-1, keepdims=True)
+            if self.algo == self.SACD_name:  # E_{a'\sim \pi}[Q(s',a')], (B, 1)
+                min_next_q_target = (next_prob * min_next_q_target).sum(
+                    dim=-1, keepdims=True
+                )
 
             q_target = reward + (1.0 - done) * self.gamma * min_next_q_target
-
 
         if self.algo in [self.TD3_name, self.SAC_name]:
             q1_pred = self.qf1(obs, action)
             q2_pred = self.qf2(obs, action)
         else:
-            action = action.long() # (B, 1)
+            action = action.long()  # (B, 1)
             q1_pred = self.qf1(obs)
             q2_pred = self.qf2(obs)
             q1_pred = q1_pred.gather(dim=-1, index=action)
@@ -235,7 +240,7 @@ class ModelFreeOffPolicy_MLP(nn.Module):
         else:
             q1 = self.qf1(obs)
             q2 = self.qf2(obs)
-        
+
         min_q_new_actions = torch.min(q1, q2)
 
         policy_loss = -min_q_new_actions
@@ -243,7 +248,7 @@ class ModelFreeOffPolicy_MLP(nn.Module):
             policy_loss += self.alpha_entropy * log_prob
 
         if self.algo == self.SACD_name:  # E_{a\sim \pi}[Q(s,a)]
-            policy_loss = (new_prob * policy_loss).sum(axis=-1, keepdims=True) # (B,1)
+            policy_loss = (new_prob * policy_loss).sum(axis=-1, keepdims=True)  # (B,1)
 
         policy_loss = policy_loss.mean()
 
@@ -253,14 +258,15 @@ class ModelFreeOffPolicy_MLP(nn.Module):
         self.policy_optim.step()
 
         if self.algo in [self.SAC_name, self.SACD_name]:
-            if self.algo == self.SACD_name: # -> negative entropy (B, 1)
+            if self.algo == self.SACD_name:  # -> negative entropy (B, 1)
                 log_prob = (new_prob * log_prob).sum(axis=-1, keepdims=True)
 
             current_log_prob = log_prob.mean().item()
 
             if self.automatic_entropy_tuning:
                 alpha_entropy_loss = -self.log_alpha_entropy.exp() * (
-                    current_log_prob + self.target_entropy)
+                    current_log_prob + self.target_entropy
+                )
 
                 self.alpha_entropy_optim.zero_grad()
                 alpha_entropy_loss.backward()

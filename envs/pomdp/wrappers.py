@@ -16,7 +16,7 @@ class POMDPWrapper(gym.Wrapper):
             dtype=np.float32,
         )
 
-        if self.env.action_space.__class__.__name__ == "Box": 
+        if self.env.action_space.__class__.__name__ == "Box":
             self.act_continuous = True
             # if continuous actions, make sure in [-1, 1]
             # NOTE: policy won't use action_space.low/high, just set [-1,1]

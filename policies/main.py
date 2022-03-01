@@ -99,7 +99,7 @@ else:  # rnn
         exp_id += "_shared"
 exp_id += "/"
 
-if algo in ["sac", "sacd"] and 'target_entropy' in v['policy']:
+if algo in ["sac", "sacd"] and "target_entropy" in v["policy"]:
     exp_id += f"ent-{v['policy']['target_entropy']}/"
 
 if arch in ["lstm", "gru"]:

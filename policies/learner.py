@@ -192,7 +192,7 @@ class Learner:
             raise ValueError
 
         # get action / observation dimensions
-        if self.train_env.action_space.__class__.__name__ == "Box": 
+        if self.train_env.action_space.__class__.__name__ == "Box":
             # continuous action space
             self.act_dim = self.train_env.action_space.shape[0]
             self.act_continuous = True
@@ -249,7 +249,7 @@ class Learner:
             self.policy_storage = SimpleReplayBuffer(
                 max_replay_buffer_size=int(buffer_size),
                 observation_dim=self.obs_dim,
-                action_dim=self.act_dim if self.act_continuous else 1, # save memory
+                action_dim=self.act_dim if self.act_continuous else 1,  # save memory
                 max_trajectory_len=self.max_trajectory_len,
                 add_timeout=False,  # no timeout storage
             )
@@ -261,7 +261,7 @@ class Learner:
             self.policy_storage = SeqReplayBuffer(
                 max_replay_buffer_size=int(buffer_size),
                 observation_dim=self.obs_dim,
-                action_dim=self.act_dim if self.act_continuous else 1, # save memory
+                action_dim=self.act_dim if self.act_continuous else 1,  # save memory
                 sampled_seq_len=sampled_seq_len,
                 sample_weight_baseline=sample_weight_baseline,
             )
@@ -435,7 +435,9 @@ class Learner:
                         [self.train_env.action_space.sample()]
                     )  # (1, A) for continuous action, (1) for discrete action
                     if not self.act_continuous:
-                        action = F.one_hot(action.long(), num_classes=self.act_dim).float() # (1, A)
+                        action = F.one_hot(
+                            action.long(), num_classes=self.act_dim
+                        ).float()  # (1, A)
                 else:  # policy takes hidden state as input for rnn, while takes obs for mlp
                     if self.policy_arch == "mlp":
                         action, _, _, _ = self.agent.act(obs, deterministic=False)
@@ -478,8 +480,12 @@ class Learner:
                 if self.policy_arch == "mlp":
                     self.policy_storage.add_sample(
                         observation=ptu.get_numpy(obs.squeeze(dim=0)),
-                        action=ptu.get_numpy(action.squeeze(dim=0) if self.act_continuous else
-                            torch.argmax(action.squeeze(dim=0), keepdims=True) # (1)
+                        action=ptu.get_numpy(
+                            action.squeeze(dim=0)
+                            if self.act_continuous
+                            else torch.argmax(
+                                action.squeeze(dim=0), keepdims=True
+                            )  # (1)
                         ),
                         reward=ptu.get_numpy(reward.squeeze(dim=0)),
                         terminal=np.array([term], dtype=float),
@@ -501,9 +507,11 @@ class Learner:
                     break  # has to manually break
 
             if self.policy_arch == "memory":  # add collected sequence to buffer
-                act_buffer = torch.cat(act_list, dim=0) # (L, dim)
+                act_buffer = torch.cat(act_list, dim=0)  # (L, dim)
                 if not self.act_continuous:
-                    act_buffer = torch.argmax(act_buffer, dim=-1, keepdims=True) # (L, 1)
+                    act_buffer = torch.argmax(
+                        act_buffer, dim=-1, keepdims=True
+                    )  # (L, 1)
 
                 self.policy_storage.add_episode(
                     observations=ptu.get_numpy(torch.cat(obs_list, dim=0)),  # (L, dim)

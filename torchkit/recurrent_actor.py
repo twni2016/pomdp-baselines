@@ -93,7 +93,7 @@ class Actor_RNN(nn.Module):
                 action_dim=self.action_dim,
                 hidden_sizes=policy_layers,
             )
-        else: # SAC-Discrete
+        else:  # SAC-Discrete
             self.policy = CategoricalPolicy(
                 obs_dim=self.rnn_hidden_size + state_embedding_size,
                 action_dim=self.action_dim,
@@ -149,13 +149,11 @@ class Actor_RNN(nn.Module):
             new_actions, _, _, log_probs = self.policy(
                 joint_embeds, return_log_prob=True
             )
-            return new_actions, log_probs # (T+1, B, dim), (T+1, B, 1)
-        else: # sac-d
-            _, probs, log_probs = self.policy(
-                joint_embeds, return_log_prob=True
-            )
-            return probs, log_probs # (T+1, B, dim), (T+1, B, dim)
-        
+            return new_actions, log_probs  # (T+1, B, dim), (T+1, B, 1)
+        else:  # sac-d
+            _, probs, log_probs = self.policy(joint_embeds, return_log_prob=True)
+            return probs, log_probs  # (T+1, B, dim), (T+1, B, dim)
+
     @torch.no_grad()
     def get_initial_info(self):
         # here we assume batch_size = 1

@@ -145,7 +145,7 @@ class TanhGaussianPolicy(Mlp):
 
 
 class CategoricalPolicy(Mlp):
-    """ Based on https://github.com/ku2482/sac-discrete.pytorch/blob/master/sacd/model.py
+    """Based on https://github.com/ku2482/sac-discrete.pytorch/blob/master/sacd/model.py
     Usage: SAC-discrete
     ```
     policy = CategoricalPolicy(...)
@@ -156,9 +156,7 @@ class CategoricalPolicy(Mlp):
     NOTE: action space must be discrete
     """
 
-    def __init__(
-        self, obs_dim, action_dim, hidden_sizes, init_w=1e-3, **kwargs
-    ):
+    def __init__(self, obs_dim, action_dim, hidden_sizes, init_w=1e-3, **kwargs):
         self.save_init_params(locals())
         super().__init__(
             hidden_sizes,
@@ -182,23 +180,23 @@ class CategoricalPolicy(Mlp):
         :param return_log_prob: If True, return a sample and its log probability
         return: action (*, B, A), prob (*, B, A), log_prob (*, B, A)
         """
-        action_logits = super().forward(obs) # (*, A)
+        action_logits = super().forward(obs)  # (*, A)
 
         prob, log_prob = None, None
         if deterministic:
-            action = torch.argmax(action_logits, dim=-1) # (*)
+            action = torch.argmax(action_logits, dim=-1)  # (*)
             assert (
                 return_log_prob == False
             )  # NOTE: cannot be used for estimating entropy
         else:
-            prob = F.softmax(action_logits, dim=-1) # (*, A)
+            prob = F.softmax(action_logits, dim=-1)  # (*, A)
             distr = Categorical(prob)
             # categorical distr cannot reparameterize
-            action = distr.sample() # (*)
+            action = distr.sample()  # (*)
             if return_log_prob:
                 log_prob = torch.log(torch.clamp(prob, min=PROB_MIN))
 
         # convert to one-hot vectors
-        action = F.one_hot(action.long(), num_classes=self.action_dim).float() # (*, A)
+        action = F.one_hot(action.long(), num_classes=self.action_dim).float()  # (*, A)
 
         return action, prob, log_prob

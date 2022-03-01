@@ -69,7 +69,7 @@ class Critic_RNN(nn.Module):
         if self.algo in [self.TD3_name, self.SAC_name]:
             extra_input_size = action_dim
             output_size = 1
-        else: # sac-discrete
+        else:  # sac-discrete
             extra_input_size = 0
             output_size = action_dim
 
@@ -145,7 +145,9 @@ class Critic_RNN(nn.Module):
                     torch.cat((observs[:-1], current_actions), dim=-1)
                 )  # (T, B, dim)
             else:
-                curr_embed = self.current_state_action_encoder(observs[:-1]) # (T, B, dim)
+                curr_embed = self.current_state_action_encoder(
+                    observs[:-1]
+                )  # (T, B, dim)
             # 3. joint embeds
             joint_embeds = torch.cat(
                 (hidden_states[:-1], curr_embed), dim=-1
