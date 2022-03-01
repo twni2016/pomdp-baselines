@@ -1,13 +1,16 @@
 import numpy as np
 import torch
 from torch import nn as nn
+import torch.nn.functional as F
 
+from torch.distributions import Categorical
 from torchkit.distributions import TanhNormal
 from torchkit.networks import Mlp
 
 
 LOG_SIG_MAX = 2
 LOG_SIG_MIN = -20
+PROB_MIN = 1e-8
 
 
 class DeterministicPolicy(Mlp):
@@ -139,3 +142,63 @@ class TanhGaussianPolicy(Mlp):
                     action = tanh_normal.sample()
 
         return action, mean, log_std, log_prob
+
+
+class CategoricalPolicy(Mlp):
+    """ Based on https://github.com/ku2482/sac-discrete.pytorch/blob/master/sacd/model.py
+    Usage: SAC-discrete
+    ```
+    policy = CategoricalPolicy(...)
+    action, _, _ = policy(obs, deterministic=True)
+    action, _, _ = policy(obs, deterministic=False)
+    action, prob, log_prob = policy(obs, deterministic=False, return_log_prob=True)
+    ```
+    NOTE: action space must be discrete
+    """
+
+    def __init__(
+        self, obs_dim, action_dim, hidden_sizes, init_w=1e-3, **kwargs
+    ):
+        self.save_init_params(locals())
+        super().__init__(
+            hidden_sizes,
+            input_size=obs_dim,
+            output_size=action_dim,
+            init_w=init_w,
+            **kwargs,
+        )
+        self.obs_dim = obs_dim
+        self.action_dim = action_dim
+
+    def forward(
+        self,
+        obs,
+        deterministic=False,
+        return_log_prob=False,
+    ):
+        """
+        :param obs: Observation, usually 2D (B, dim), but maybe 3D (T, B, dim)
+        :param deterministic: If True, do not sample
+        :param return_log_prob: If True, return a sample and its log probability
+        return: action (*, B, A), prob (*, B, A), log_prob (*, B, A)
+        """
+        action_logits = super().forward(obs) # (*, A)
+
+        prob, log_prob = None, None
+        if deterministic:
+            action = torch.argmax(action_logits, dim=-1) # (*)
+            assert (
+                return_log_prob == False
+            )  # NOTE: cannot be used for estimating entropy
+        else:
+            prob = F.softmax(action_logits, dim=-1) # (*, A)
+            distr = Categorical(prob)
+            # categorical distr cannot reparameterize
+            action = distr.sample() # (*)
+            if return_log_prob:
+                log_prob = torch.log(torch.clamp(prob, min=PROB_MIN))
+
+        # convert to one-hot vectors
+        action = F.one_hot(action.long(), num_classes=self.action_dim).float() # (*, A)
+
+        return action, prob, log_prob

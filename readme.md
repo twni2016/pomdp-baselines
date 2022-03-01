@@ -49,7 +49,7 @@ pip install -r requirements.txt
 ```
 
 The `requirements.txt` file includes all the dependencies (e.g. PyTorch, PyBullet) used in our experiments (including the compared methods), but there are two exceptions:
-- To run Cheetah-Vel and Ant-Dir in meta RL, you have to install [MuJoCo](https://github.com/openai/mujoco-py) on your own (it is free now!)
+- To run Cheetah-Vel and Ant-Dir in meta RL, you have to install [MuJoCo](https://github.com/openai/mujoco-py) (>=2.0.2) on your own (it is free now!)
 - To run robust RL and generalization in RL experiments, you have to install [Roboschool](https://github.com/openai/roboschool). 
     - We found it hard to install Roboschool from scratch, therefore we provide a docker file `roboschool.sif` in [google drive](https://drive.google.com/file/d/1KpTpVwoU02AI7uQrk2T9hQ6s15EISRTa/view?usp=sharing) that contains Roboschool and the other necessary libraries, adapted from [SunBlaze repo](https://github.com/sunblaze-ucb/rl-generalization). 
     - To download and activate the docker file by singularity (tested in v3.7) on a cluster (on a single server should be similar):

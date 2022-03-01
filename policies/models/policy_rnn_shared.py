@@ -9,7 +9,7 @@ from torch.nn import functional as F
 from torch.optim import Adam
 from utils import helpers as utl
 from torchkit.networks import FlattenMlp
-from torchkit.continous_actor import DeterministicPolicy, TanhGaussianPolicy
+from torchkit.actor import DeterministicPolicy, TanhGaussianPolicy
 import torchkit.pytorch_utils as ptu
 from utils import logger
 
