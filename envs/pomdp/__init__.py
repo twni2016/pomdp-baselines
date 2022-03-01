@@ -52,6 +52,33 @@ register(
     max_episode_steps=200,
 )
 
+register(
+    "LunarLander-F-v0",
+    entry_point="envs.pomdp.wrappers:POMDPWrapper",
+    kwargs=dict(
+        env=gym.make("LunarLander-v2"), partially_obs_dims=list(range(8))
+    ),  # angle & velocity
+    max_episode_steps=1000,  # reward threshold for solving the task: 200
+)
+
+register(
+    "LunarLander-P-v0",
+    entry_point="envs.pomdp.wrappers:POMDPWrapper",
+    kwargs=dict(
+        env=gym.make("LunarLander-v2"), partially_obs_dims=[0, 1, 4, 6, 7]
+    ),
+    max_episode_steps=1000, 
+)
+
+register(
+    "LunarLander-V-v0",
+    entry_point="envs.pomdp.wrappers:POMDPWrapper",
+    kwargs=dict(
+        env=gym.make("LunarLander-v2"), partially_obs_dims=[2, 3, 5, 6, 7]
+    ),
+    max_episode_steps=1000, 
+)
+
 ### Below are pybullect (roboschool) environments, using BLT for Bullet
 import pybullet_envs
 

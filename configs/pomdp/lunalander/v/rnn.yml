@@ -1,28 +1,39 @@
 seed: 73
-cuda: -1 # use_gpu
+cuda: 0 # use_gpu
 env:
   env_type: pomdp
-  env_name: CartPole-F-v0
+  env_name: LunarLander-V-v0
 
   num_eval_tasks: 20 # num of eval episodes
 
 train:
-  # 500*200 = 100k steps
+  # 500*1000 = 500k steps
   num_iters: 500 # number meta-training iterates
   num_init_rollouts_pool: 5 # before training
   num_rollouts_per_iter: 1
+
+  num_updates_per_iter: 1.0
+  # buffer params
   buffer_size: 1e6
-  batch_size: 256
+  batch_size: 32 # to tune based on sampled_seq_len
+  sampled_seq_len: -1 # -1 is all, or positive integer
+  sample_weight_baseline: 0.0
 
 eval:
   eval_stochastic: false # also eval stochastic policy
-  log_interval: 1 # num of iters
+  log_interval: 4 # num of iters
   save_interval: -1
   log_tensorboard: true
 
 policy:
-  arch: mlp
+  separate: True
+  arch: lstm # [lstm, gru]
   algo: sacd # only support sac-discrete
+
+  action_embedding_size: 8 # no action input
+  state_embedding_size: 32
+  reward_embedding_size: 8
+  rnn_hidden_size: 128
 
   dqn_layers: [128, 128]
   policy_layers: [128, 128]
@@ -30,7 +41,7 @@ policy:
   gamma: 0.99
   tau: 0.005
 
-  # sac alpha
+  # sacd alpha
   entropy_alpha: null
   automatic_entropy_tuning: true
   target_entropy: 0.7 # the ratio: target_entropy = ratio * log(|A|)

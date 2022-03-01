@@ -2,12 +2,12 @@ seed: 73
 cuda: -1 # use_gpu
 env:
   env_type: pomdp
-  env_name: CartPole-F-v0
+  env_name: LunarLander-F-v0
 
   num_eval_tasks: 20 # num of eval episodes
 
 train:
-  # 500*200 = 100k steps
+  # 500*1000 = 500k steps
   num_iters: 500 # number meta-training iterates
   num_init_rollouts_pool: 5 # before training
   num_rollouts_per_iter: 1
