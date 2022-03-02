@@ -82,3 +82,52 @@ class FlattenMlp(Mlp):
     def forward(self, *inputs, **kwargs):
         flat_inputs = torch.cat(inputs, dim=-1)
         return super().forward(flat_inputs, **kwargs)
+
+def conv_output_shape(h_w, kernel_size=1, stride=1, pad=0, dilation=1):
+    from math import floor
+    if type(kernel_size) is not tuple:
+        kernel_size = (kernel_size, kernel_size)
+    h = floor( ((h_w[0] + (2 * pad) - ( dilation * (kernel_size[0] - 1) ) - 1 )/ stride) + 1)
+    w = floor( ((h_w[1] + (2 * pad) - ( dilation * (kernel_size[1] - 1) ) - 1 )/ stride) + 1)
+    return h, w
+
+import numpy as np
+class ImageEncoder(nn.Module):
+    def __init__(self, image_shape, embed_size=100, depth=8, kernel_size=(2,2), stride=1, from_flattened=False):
+        super(ImageEncoder, self).__init__()
+        self.shape = image_shape
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.depth = depth
+
+        self.conv1 = nn.Conv2d(image_shape[0], depth, kernel_size, stride)
+        self.conv2 = nn.Conv2d(depth, 2*depth, kernel_size, stride)
+        self.linear = nn.Linear(self.conv_out_size(), embed_size)
+        self.activation = nn.ReLU()
+
+        self.from_flattened = from_flattened
+        self.embed_size = embed_size
+
+    def forward(self, image):
+        # image of size [N, C, H, W]
+        # return embedding of shape [N, embed_size]
+        if self.from_flattened:
+            batch_size = image.shape[:-1]
+            img_shape = [np.prod(batch_size)] + list(self.shape)
+            image = torch.reshape(image, img_shape)
+        else:
+            batch_size = [image.shape[0]]
+        embed = self.conv1(image)
+        embed = self.activation(embed)
+        embed = self.conv2(embed)
+        embed = self.activation(embed)
+        embed = torch.reshape(embed, list(batch_size) +[-1])
+        embed = self.linear(embed)
+        return embed
+
+    def conv_out_size(self):
+        h_w = self.shape[-2:]
+        out_h_w = conv_output_shape(h_w, self.kernel_size, self.stride)
+        out_h_w = conv_output_shape(out_h_w, self.kernel_size, self.stride)
+
+        return out_h_w[0] * out_h_w[1] * self.depth*2

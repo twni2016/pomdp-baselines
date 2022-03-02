@@ -20,6 +20,7 @@ from torchkit import pytorch_utils as ptu
 from utils import evaluation as utl_eval
 from utils import logger
 
+from torchkit.networks import ImageEncoder
 
 class Learner:
     """
@@ -203,7 +204,7 @@ class Learner:
         self.obs_dim = self.train_env.observation_space.shape[0]  # include 1-dim done
         logger.log("obs_dim", self.obs_dim, "act_dim", self.act_dim)
 
-    def init_policy(self, arch, separate: bool = True, **kwargs):
+    def init_policy(self, arch, separate: bool = True, use_image_encoder: bool = False, **kwargs):
         # initialize policy
         if arch == "mlp":
             self.policy_arch = "mlp"
@@ -216,10 +217,18 @@ class Learner:
                 agent_class = Policy_Shared_RNN
                 logger.log("WARNING: YOU ARE USING SHARED ACTOR-CRITIC ARCH !!!!!!!")
 
+        if use_image_encoder: # Catch
+            image_encoder_fn = lambda: ImageEncoder(
+                image_shape=self.train_env.image_space.shape,
+                from_flattened=True)
+        else:
+            image_encoder_fn = None
+
         self.agent = agent_class(
             encoder=arch,  # redundant for Policy_MLP
             obs_dim=self.obs_dim,
             action_dim=self.act_dim,
+            image_encoder_fn=image_encoder_fn,
             **kwargs,
         ).to(ptu.device)
         logger.log(self.agent)
@@ -458,7 +467,7 @@ class Learner:
                 # update statistics
                 steps += 1
 
-                # add data to policy buffer - (s+, a, r, s'+, term')
+                ## determine terminal flag per environment
                 if self.env_type == "meta" and "is_goal_state" in dir(
                     self.train_env.unwrapped
                 ):
@@ -468,6 +477,8 @@ class Learner:
                     self._successes_in_buffer += int(term)
                 elif self.env_type == "metaworld":
                     term = False  # generalize tasks done = False always
+                elif 'image_space' in dir(self.train_env.unwrapped): # catch
+                    term = done_rollout
                 else:
                     # term ignore time-out scenarios, but record early stopping
                     term = (
@@ -477,6 +488,7 @@ class Learner:
                         else done_rollout
                     )
 
+                # add data to policy buffer - (s+, a, r, s'+, term')
                 if self.policy_arch == "mlp":
                     self.policy_storage.add_sample(
                         observation=ptu.get_numpy(obs.squeeze(dim=0)),

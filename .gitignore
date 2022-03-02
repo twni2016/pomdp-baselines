@@ -10,7 +10,7 @@ __pycache__/
 logs
 logs/
 data/
-
+scripts/tmp_configs/
 
 # singularity
 *.sif

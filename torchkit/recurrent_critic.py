@@ -27,6 +27,7 @@ class Critic_RNN(nn.Module):
         rnn_hidden_size,
         dqn_layers,
         rnn_num_layers,
+        image_encoder=None,
         **kwargs
     ):
         super().__init__()
@@ -37,7 +38,14 @@ class Critic_RNN(nn.Module):
 
         ### Build Model
         ## 1. embed action, state, reward (Feed-forward layers first)
-        self.state_encoder = utl.FeatureExtractor(obs_dim, state_embedding_size, F.relu)
+
+        self.image_encoder = image_encoder
+        if self.image_encoder is None:
+            self.state_encoder = utl.FeatureExtractor(obs_dim, state_embedding_size, F.relu)
+        else: # for pixel observation, use external encoder
+            assert state_embedding_size == 0
+            state_embedding_size = self.image_encoder.embed_size # reset it
+
         self.action_encoder = utl.FeatureExtractor(
             action_dim, action_embedding_size, F.relu
         )
@@ -74,9 +82,12 @@ class Critic_RNN(nn.Module):
             output_size = action_dim
 
         ## 3. build another obs+act branch
-        self.current_state_action_encoder = utl.FeatureExtractor(
-            obs_dim + extra_input_size, rnn_input_size, F.relu
-        )
+        if self.image_encoder is None:
+            self.current_state_action_encoder = utl.FeatureExtractor(
+                obs_dim + extra_input_size, rnn_input_size, F.relu
+            )
+        else:
+            rnn_input_size = state_embedding_size
 
         ## 4. build q networks
         self.qf1 = FlattenMlp(
@@ -90,12 +101,25 @@ class Critic_RNN(nn.Module):
             hidden_sizes=dqn_layers,
         )
 
+    def _get_obs_embedding(self, observs):
+        if self.image_encoder is None: # vector obs
+            return self.state_encoder(observs)
+        else: # pixel obs
+            return self.image_encoder(observs)
+
+    def _get_shortcut_obs_act_embedding(self, *inputs):
+        flat_inputs = torch.cat(inputs, dim=-1)
+        if self.image_encoder is None: # vector obs
+            return self.current_state_action_encoder(flat_inputs)
+        else: # pixel obs
+            return self.image_encoder(flat_inputs)
+
     def get_hidden_states(self, prev_actions, rewards, observs):
         # all the input have the shape of (T+1, B, *)
         # get embedding of initial transition
         input_a = self.action_encoder(prev_actions)
         input_r = self.reward_encoder(rewards)
-        input_s = self.state_encoder(observs)
+        input_s = self._get_obs_embedding(observs)
         inputs = torch.cat((input_a, input_r, input_s), dim=-1)
 
         # feed into RNN: output (T+1, B, hidden_size)
@@ -129,11 +153,11 @@ class Critic_RNN(nn.Module):
         if current_actions.shape[0] == observs.shape[0]:
             # current_actions include last obs's action, i.e. we have a'[T] in reaction to o[T]
             if self.algo in [self.TD3_name, self.SAC_name]:
-                curr_embed = self.current_state_action_encoder(
-                    torch.cat((observs, current_actions), dim=-1)
+                curr_embed = self._get_shortcut_obs_act_embedding(
+                    observs, current_actions
                 )  # (T+1, B, dim)
             else:
-                curr_embed = self.current_state_action_encoder(observs)  # (T+1, B, dim)
+                curr_embed = self._get_shortcut_obs_act_embedding(observs)  # (T+1, B, dim)
             # 3. joint embeds
             joint_embeds = torch.cat(
                 (hidden_states, curr_embed), dim=-1
@@ -141,11 +165,11 @@ class Critic_RNN(nn.Module):
         else:
             # current_actions does NOT include last obs's action
             if self.algo in [self.TD3_name, self.SAC_name]:
-                curr_embed = self.current_state_action_encoder(
-                    torch.cat((observs[:-1], current_actions), dim=-1)
+                curr_embed = self._get_shortcut_obs_act_embedding(
+                    observs[:-1], current_actions
                 )  # (T, B, dim)
             else:
-                curr_embed = self.current_state_action_encoder(
+                curr_embed = self._get_shortcut_obs_act_embedding(
                     observs[:-1]
                 )  # (T, B, dim)
             # 3. joint embeds

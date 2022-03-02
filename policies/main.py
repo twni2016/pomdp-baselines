@@ -106,7 +106,7 @@ if arch in ["lstm", "gru"]:
     exp_id += f"len-{v['train']['sampled_seq_len']}/bs-{v['train']['batch_size']}/"
     exp_id += f"baseline-{v['train']['sample_weight_baseline']}/"
     exp_id += f"freq-{v['train']['num_updates_per_iter']}/"
-    assert v["policy"]["state_embedding_size"] > 0
+    # assert v["policy"]["state_embedding_size"] > 0
     policy_input_str = "o"
     if v["policy"]["action_embedding_size"] > 0:
         policy_input_str += "a"

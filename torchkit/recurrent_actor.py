@@ -29,6 +29,7 @@ class Actor_RNN(nn.Module):
         rnn_hidden_size,
         policy_layers,
         rnn_num_layers,
+        image_encoder=None,
         **kwargs
     ):
         super().__init__()
@@ -41,7 +42,14 @@ class Actor_RNN(nn.Module):
 
         ### Build Model
         ## 1. embed action, state, reward (Feed-forward layers first)
-        self.state_encoder = utl.FeatureExtractor(obs_dim, state_embedding_size, F.relu)
+
+        self.image_encoder = image_encoder
+        if self.image_encoder is None:
+            self.state_encoder = utl.FeatureExtractor(obs_dim, state_embedding_size, F.relu)
+        else: # for pixel observation, use external encoder
+            assert state_embedding_size == 0
+            state_embedding_size = self.image_encoder.embed_size # reset it
+
         self.action_encoder = utl.FeatureExtractor(
             action_dim, action_embedding_size, F.relu
         )
@@ -76,9 +84,10 @@ class Actor_RNN(nn.Module):
                 nn.init.orthogonal_(param)
 
         ## 3. build another obs branch
-        self.current_state_encoder = utl.FeatureExtractor(
-            obs_dim, state_embedding_size, F.relu
-        )
+        if self.image_encoder is None:
+            self.current_state_encoder = utl.FeatureExtractor(
+                obs_dim, state_embedding_size, F.relu
+            )
 
         ## 4. build policy
         if self.algo == self.TD3_name:
@@ -100,6 +109,18 @@ class Actor_RNN(nn.Module):
                 hidden_sizes=policy_layers,
             )
 
+    def _get_obs_embedding(self, observs):
+        if self.image_encoder is None: # vector obs
+            return self.state_encoder(observs)
+        else: # pixel obs
+            return self.image_encoder(observs)
+
+    def _get_shortcut_obs_embedding(self, observs):
+        if self.image_encoder is None: # vector obs
+            return self.current_state_encoder(observs)
+        else: # pixel obs
+            return self.image_encoder(observs)
+
     def get_hidden_states(
         self, prev_actions, rewards, observs, initial_internal_state=None
     ):
@@ -107,7 +128,7 @@ class Actor_RNN(nn.Module):
         # get embedding of initial transition
         input_a = self.action_encoder(prev_actions)
         input_r = self.reward_encoder(rewards)
-        input_s = self.state_encoder(observs)
+        input_s = self._get_obs_embedding(observs)
         inputs = torch.cat((input_a, input_r, input_s), dim=-1)
 
         # feed into RNN: output (T+1, B, hidden_size)
@@ -136,7 +157,7 @@ class Actor_RNN(nn.Module):
         )
 
         # 2. another branch for current obs
-        curr_embed = self.current_state_encoder(observs)  # (T+1, B, dim)
+        curr_embed = self._get_shortcut_obs_embedding(observs)  # (T+1, B, dim)
 
         # 3. joint embed
         joint_embeds = torch.cat((hidden_states, curr_embed), dim=-1)  # (T+1, B, dim)
@@ -197,7 +218,7 @@ class Actor_RNN(nn.Module):
             initial_internal_state=prev_internal_state,
         )
         # 2. another branch for current obs
-        curr_embed = self.current_state_encoder(obs)  # (1, B, dim)
+        curr_embed = self._get_shortcut_obs_embedding(obs)  # (1, B, dim)
 
         # 3. joint embed
         joint_embeds = torch.cat((hidden_state, curr_embed), dim=-1)  # (1, B, dim)

@@ -61,6 +61,8 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         automatic_entropy_tuning=True,
         target_entropy=None,
         alpha_lr=3e-4,
+        # pixel obs
+        image_encoder_fn=None,
         **kwargs
     ):
         super().__init__()
@@ -85,6 +87,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             rnn_hidden_size,
             dqn_layers,
             rnn_num_layers,
+            image_encoder=image_encoder_fn(), # separate weight
         )
 
         # target networks
@@ -102,6 +105,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             rnn_hidden_size,
             policy_layers,
             rnn_num_layers,
+            image_encoder=image_encoder_fn(), # separate weight
         )
 
         if self.algo == self.TD3_name:
