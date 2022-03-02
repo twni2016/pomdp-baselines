@@ -87,7 +87,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             rnn_hidden_size,
             dqn_layers,
             rnn_num_layers,
-            image_encoder=image_encoder_fn(), # separate weight
+            image_encoder=image_encoder_fn(),  # separate weight
         )
 
         # target networks
@@ -105,7 +105,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             rnn_hidden_size,
             policy_layers,
             rnn_num_layers,
-            image_encoder=image_encoder_fn(), # separate weight
+            image_encoder=image_encoder_fn(),  # separate weight
         )
 
         if self.algo == self.TD3_name:

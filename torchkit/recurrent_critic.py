@@ -41,10 +41,12 @@ class Critic_RNN(nn.Module):
 
         self.image_encoder = image_encoder
         if self.image_encoder is None:
-            self.state_encoder = utl.FeatureExtractor(obs_dim, state_embedding_size, F.relu)
-        else: # for pixel observation, use external encoder
+            self.state_encoder = utl.FeatureExtractor(
+                obs_dim, state_embedding_size, F.relu
+            )
+        else:  # for pixel observation, use external encoder
             assert state_embedding_size == 0
-            state_embedding_size = self.image_encoder.embed_size # reset it
+            state_embedding_size = self.image_encoder.embed_size  # reset it
 
         self.action_encoder = utl.FeatureExtractor(
             action_dim, action_embedding_size, F.relu
@@ -102,16 +104,16 @@ class Critic_RNN(nn.Module):
         )
 
     def _get_obs_embedding(self, observs):
-        if self.image_encoder is None: # vector obs
+        if self.image_encoder is None:  # vector obs
             return self.state_encoder(observs)
-        else: # pixel obs
+        else:  # pixel obs
             return self.image_encoder(observs)
 
     def _get_shortcut_obs_act_embedding(self, *inputs):
         flat_inputs = torch.cat(inputs, dim=-1)
-        if self.image_encoder is None: # vector obs
+        if self.image_encoder is None:  # vector obs
             return self.current_state_action_encoder(flat_inputs)
-        else: # pixel obs
+        else:  # pixel obs
             return self.image_encoder(flat_inputs)
 
     def get_hidden_states(self, prev_actions, rewards, observs):
@@ -157,7 +159,9 @@ class Critic_RNN(nn.Module):
                     observs, current_actions
                 )  # (T+1, B, dim)
             else:
-                curr_embed = self._get_shortcut_obs_act_embedding(observs)  # (T+1, B, dim)
+                curr_embed = self._get_shortcut_obs_act_embedding(
+                    observs
+                )  # (T+1, B, dim)
             # 3. joint embeds
             joint_embeds = torch.cat(
                 (hidden_states, curr_embed), dim=-1

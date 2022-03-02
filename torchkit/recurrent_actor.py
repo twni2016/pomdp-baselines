@@ -45,10 +45,12 @@ class Actor_RNN(nn.Module):
 
         self.image_encoder = image_encoder
         if self.image_encoder is None:
-            self.state_encoder = utl.FeatureExtractor(obs_dim, state_embedding_size, F.relu)
-        else: # for pixel observation, use external encoder
+            self.state_encoder = utl.FeatureExtractor(
+                obs_dim, state_embedding_size, F.relu
+            )
+        else:  # for pixel observation, use external encoder
             assert state_embedding_size == 0
-            state_embedding_size = self.image_encoder.embed_size # reset it
+            state_embedding_size = self.image_encoder.embed_size  # reset it
 
         self.action_encoder = utl.FeatureExtractor(
             action_dim, action_embedding_size, F.relu
@@ -110,15 +112,15 @@ class Actor_RNN(nn.Module):
             )
 
     def _get_obs_embedding(self, observs):
-        if self.image_encoder is None: # vector obs
+        if self.image_encoder is None:  # vector obs
             return self.state_encoder(observs)
-        else: # pixel obs
+        else:  # pixel obs
             return self.image_encoder(observs)
 
     def _get_shortcut_obs_embedding(self, observs):
-        if self.image_encoder is None: # vector obs
+        if self.image_encoder is None:  # vector obs
             return self.current_state_encoder(observs)
-        else: # pixel obs
+        else:  # pixel obs
             return self.image_encoder(observs)
 
     def get_hidden_states(

@@ -22,6 +22,7 @@ from utils import logger
 
 from torchkit.networks import ImageEncoder
 
+
 class Learner:
     """
     Learner class for SAC/TD3 x MLP/RNN
@@ -204,7 +205,9 @@ class Learner:
         self.obs_dim = self.train_env.observation_space.shape[0]  # include 1-dim done
         logger.log("obs_dim", self.obs_dim, "act_dim", self.act_dim)
 
-    def init_policy(self, arch, separate: bool = True, use_image_encoder: bool = False, **kwargs):
+    def init_policy(
+        self, arch, separate: bool = True, use_image_encoder: bool = False, **kwargs
+    ):
         # initialize policy
         if arch == "mlp":
             self.policy_arch = "mlp"
@@ -217,10 +220,10 @@ class Learner:
                 agent_class = Policy_Shared_RNN
                 logger.log("WARNING: YOU ARE USING SHARED ACTOR-CRITIC ARCH !!!!!!!")
 
-        if use_image_encoder: # Catch
+        if use_image_encoder:  # Catch
             image_encoder_fn = lambda: ImageEncoder(
-                image_shape=self.train_env.image_space.shape,
-                from_flattened=True)
+                image_shape=self.train_env.image_space.shape, from_flattened=True
+            )
         else:
             image_encoder_fn = None
 
@@ -477,7 +480,7 @@ class Learner:
                     self._successes_in_buffer += int(term)
                 elif self.env_type == "metaworld":
                     term = False  # generalize tasks done = False always
-                elif 'image_space' in dir(self.train_env.unwrapped): # catch
+                elif "image_space" in dir(self.train_env.unwrapped):  # catch
                     term = done_rollout
                 else:
                     # term ignore time-out scenarios, but record early stopping

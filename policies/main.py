@@ -58,7 +58,7 @@ set_gpu_mode(torch.cuda.is_available() and v["cuda"] >= 0, v["cuda"])
 
 # logs
 exp_id = "logs/"
-# exp_id = 'debug/'
+# exp_id = "debug/"
 
 env_type = v["env"]["env_type"]
 if len(v["env"]["env_name"].split("-")) == 3:

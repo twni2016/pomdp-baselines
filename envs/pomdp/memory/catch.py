@@ -9,19 +9,29 @@ import gym
 Delay = (Number of runs - 1) * 7 + 6
 Time_steps = (Number of runs - 1) * 7 + 6
 """
+
+
 class DelayedCatch(gym.Env):
-    def __init__(self, delay, grid_size=7, flatten_img=False, delayed=True, one_hot_actions=True):
+    def __init__(
+        self, delay, grid_size=7, flatten_img=False, delayed=True, one_hot_actions=True
+    ):
         super().__init__()
         self.grid_size = grid_size
         self.delay = delay
-        self.num_catches = (delay + 1)//7
-        self.action_space = gym.spaces.Discrete(3) # vectorize it
+        self.num_catches = (delay + 1) // 7
+        self.action_space = gym.spaces.Discrete(3)  # vectorize it
         if flatten_img:
-            self.observation_space = gym.spaces.MultiDiscrete([2 for i in range(grid_size * grid_size)])
+            self.observation_space = gym.spaces.MultiDiscrete(
+                [2 for i in range(grid_size * grid_size)]
+            )
             ## NOTE: add
-            self.image_space = gym.spaces.MultiDiscrete([[[2 for i in range(grid_size)] for i in range(grid_size)]])
+            self.image_space = gym.spaces.MultiDiscrete(
+                [[[2 for i in range(grid_size)] for i in range(grid_size)]]
+            )
         else:
-            self.observation_space = gym.spaces.MultiDiscrete([[[2 for i in range(grid_size)] for i in range(grid_size)]])
+            self.observation_space = gym.spaces.MultiDiscrete(
+                [[[2 for i in range(grid_size)] for i in range(grid_size)]]
+            )
             self.image_space = self.observation_space
         self.flatten_img = flatten_img
         self.delayed = delayed
@@ -45,7 +55,7 @@ class DelayedCatch(gym.Env):
         else:
             raise ValueError("not valid action")
         f0, f1, basket = state[0]
-        new_basket = min(max(0, basket + action), self.grid_size-1)
+        new_basket = min(max(0, basket + action), self.grid_size - 1)
         f0 += 1
         out = np.asarray([f0, f1, new_basket])
         out = out[np.newaxis]
@@ -54,7 +64,7 @@ class DelayedCatch(gym.Env):
         self.state = out
 
     def _draw_state(self):
-        im_size = (self.grid_size,)*2
+        im_size = (self.grid_size,) * 2
         state = self.state[0]
         canvas = np.zeros(im_size)
         canvas[state[0], state[1]] = -1  # draw fruit
@@ -63,7 +73,7 @@ class DelayedCatch(gym.Env):
 
     def _get_reward(self):
         fruit_row, fruit_col, basket = self.state[0]
-        if fruit_row == self.grid_size-1:
+        if fruit_row == self.grid_size - 1:
             if fruit_col == basket:
                 return 1
             else:
@@ -72,7 +82,7 @@ class DelayedCatch(gym.Env):
             return 0
 
     def _is_over(self):
-        if self.state[0, 0] == self.grid_size-1:
+        if self.state[0, 0] == self.grid_size - 1:
             return True
         else:
             return False
@@ -111,8 +121,8 @@ class DelayedCatch(gym.Env):
     def reset(self):
         # Pre-generate the initial states
         self.catch_count = 0
-        self.ns = np.random.randint(0, self.grid_size-1, size=self.num_catches)
-        self.ms = np.random.randint(1, self.grid_size-2, size=self.num_catches)
+        self.ns = np.random.randint(0, self.grid_size - 1, size=self.num_catches)
+        self.ms = np.random.randint(1, self.grid_size - 2, size=self.num_catches)
         obs = self.soft_reset()
         self.accumulated_reward = 0
         self.time_step = 0
@@ -126,13 +136,14 @@ class DelayedCatch(gym.Env):
         self.catch_count += 1
         return self.observe()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     runs = 5
     delay = (runs - 1) * 7 + 6
     env = DelayedCatch(delay, flatten_img=True, one_hot_actions=False)
 
     obs = env.reset()
-    done = False 
+    done = False
     while not done:
         obs, rew, done, info = env.step(env.action_space.sample())
         print(env.time_step, obs, rew, done)

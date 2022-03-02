@@ -83,17 +83,34 @@ class FlattenMlp(Mlp):
         flat_inputs = torch.cat(inputs, dim=-1)
         return super().forward(flat_inputs, **kwargs)
 
+
 def conv_output_shape(h_w, kernel_size=1, stride=1, pad=0, dilation=1):
     from math import floor
+
     if type(kernel_size) is not tuple:
         kernel_size = (kernel_size, kernel_size)
-    h = floor( ((h_w[0] + (2 * pad) - ( dilation * (kernel_size[0] - 1) ) - 1 )/ stride) + 1)
-    w = floor( ((h_w[1] + (2 * pad) - ( dilation * (kernel_size[1] - 1) ) - 1 )/ stride) + 1)
+    h = floor(
+        ((h_w[0] + (2 * pad) - (dilation * (kernel_size[0] - 1)) - 1) / stride) + 1
+    )
+    w = floor(
+        ((h_w[1] + (2 * pad) - (dilation * (kernel_size[1] - 1)) - 1) / stride) + 1
+    )
     return h, w
 
+
 import numpy as np
+
+
 class ImageEncoder(nn.Module):
-    def __init__(self, image_shape, embed_size=100, depth=8, kernel_size=(2,2), stride=1, from_flattened=False):
+    def __init__(
+        self,
+        image_shape,
+        embed_size=100,
+        depth=8,
+        kernel_size=(2, 2),
+        stride=1,
+        from_flattened=False,
+    ):
         super(ImageEncoder, self).__init__()
         self.shape = image_shape
         self.kernel_size = kernel_size
@@ -101,7 +118,7 @@ class ImageEncoder(nn.Module):
         self.depth = depth
 
         self.conv1 = nn.Conv2d(image_shape[0], depth, kernel_size, stride)
-        self.conv2 = nn.Conv2d(depth, 2*depth, kernel_size, stride)
+        self.conv2 = nn.Conv2d(depth, 2 * depth, kernel_size, stride)
         self.linear = nn.Linear(self.conv_out_size(), embed_size)
         self.activation = nn.ReLU()
 
@@ -121,7 +138,7 @@ class ImageEncoder(nn.Module):
         embed = self.activation(embed)
         embed = self.conv2(embed)
         embed = self.activation(embed)
-        embed = torch.reshape(embed, list(batch_size) +[-1])
+        embed = torch.reshape(embed, list(batch_size) + [-1])
         embed = self.linear(embed)
         return embed
 
@@ -130,4 +147,4 @@ class ImageEncoder(nn.Module):
         out_h_w = conv_output_shape(h_w, self.kernel_size, self.stride)
         out_h_w = conv_output_shape(out_h_w, self.kernel_size, self.stride)
 
-        return out_h_w[0] * out_h_w[1] * self.depth*2
+        return out_h_w[0] * out_h_w[1] * self.depth * 2
