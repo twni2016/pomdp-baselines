@@ -2,17 +2,17 @@ seed: 73
 cuda: 0 # use_gpu
 env:
   env_type: pomdp
-  env_name: Catch-5-v0
+  env_name: Catch-40-v0
 
   num_eval_tasks: 20 # num of eval episodes
 
 train:
-  # 20000*(7*n) = 10k steps
+  # 20000*(7*n) = 5M steps
   num_iters: 20000 # number meta-training iterates
   num_init_rollouts_pool: 5 # before training
   num_rollouts_per_iter: 1
 
-  num_updates_per_iter: 1.0
+  num_updates_per_iter: 0.2 # 1.0
   # buffer params
   buffer_size: 1e6
   batch_size: 32 # to tune based on sampled_seq_len
@@ -30,8 +30,8 @@ policy:
   arch: lstm # [lstm, gru]
   algo: sacd # only support sac-discrete
 
-  action_embedding_size: 8
-  state_embedding_size: 0
+  action_embedding_size: 0 # no need for catch
+  state_embedding_size: 0 # use image encoder instead
   use_image_encoder: True # new
   reward_embedding_size: 0
   rnn_hidden_size: 128
