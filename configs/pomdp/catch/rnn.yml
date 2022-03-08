@@ -1,5 +1,6 @@
 seed: 73
 cuda: 0 # use_gpu
+# RAM: ~10G
 env:
   env_type: pomdp
   env_name: Catch-40-v0
