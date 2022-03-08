@@ -48,7 +48,7 @@ Mar 2022: we support recurrent SAC-discrete for POMDPs with **discrete action sp
 ```
 python policies/main.py --cfg configs/pomdp/cartpole/v/rnn.yml --target_entropy 0.7
 ```
-See [this PR for detailed instructions](https://github.com/twni2016/pomdp-baselines/pull/1).
+See [this PR for detailed instructions](https://github.com/twni2016/pomdp-baselines/pull/1) and [this PR for results on a long-term credit assignment benchmark](https://github.com/twni2016/pomdp-baselines/pull/2).
 
 ### Meta RL 
 
