@@ -36,6 +36,7 @@ v = yaml.load(open(FLAGS.cfg))
 # overwrite config params
 if FLAGS.algo is not None:
     v["policy"]["algo"] = FLAGS.algo
+
 v["policy"]["automatic_entropy_tuning"] = FLAGS.automatic_entropy_tuning
 if not v["policy"]["automatic_entropy_tuning"]:
     v["policy"]["entropy_alpha"] = FLAGS.entropy_alpha
