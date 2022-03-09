@@ -37,10 +37,11 @@ v = yaml.load(open(FLAGS.cfg))
 if FLAGS.algo is not None:
     v["policy"]["algo"] = FLAGS.algo
 
-v["policy"]["automatic_entropy_tuning"] = FLAGS.automatic_entropy_tuning
-if not v["policy"]["automatic_entropy_tuning"]:
+if FLAGS.automatic_entropy_tuning is not None:
+    v["policy"]["automatic_entropy_tuning"] = FLAGS.automatic_entropy_tuning
+if FLAGS.entropy_alpha is not None:
     v["policy"]["entropy_alpha"] = FLAGS.entropy_alpha
-elif FLAGS.target_entropy is not None:
+if FLAGS.target_entropy is not None:
     v["policy"]["target_entropy"] = FLAGS.target_entropy
 
 if FLAGS.seed is not None:
