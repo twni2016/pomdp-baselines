@@ -17,7 +17,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("cfg", None, "path to configuration file")
 flags.DEFINE_string("algo", None, "[td3, sac, sacd]")
 
-flags.DEFINE_boolean("automatic_entropy_tuning", True, "for [sac, sacd]")
+flags.DEFINE_boolean("automatic_entropy_tuning", None, "for [sac, sacd]")
 flags.DEFINE_float("target_entropy", None, "for [sac, sacd]")
 flags.DEFINE_float("entropy_alpha", None, "for [sac, sacd]")
 
@@ -37,10 +37,11 @@ v = yaml.load(open(FLAGS.cfg))
 if FLAGS.algo is not None:
     v["policy"]["algo"] = FLAGS.algo
 
-v["policy"]["automatic_entropy_tuning"] = FLAGS.automatic_entropy_tuning
-if not v["policy"]["automatic_entropy_tuning"]:
+if FLAGS.automatic_entropy_tuning is not None:
+    v["policy"]["automatic_entropy_tuning"] = FLAGS.automatic_entropy_tuning
+if FLAGS.entropy_alpha is not None:
     v["policy"]["entropy_alpha"] = FLAGS.entropy_alpha
-elif FLAGS.target_entropy is not None:
+if FLAGS.target_entropy is not None:
     v["policy"]["target_entropy"] = FLAGS.target_entropy
 
 if FLAGS.seed is not None:
