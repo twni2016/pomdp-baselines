@@ -28,7 +28,7 @@ DONE:
 * Feb 2022: simplify `--oracle` commands, and upload the plotting scripts
 * Jan 2022: introduce new meta RL environments (*-Dir), and replace re-implementation of off-policy variBAD with original implementation
 * Dec 2021: add some command-line arguments to overwrite the config file and save the updated one
-* Dec 2021: fix [seed reproducibility issue](envs/readme.md#reproducibilty-issue-in-gym-environments) for gym v0.18 (but not for SunBlaze)
+* Dec 2021: fix [seed reproducibility issue](envs/readme.md#reproducibilty-issue-in-gym-environments) for gym v0.21 (but not for SunBlaze)
 * Nov 2021: add Markovian and Oracle policies training
 
 TODO:

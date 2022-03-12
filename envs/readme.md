@@ -21,7 +21,7 @@ class EnvWrapper(gym.Wrapper):
 ```
 
 ## Reproducibilty Issue in Gym Environments
-In current gym version (v0.18), we need to set seed for env and its action space to ensure reproducibilty
+In current gym version (v0.21), we need to set seed for env and its action space to ensure reproducibilty
 ```python
 env.seed(seed)
 env.action_space.np_random.seed(seed)
