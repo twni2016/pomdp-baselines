@@ -3,6 +3,7 @@ from .replay_buffer import ReplayBuffer
 
 
 class SimpleReplayBuffer(ReplayBuffer):
+    buffer_type = "markov"
     def __init__(
         self,
         max_replay_buffer_size,
