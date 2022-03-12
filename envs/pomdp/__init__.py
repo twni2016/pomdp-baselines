@@ -10,7 +10,7 @@ register(
     "Pendulum-F-v0",
     entry_point="envs.pomdp.wrappers:POMDPWrapper",
     kwargs=dict(
-        env=gym.make("Pendulum-v0"), partially_obs_dims=[0, 1, 2]
+        env=gym.make("Pendulum-v1"), partially_obs_dims=[0, 1, 2]
     ),  # angle & velocity
     max_episode_steps=200,
 )
@@ -18,14 +18,14 @@ register(
 register(
     "Pendulum-P-v0",
     entry_point="envs.pomdp.wrappers:POMDPWrapper",
-    kwargs=dict(env=gym.make("Pendulum-v0"), partially_obs_dims=[0, 1]),  # angle
+    kwargs=dict(env=gym.make("Pendulum-v1"), partially_obs_dims=[0, 1]),  # angle
     max_episode_steps=200,
 )
 
 register(
     "Pendulum-V-v0",
     entry_point="envs.pomdp.wrappers:POMDPWrapper",
-    kwargs=dict(env=gym.make("Pendulum-v0"), partially_obs_dims=[2]),  # velocity
+    kwargs=dict(env=gym.make("Pendulum-v1"), partially_obs_dims=[2]),  # velocity
     max_episode_steps=200,
 )
 
