@@ -41,25 +41,23 @@ Here we provide a stand-alone minimal example with the least dependencies to run
 Simply open the Jupyter Notebook [example.ipynb](example.ipynb) and it contains the training and evaluation procedure on a toy POMDP environment (Pendulum-V). It only costs < 20 min to run the whole process on a GPU.
 
 ## Installation
-First download this repo into your local directory (preferably on a cluster or a server) to <local_path>. Then we recommend to use a virtual env to install all the dependencies. For example, we install using miniconda and pip:
+First download this repo into your local directory (preferably on a cluster or a server) to <local_path>. Then we recommend to use a virtual env to install all the dependencies. We provide the yaml file to install using miniconda:
 
 ```bash
-conda create -n pomdp python==3.8
+conda env create -f environments.yml
 conda activate pomdp
-pip install -r requirements.txt
 ```
 
-The `requirements.txt` file includes all the dependencies (e.g. PyTorch, PyBullet) used in our experiments (including the compared methods), but there are two exceptions:
-- To run Cheetah-Vel and Ant-Dir in meta RL, you have to install [MuJoCo](https://github.com/openai/mujoco-py) (>=2.0.2) on your own (it is free now!)
-- To run robust RL and generalization in RL experiments, you have to install [Roboschool](https://github.com/openai/roboschool). 
-    - We found it hard to install Roboschool from scratch, therefore we provide a docker file `roboschool.sif` in [google drive](https://drive.google.com/file/d/1KpTpVwoU02AI7uQrk2T9hQ6s15EISRTa/view?usp=sharing) that contains Roboschool and the other necessary libraries, adapted from [SunBlaze repo](https://github.com/sunblaze-ucb/rl-generalization). 
-    - To download and activate the docker file by singularity (tested in v3.7) on a cluster (on a single server should be similar):
+The `environments.yml` file includes all the dependencies (e.g. MuJoCo, PyTorch, PyBullet) used in our experiments (including the compared methods), where we use `mujoco-py=2.1` as [it is free to use without license](https://github.com/openai/mujoco-py/releases/tag/v2.1.2.14).
+
+However, to run robust RL and generalization in RL experiments, you have to install [Roboschool](https://github.com/openai/roboschool). We found it hard to install Roboschool from scratch, therefore we provide a docker file `roboschool.sif` in [google drive](https://drive.google.com/file/d/1KpTpVwoU02AI7uQrk2T9hQ6s15EISRTa/view?usp=sharing) that contains Roboschool and the other necessary libraries, adapted from [SunBlaze repo](https://github.com/sunblaze-ucb/rl-generalization). 
+  - To download and activate the docker file by singularity (tested in v3.7) on a cluster (on a single server should be similar):
     ```bash
     # download roboschool.sif from the google drive to envs/rl-generalization/roboschool.sif
     # then run singularity shell
     singularity shell --nv -H <local_path>:/home envs/rl-generalization/roboschool.sif
     ```
-    - Then you can test it by `import roboschool` in a `python3` shell.
+  - Then you can test it by `import roboschool` in a `python3` shell.
 
 ## Run Our Implementation of Recurrent Model-Free RL and the Compared Methods
 
