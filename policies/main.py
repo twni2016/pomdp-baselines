@@ -9,6 +9,7 @@ from ruamel.yaml import YAML
 from absl import flags
 from utils import system, logger
 from pathlib import Path
+import psutil
 
 from torchkit.pytorch_utils import set_gpu_mode
 from policies.learner import Learner
@@ -150,6 +151,10 @@ learner = Learner(
     eval_args=v["eval"],
     policy_args=v["policy"],
     seed=seed,
+)
+
+logger.log(
+    f"total RAM usage: {psutil.Process().memory_info().rss / 1024 ** 3 :.2f} GB\n"
 )
 
 learner.train()
