@@ -25,17 +25,17 @@ class SeqReplayBuffer:
         self._observation_dim = observation_dim
         self._action_dim = action_dim
 
-        self._observations = np.zeros((max_replay_buffer_size, observation_dim))
-        self._next_observations = np.zeros((max_replay_buffer_size, observation_dim))
+        self._observations = np.zeros((max_replay_buffer_size, observation_dim), dtype=np.float32)
+        self._next_observations = np.zeros((max_replay_buffer_size, observation_dim), dtype=np.float32)
 
-        self._actions = np.zeros((max_replay_buffer_size, action_dim))
-        self._rewards = np.zeros((max_replay_buffer_size, 1))
+        self._actions = np.zeros((max_replay_buffer_size, action_dim), dtype=np.float32)
+        self._rewards = np.zeros((max_replay_buffer_size, 1), dtype=np.float32)
 
         # terminals are "done" signals, useful for policy training
         # for each trajectory, it has single 1 like 0000001000 for reaching goal or early stopping
         # 	or simply 0s for timing out.
         # NOTE: so we cannot use terminals to determine the trajectory boundary!
-        self._terminals = np.zeros((max_replay_buffer_size, 1), dtype="uint8")
+        self._terminals = np.zeros((max_replay_buffer_size, 1), dtype=np.uint8)
 
         # NOTE: valid_starts are (internal) masks which is 1 (or postive number as weight)
         # 	if we can SAMPLE the (sub)sequence FROM this index else 0.
@@ -44,7 +44,7 @@ class SeqReplayBuffer:
         # 	That is to say, if its length <= sampled_seq_len, then the valid_starts looks like 100000000
         # 	else looks like 11111000000 (have sampled_seq_len - 1 zeros)
         # See xxx function for details
-        self._valid_starts = np.zeros((max_replay_buffer_size))
+        self._valid_starts = np.zeros((max_replay_buffer_size), dtype=np.float32)
 
         assert sampled_seq_len >= 2
         assert sample_weight_baseline >= 0.0
@@ -52,6 +52,12 @@ class SeqReplayBuffer:
         self._sample_weight_baseline = sample_weight_baseline
 
         self.clear()
+
+        RAM = 0.0
+        for name, var in vars(self).items():
+            if isinstance(var, np.ndarray):
+                RAM += var.nbytes
+        print(f"buffer RAM usage: {RAM / 1024**2:.0f} MB")
 
     def size(self):
         return self._size
