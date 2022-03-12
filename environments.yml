@@ -42,7 +42,6 @@ dependencies:
   - gxx_linux-64=7.3.0=h553295d_9
   - icu=58.2=he6710b0_3
   - idna=2.10=pyhd3eb1b0_0
-  - importlib-metadata=2.0.0=py_1
   - importlib_metadata=2.0.0=1
   - intel-openmp=2020.2=254
   - ipykernel=5.3.4=py38h5ca1d4c_0
@@ -187,7 +186,10 @@ dependencies:
   - zstd=1.4.5=h9ceee32_0
   - pip:
     - absl-py==0.11.0
+    - ale-py==0.7.4
     - astunparse==1.6.3
+    - autorom==0.4.2
+    - autorom-accept-rom-license==0.4.2
     - black==21.9b0
     - box2d==2.3.10
     - cachetools==4.2.1
@@ -211,11 +213,13 @@ dependencies:
     - google-auth-oauthlib==0.4.2
     - google-pasta==0.2.0
     - grpcio==1.32.0
-    - gym==0.18.0
+    - gym==0.21.0
     - h5py==2.10.0
     - huggingface-hub==0.0.8
     - imageio==2.9.0
     - imageio-ffmpeg==0.4.3
+    - importlib-metadata==4.11.2
+    - importlib-resources==5.4.0
     - ipdb==0.13.4
     - jsonpickle==0.9.6
     - keras-nightly==2.5.0.dev2021032900
