@@ -7,13 +7,15 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 import random
-
 import gym
+
 from .models.policy_rnn import ModelFreeOffPolicy_Separate_RNN as Policy_RNN
 from .models.policy_rnn_shared import ModelFreeOffPolicy_Shared_RNN as Policy_Shared_RNN
 from .models.policy_mlp import ModelFreeOffPolicy_MLP as Policy_MLP
-from buffers.simple_replay_buffer import SimpleReplayBuffer
-from buffers.seq_replay_buffer import SeqReplayBuffer
+
+from buffers.simple_replay_buffer import SimpleReplayBuffer # Markov policy
+from buffers.seq_replay_buffer_vanilla import SeqReplayBuffer # RNN policy on vector-based task
+from buffers.seq_replay_buffer_efficient import RAMEfficient_SeqReplayBuffer # RNN policy on image/vector-based task
 
 from utils import helpers as utl
 from torchkit import pytorch_utils as ptu
@@ -246,6 +248,7 @@ class Learner:
         num_updates_per_iter=None,
         sampled_seq_len=None,
         sample_weight_baseline=None,
+        buffer_type=None,
         **kwargs
     ):
 
@@ -270,12 +273,19 @@ class Learner:
             if sampled_seq_len == -1:
                 sampled_seq_len = self.max_trajectory_len
 
-            self.policy_storage = SeqReplayBuffer(
+            if buffer_type is None or buffer_type == SeqReplayBuffer.buffer_type:
+                buffer_class = SeqReplayBuffer
+            elif buffer_type == RAMEfficient_SeqReplayBuffer.buffer_type:
+                buffer_class = RAMEfficient_SeqReplayBuffer
+            logger.log(buffer_class)
+
+            self.policy_storage = buffer_class(
                 max_replay_buffer_size=int(buffer_size),
                 observation_dim=self.obs_dim,
                 action_dim=self.act_dim if self.act_continuous else 1,  # save memory
                 sampled_seq_len=sampled_seq_len,
                 sample_weight_baseline=sample_weight_baseline,
+                observation_type=self.train_env.observation_space.dtype,
             )
 
         self.batch_size = batch_size
