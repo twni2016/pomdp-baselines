@@ -25,8 +25,12 @@ class SeqReplayBuffer:
         self._observation_dim = observation_dim
         self._action_dim = action_dim
 
-        self._observations = np.zeros((max_replay_buffer_size, observation_dim), dtype=np.float32)
-        self._next_observations = np.zeros((max_replay_buffer_size, observation_dim), dtype=np.float32)
+        self._observations = np.zeros(
+            (max_replay_buffer_size, observation_dim), dtype=np.float32
+        )
+        self._next_observations = np.zeros(
+            (max_replay_buffer_size, observation_dim), dtype=np.float32
+        )
 
         self._actions = np.zeros((max_replay_buffer_size, action_dim), dtype=np.float32)
         self._rewards = np.zeros((max_replay_buffer_size, 1), dtype=np.float32)
@@ -57,7 +61,7 @@ class SeqReplayBuffer:
         for name, var in vars(self).items():
             if isinstance(var, np.ndarray):
                 RAM += var.nbytes
-        print(f"buffer RAM usage: {RAM / 1024**2:.0f} MB")
+        print(f"buffer RAM usage: {RAM / 1024 ** 3 :.2f} GB")
 
     def size(self):
         return self._size
