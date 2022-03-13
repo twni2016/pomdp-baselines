@@ -62,7 +62,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         target_entropy=None,
         alpha_lr=3e-4,
         # pixel obs
-        image_encoder_fn=None,
+        image_encoder_fn=lambda: None,
         **kwargs
     ):
         super().__init__()

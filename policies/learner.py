@@ -227,7 +227,7 @@ class Learner:
                 image_shape=self.train_env.image_space.shape, from_flattened=True
             )
         else:
-            image_encoder_fn = None
+            image_encoder_fn = lambda: None
 
         self.agent = agent_class(
             encoder=arch,  # redundant for Policy_MLP

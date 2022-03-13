@@ -14,7 +14,9 @@ train:
   num_rollouts_per_iter: 1
 
   num_updates_per_iter: 0.25 # 1.0
+
   # buffer params
+  buffer_type: seq_efficient
   buffer_size: 1e6
   batch_size: 32 # to tune based on sampled_seq_len
   sampled_seq_len: -1 # -1 is all, or positive integer
