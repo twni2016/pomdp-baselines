@@ -3,6 +3,7 @@ import numpy as np
 
 class RAMEfficient_SeqReplayBuffer:
     buffer_type = "seq_efficient"
+
     def __init__(
         self,
         max_replay_buffer_size,
@@ -30,9 +31,9 @@ class RAMEfficient_SeqReplayBuffer:
         self._observation_dim = observation_dim
         self._action_dim = action_dim
 
-        if observation_type == np.uint8: # pixel
+        if observation_type == np.uint8:  # pixel
             observation_type = np.uint8
-        else: # treat all as float32
+        else:  # treat all as float32
             observation_type = np.float32
         self._observations = np.zeros(
             (max_replay_buffer_size, observation_dim), dtype=observation_type
@@ -192,10 +193,10 @@ class RAMEfficient_SeqReplayBuffer:
         )
 
     def _generate_masks(self, indices, batch_size):
-        '''
+        """
         input: sampled_indices list of len B*T
         output: masks (B, T)
-        '''
+        """
 
         # get ends of sampled sequences (B, T)
         # each row starts with 0, like 0000000 or 0000010001
