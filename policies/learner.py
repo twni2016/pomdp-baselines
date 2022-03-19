@@ -13,13 +13,14 @@ from .models.policy_rnn import ModelFreeOffPolicy_Separate_RNN as Policy_RNN
 from .models.policy_rnn_shared import ModelFreeOffPolicy_Shared_RNN as Policy_Shared_RNN
 from .models.policy_mlp import ModelFreeOffPolicy_MLP as Policy_MLP
 
-from buffers.simple_replay_buffer import SimpleReplayBuffer  # Markov policy
-from buffers.seq_replay_buffer_vanilla import (
-    SeqReplayBuffer,
-)  # RNN policy on vector-based task
-from buffers.seq_replay_buffer_efficient import (
-    RAMEfficient_SeqReplayBuffer,
-)  # RNN policy on image/vector-based task
+# Markov policy
+from buffers.simple_replay_buffer import SimpleReplayBuffer
+
+# RNN policy on vector-based task
+from buffers.seq_replay_buffer_vanilla import SeqReplayBuffer
+
+# RNN policy on image/vector-based task
+from buffers.seq_replay_buffer_efficient import RAMEfficient_SeqReplayBuffer
 
 from utils import helpers as utl
 from torchkit import pytorch_utils as ptu
