@@ -77,7 +77,7 @@ class DelayedCatch(gym.Env):
             if fruit_col == basket:
                 return 1
             else:
-                return 0 # change it from -1 to 0, to match IMPALA+SR
+                return 0  # change it from -1 to 0, to match IMPALA+SR
         else:
             return 0
 

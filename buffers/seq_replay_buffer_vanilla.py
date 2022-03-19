@@ -3,6 +3,7 @@ import numpy as np
 
 class SeqReplayBuffer:
     buffer_type = "seq_vanilla"
+
     def __init__(
         self,
         max_replay_buffer_size,
@@ -173,10 +174,10 @@ class SeqReplayBuffer:
         )
 
     def _generate_masks(self, indices, batch_size):
-        '''
+        """
         input: sampled_indices list of len B*T
         output: masks (B, T)
-        '''
+        """
 
         # get valid_starts of sampled sequences (B, T)
         # each row starts with a postive number, like 11111000, or 10000011, or 1s
