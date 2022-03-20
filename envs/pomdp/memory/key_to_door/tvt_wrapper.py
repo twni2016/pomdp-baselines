@@ -60,7 +60,7 @@ class KeyToDoor(gym.Env):
 
         if self.pycolab_env._episode.game_over:
             done = True
-            info["success"] = (self.pycolab_env.last_phase_reward() > 0.0)
+            info["success"] = self.pycolab_env.last_phase_reward() > 0.0
         else:
             done = False
 

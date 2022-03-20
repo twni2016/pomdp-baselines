@@ -212,9 +212,7 @@ class Learner:
         self.obs_dim = self.train_env.observation_space.shape[0]  # include 1-dim done
         logger.log("obs_dim", self.obs_dim, "act_dim", self.act_dim)
 
-    def init_policy(
-        self, arch, separate: bool = True, image_encoder=None, **kwargs
-    ):
+    def init_policy(self, arch, separate: bool = True, image_encoder=None, **kwargs):
         # initialize policy
         if arch == "mlp":
             self.policy_arch = "mlp"
@@ -690,7 +688,7 @@ class Learner:
                         and self.eval_env.unwrapped.is_success()
                     ):
                         success_rate[task_idx] = 1.0  # ever once reach
-                    elif "success" in info and info["success"] == True: # keytodoor
+                    elif "success" in info and info["success"] == True:  # keytodoor
                         success_rate[task_idx] = 1.0
 
                     if done_rollout:
@@ -933,7 +931,7 @@ class Learner:
                 "metrics/return_eval_total", np.mean(np.sum(returns_eval, axis=-1))
             )
             logger.record_tabular(
-                "metrics/success_rate_eval", np.mean(np.sum(success_rate_eval, axis=-1))
+                "metrics/success_rate_eval", np.mean(success_rate_eval)
             )
 
             if self.eval_stochastic:
@@ -945,7 +943,7 @@ class Learner:
                     np.mean(np.sum(returns_eval_sto, axis=-1)),
                 )
                 logger.record_tabular(
-                    "metrics/success_rate_eval_sto", np.mean(np.sum(success_rate_eval_sto, axis=-1))
+                    "metrics/success_rate_eval_sto", np.mean(success_rate_eval_sto)
                 )
 
         else:

@@ -136,7 +136,7 @@ class ImageEncoder(nn.Module):
             image = torch.reshape(image, img_shape)
         else:
             batch_size = [image.shape[0]]
-        
+
         if self.normalize_pixel:
             image = image / 255.0
 
