@@ -110,6 +110,7 @@ class ImageEncoder(nn.Module):
         kernel_size=(2, 2),
         stride=1,
         from_flattened=False,
+        normalize_pixel=False,
     ):
         super(ImageEncoder, self).__init__()
         self.shape = image_shape
@@ -123,6 +124,7 @@ class ImageEncoder(nn.Module):
         self.activation = nn.ReLU()
 
         self.from_flattened = from_flattened
+        self.normalize_pixel = normalize_pixel
         self.embed_size = embed_size
 
     def forward(self, image):
@@ -134,6 +136,10 @@ class ImageEncoder(nn.Module):
             image = torch.reshape(image, img_shape)
         else:
             batch_size = [image.shape[0]]
+        
+        if self.normalize_pixel:
+            image = image / 255.0
+
         embed = self.conv1(image)
         embed = self.activation(embed)
         embed = self.conv2(embed)

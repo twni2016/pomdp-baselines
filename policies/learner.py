@@ -213,7 +213,7 @@ class Learner:
         logger.log("obs_dim", self.obs_dim, "act_dim", self.act_dim)
 
     def init_policy(
-        self, arch, separate: bool = True, use_image_encoder: bool = False, **kwargs
+        self, arch, separate: bool = True, image_encoder=None, **kwargs
     ):
         # initialize policy
         if arch == "mlp":
@@ -227,9 +227,9 @@ class Learner:
                 agent_class = Policy_Shared_RNN
                 logger.log("WARNING: YOU ARE USING SHARED ACTOR-CRITIC ARCH !!!!!!!")
 
-        if use_image_encoder:  # Catch
+        if image_encoder is not None:  # Catch, keytodoor
             image_encoder_fn = lambda: ImageEncoder(
-                image_shape=self.train_env.image_space.shape, from_flattened=True
+                image_shape=self.train_env.image_space.shape, **image_encoder
             )
         else:
             image_encoder_fn = lambda: None
@@ -495,7 +495,7 @@ class Learner:
                     self._successes_in_buffer += int(term)
                 elif self.env_type == "metaworld":
                     term = False  # generalize tasks done = False always
-                elif "image_space" in dir(self.train_env.unwrapped):  # catch
+                elif "image_space" in dir(self.train_env.unwrapped):  # catch, keytodoor
                     term = done_rollout
                 else:
                     # term ignore time-out scenarios, but record early stopping
@@ -683,13 +683,15 @@ class Learner:
                         and self.eval_env.unwrapped.is_goal_state()
                     ):
                         success_rate[task_idx] = 1.0  # ever once reach
-                    if self.env_type == "metaworld" and info["success"] == True:
+                    elif self.env_type == "metaworld" and info["success"] == True:
                         success_rate[task_idx] = 1.0  # ever once reach
-                    if (
+                    elif (
                         self.env_type == "generalize"
                         and self.eval_env.unwrapped.is_success()
                     ):
                         success_rate[task_idx] = 1.0  # ever once reach
+                    elif "success" in info and info["success"] == True: # keytodoor
+                        success_rate[task_idx] = 1.0
 
                     if done_rollout:
                         # for all env types, same
@@ -930,6 +932,10 @@ class Learner:
             logger.record_tabular(
                 "metrics/return_eval_total", np.mean(np.sum(returns_eval, axis=-1))
             )
+            logger.record_tabular(
+                "metrics/success_rate_eval", np.mean(np.sum(success_rate_eval, axis=-1))
+            )
+
             if self.eval_stochastic:
                 logger.record_tabular(
                     "metrics/total_steps_eval_sto", np.mean(total_steps_eval_sto)
@@ -937,6 +943,9 @@ class Learner:
                 logger.record_tabular(
                     "metrics/return_eval_total_sto",
                     np.mean(np.sum(returns_eval_sto, axis=-1)),
+                )
+                logger.record_tabular(
+                    "metrics/success_rate_eval_sto", np.mean(np.sum(success_rate_eval_sto, axis=-1))
                 )
 
         else:

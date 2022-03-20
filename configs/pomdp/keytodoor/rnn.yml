@@ -3,13 +3,13 @@ cuda: 0 # use_gpu
 # RAM: ~10G
 env:
   env_type: pomdp
-  env_name: Catch-40-v0
+  env_name: KeytoDoor-v0
 
   num_eval_tasks: 20 # num of eval episodes
 
 train:
-  # 20000*(7*n) = 5M steps
-  num_iters: 20000 # number meta-training iterates
+  # 100000*90 = 9M steps
+  num_iters: 100000 # number meta-training iterates
   num_init_rollouts_pool: 5 # before training
   num_rollouts_per_iter: 1
 
@@ -37,6 +37,7 @@ policy:
   state_embedding_size: 0 # use image encoder instead
   image_encoder: 
     from_flattened: True
+    normalize_pixel: True
 
   reward_embedding_size: 0
   rnn_hidden_size: 128
