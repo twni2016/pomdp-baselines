@@ -13,27 +13,25 @@ Time_steps = (Number of runs - 1) * 7 + 6
 
 class DelayedCatch(gym.Env):
     def __init__(
-        self, delay, grid_size=7, flatten_img=False, delayed=True, one_hot_actions=True
+        self, delay, grid_size=7, flatten_img=True, delayed=True, one_hot_actions=False
     ):
         super().__init__()
         self.grid_size = grid_size
         self.delay = delay
         self.num_catches = (delay + 1) // 7
         self.action_space = gym.spaces.Discrete(3)  # vectorize it
+
+        self.image_space = gym.spaces.MultiDiscrete(
+            [[[2 for i in range(grid_size)] for i in range(grid_size)]]
+        )
+        self.flatten_img = flatten_img
         if flatten_img:
             self.observation_space = gym.spaces.MultiDiscrete(
                 [2 for i in range(grid_size * grid_size)]
             )
-            ## NOTE: add
-            self.image_space = gym.spaces.MultiDiscrete(
-                [[[2 for i in range(grid_size)] for i in range(grid_size)]]
-            )
         else:
-            self.observation_space = gym.spaces.MultiDiscrete(
-                [[[2 for i in range(grid_size)] for i in range(grid_size)]]
-            )
-            self.image_space = self.observation_space
-        self.flatten_img = flatten_img
+            self.observation_space = self.image_space
+
         self.delayed = delayed
         self.one_hot_actions = one_hot_actions
 

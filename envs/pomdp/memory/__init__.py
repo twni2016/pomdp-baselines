@@ -13,3 +13,13 @@ for runs in [1, 2, 5, 10, 20, 40]:
         ),
         max_episode_steps=delay_fn(runs),
     )
+
+register(
+    "KeytoDoor-v0",
+    entry_point="envs.pomdp.memory.key_to_door.tvt_wrapper:KeyToDoor",
+    kwargs=dict(
+        flatten_img=True,
+        one_hot_actions=False,
+    ),
+    max_episode_steps=90,
+)
