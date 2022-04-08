@@ -4,7 +4,8 @@ y_tags = [  ### raw_atg, processed tag
     ## reward/succ tags
     ("metrics/return_eval_total", "return"),
     # ("metrics/return_train_total", "return_train"),
-    # ("metrics/success_rate_eval", "succ"),
+    ("metrics/success_rate_eval", "success_rate"),
+    # ("metrics/success_rate_eval", "door_opened"),
     ("metrics/return_eval_avg", "return_avg"),
     ("metrics/return_eval_worst", "return_worst"),
     ("metrics/succ_eval_DD", "succ_DD"),
@@ -48,14 +49,16 @@ diagnosis_tags = [
 ]
 
 ours_name = "Ours: recurrent model-free RL"
-baseline_names = ["sac_gru", "sac_lstm", "td3_gru", "td3_lstm"]
+baseline_names = ["sac_gru", "sac_lstm", "sacd_lstm", "td3_gru", "td3_lstm"]
 
 
 def get_variant_tags(trial_str, max_episode_len):
     v = dict()
     # find RL tag
-    if "sac" in trial_str:
+    if "sac_" in trial_str:
         v["RL"] = "sac"
+    elif "sacd_" in trial_str:
+        v["RL"] = "sacd"
     elif "td3" in trial_str:
         v["RL"] = "td3"
     if "lstm" in trial_str:
@@ -293,7 +296,7 @@ curve_style_dict = {
 
 # ablation plots
 variant_colors = {
-    "RL": {"sac": "red", "td3": "blue"},
+    "RL": {"sac": "red", "sacd": "red", "td3": "blue"},
     "Encoder": {"gru": "red", "lstm": "blue"},
     "Inputs": {"o": "yellow", "or": "green", "oa": "red", "oar": "blue"},
     "Arch": {"shared": "red", "separate": "blue"},

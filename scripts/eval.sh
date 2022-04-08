@@ -218,3 +218,17 @@ export PYTHONPATH=${PWD}:$PYTHONPATH
 #     --csv_paths results/data/generalize/SunblazeHopper-v0/final.csv,results/data/generalize/SunblazeHopperRandomNormal-v0/final.csv \
 #     --window_size 10 --name Hopper-Generalize --factors RL,Len,Inputs --best_variant td3-lstm-64-o-separate \
 #     --other_methods oracle_sac,Markovian_sac
+
+## Long-term credit assignments
+
+# python scripts/merge_csv.py --base_path results/logs/pomdp/Catch/40 \
+#     --max_episode_len 279 --start_x 13950 --interval_x 13950
+# python scripts/plot_csv.py --csv_path results/data/pomdp/Catch/40/final.csv \
+#     --window_size 10 --loc "lower right" --max_x 2500000 \
+#     --best_variant sacd-lstm-279-o-separate
+
+# python scripts/merge_csv.py --base_path results/logs/pomdp/KeytoDoor-v0 \
+#     --max_episode_len 90 --start_x 4500 --interval_x 4500
+# python scripts/plot_csv.py --csv_path results/data/pomdp/KeytoDoor-v0/final.csv \
+#     --window_size 10 --loc "lower right" --max_x 1400000 \
+#     --best_variant sacd-lstm-90-o-separate

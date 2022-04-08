@@ -22,6 +22,7 @@ flags.DEFINE_string("csv_path", None, "csv path")
 flags.DEFINE_integer("max_x", None, "max value of x")
 flags.DEFINE_integer("window_size", 20, "window size of the plot")
 flags.DEFINE_float("last_steps_ratio", 0.80, "for measureing top k")
+flags.DEFINE_float("normalizer", None, "for normalizing the return in the plots")
 flags.DEFINE_string("best_variant", None, "best variant of our method if given")
 flags.DEFINE_list("other_methods", None, "selective other methods to show if given")
 flags.DEFINE_string("name", None, "env name for adding constant horizontal lines")
@@ -45,6 +46,9 @@ if FLAGS.max_x is not None:
 
 # smoothing
 for key in key_of_interests:
+    if FLAGS.normalizer is not None:
+        df[key] /= FLAGS.normalizer
+
     df[key] = df.groupby(
         [method_tag, *variant_tag_names, trial_tag]  # fix BUG: add method_tag
     )[key].transform(
@@ -116,7 +120,8 @@ print(run_down_df)
 run_down_df.to_csv(
     os.path.join(
         *FLAGS.csv_path.split("/")[:-1],
-        f"rundown-max_x{FLAGS.max_x}-last{FLAGS.last_steps_ratio}-window{FLAGS.window_size}.csv",
+        f"rundown-{'-'.join(key_of_interests)}" \
+        + f"-max_x{FLAGS.max_x}-last{FLAGS.last_steps_ratio}-window{FLAGS.window_size}.csv",
     ),
     index=False,
 )
@@ -176,6 +181,8 @@ for key in key_of_interests:
         # ci=None, # save a lot time without error bars
         sort=False,
     )
+    if FLAGS.normalizer is not None:
+        axes[ax_id].set_ylabel("Normalized " + key)
 
     if FLAGS.name is not None:
         for baseline_name, baseline_scalar in table_results[FLAGS.name][key].items():
@@ -196,7 +203,8 @@ plt.tight_layout()
 # plt.show()
 # plt.close()
 
-fig_name = f"instance-{FLAGS.best_variant}-max_x{FLAGS.max_x}-last{FLAGS.last_steps_ratio}-window{FLAGS.window_size}"
+fig_name = f"{'-'.join(key_of_interests)}"
+fig_name += f"-instance-{FLAGS.best_variant}-max_x{FLAGS.max_x}-last{FLAGS.last_steps_ratio}-window{FLAGS.window_size}"
 if FLAGS.other_methods is not None:
     fig_name += f"-others{'_'.join(FLAGS.other_methods)}"
 
