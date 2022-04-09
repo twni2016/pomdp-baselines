@@ -2,10 +2,10 @@
 x_tag = ("z/env_steps", "env_steps")
 y_tags = [  ### raw_atg, processed tag
     ## reward/succ tags
-    ("metrics/return_eval_total", "return"),
+    # ("metrics/return_eval_total", "return"),
     # ("metrics/return_train_total", "return_train"),
-    ("metrics/success_rate_eval", "success_rate"),
-    # ("metrics/success_rate_eval", "door_opened"),
+    # ("metrics/success_rate_eval", "success_rate"),
+    ("metrics/success_rate_eval", "door_opened"),
     ("metrics/return_eval_avg", "return_avg"),
     ("metrics/return_eval_worst", "return_worst"),
     ("metrics/succ_eval_DD", "succ_DD"),
@@ -292,6 +292,7 @@ curve_style_dict = {
     "td3_2lstm": ("brown", no_dash),
     "td3_2gru": ("brown", no_dash),
     "td3_pfgru": ("magenta", no_dash),
+    "IMPALA+SR": ("red", no_dash),
 }
 
 # ablation plots
@@ -386,5 +387,11 @@ table_results = {
             # "Oracle": 0.2847, "Markovian": 0.245,
             "Random": 0.0,
         },
+    },
+    "Delayed-Catch": {
+        "return": {"IMPALA+SR": 3.1}, # at 2.5M
+    },
+    "Key-to-Door": {
+        "door_opened": {"IMPALA+SR": 0.34}, # at 1.4M
     },
 }

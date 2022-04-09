@@ -195,8 +195,8 @@ for key in key_of_interests:
 
     axes[ax_id].legend(framealpha=0.5, loc=FLAGS.loc)  # fix location
     # axes[ax_id].set_ylim(None, -50)
-    # if FLAGS.max_x is not None:
-    #     axes[ax_id].set_xlim(0, FLAGS.max_x)
+    if FLAGS.max_x is not None:
+        axes[ax_id].set_xlim(0, FLAGS.max_x)
     ax_id += 1
 
 plt.tight_layout()
