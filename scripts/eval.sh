@@ -227,8 +227,8 @@ export PYTHONPATH=${PWD}:$PYTHONPATH
 #     --window_size 10 --loc "right" --max_x 2500000 \
 #     --name Delayed-Catch --best_variant sacd-lstm-279-o-separate
 
-# python scripts/merge_csv.py --base_path results/logs/pomdp/KeytoDoor-v0 \
+# python scripts/merge_csv.py --base_path results/logs/pomdp/KeytoDoor/SR \
 #     --max_episode_len 90 --start_x 4500 --interval_x 4500
-# python scripts/plot_csv.py --csv_path results/data/pomdp/KeytoDoor-v0/final.csv \
+# python scripts/plot_csv.py --csv_path results/data/pomdp/KeytoDoor/SR/final.csv \
 #     --window_size 10 --loc "right" --max_x 1400000 \
 #     --name Key-to-Door --best_variant sacd-lstm-90-o-separate

@@ -38,19 +38,23 @@ class PycolabEnvironment(object):
         apple_reward=1.0,
         fix_apple_reward_in_episode=False,
         final_reward=10.0,
+        respawn_every=20,
         crop=True,
         default_reward=0,
+        REWARD_GRID=key_to_door.REWARD_GRID_SR,
     ):
         """Construct a `environment.Base` adapter that wraps a pycolab game."""
         rng = np.random.RandomState()
         if game == "key_to_door":
             self._game = key_to_door.Game(
-                rng,
-                num_apples,
-                apple_reward,
-                fix_apple_reward_in_episode,
-                final_reward,
-                crop,
+                rng=rng,
+                num_apples=num_apples,
+                apple_reward=apple_reward,
+                fix_apple_reward_in_episode=fix_apple_reward_in_episode,
+                final_reward=final_reward,
+                respawn_every=respawn_every,
+                crop=crop,
+                REWARD_GRID=REWARD_GRID,
             )
         else:
             raise ValueError('Unsupported game "%s".' % game)

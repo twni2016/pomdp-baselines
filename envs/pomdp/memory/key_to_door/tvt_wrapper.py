@@ -1,6 +1,6 @@
 import numpy as np
 import gym
-from envs.pomdp.memory.key_to_door import env
+from envs.pomdp.memory.key_to_door import env, key_to_door
 
 
 class KeyToDoor(gym.Env):
@@ -11,19 +11,23 @@ class KeyToDoor(gym.Env):
         fix_apple_reward_in_episode=True,
         final_reward=10.0,
         default_reward=0,
+        respawn_every=20,
+        REWARD_GRID=key_to_door.REWARD_GRID_SR,
         crop=True,
         flatten_img=True,
         one_hot_actions=False,
     ):
         super().__init__()
         self.pycolab_env = env.PycolabEnvironment(
-            "key_to_door",
-            num_apples,
-            apple_reward,
-            fix_apple_reward_in_episode,
-            final_reward,
-            crop,
-            default_reward,
+            game="key_to_door",
+            num_apples=num_apples,
+            apple_reward=apple_reward,
+            fix_apple_reward_in_episode=fix_apple_reward_in_episode,
+            final_reward=final_reward,
+            respawn_every=respawn_every,
+            crop=crop,
+            default_reward=default_reward,
+            REWARD_GRID=REWARD_GRID,
         )
 
         self.action_space = gym.spaces.Discrete(4)  # 4 directions

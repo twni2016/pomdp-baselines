@@ -120,7 +120,7 @@ print(run_down_df)
 run_down_df.to_csv(
     os.path.join(
         *FLAGS.csv_path.split("/")[:-1],
-        f"rundown-{'-'.join(key_of_interests)}" \
+        f"rundown-{'-'.join(key_of_interests)}"
         + f"-max_x{FLAGS.max_x}-last{FLAGS.last_steps_ratio}-window{FLAGS.window_size}.csv",
     ),
     index=False,

@@ -50,7 +50,7 @@ EXPLORE_GRID = [
     "  #######  ",
 ]
 
-REWARD_GRID = [
+REWARD_GRID_SR = [
     "           ",
     "   ##d##   ",
     "   #   #   ",
@@ -58,6 +58,16 @@ REWARD_GRID = [
     "   #   #   ",
     "   #####   ",
     "           ",
+]
+
+REWARD_GRID_CCA = [
+    "  #######  ",
+    "  #+++++#  ",
+    "  #+++++#  ",
+    "  ##   ##  ",
+    "  #ddddd#  ",
+    "  #ddddd#  ",
+    "  #######  ",
 ]
 
 
@@ -124,17 +134,21 @@ class Game(game.AbstractGame):
         apple_reward=(1, 10),
         fix_apple_reward_in_episode=True,
         final_reward=10.0,
+        respawn_every=common.DEFAULT_APPLE_RESPAWN_TIME,
         crop=True,
         max_frames=common.DEFAULT_MAX_FRAMES_PER_PHASE,
+        REWARD_GRID=REWARD_GRID_SR,
     ):
         del rng  # Each episode is identical and colours are not randomised.
         self._num_apples = num_apples
         self._apple_reward = apple_reward
         self._fix_apple_reward_in_episode = fix_apple_reward_in_episode
         self._final_reward = final_reward
+        self._respawn_every = respawn_every
         self._crop = crop
         self._max_frames = max_frames
         self._episode_length = sum(self._max_frames.values())
+        self._REWARD_GRID = REWARD_GRID
         self._num_actions = common.NUM_ACTIONS
         self._colours = common.FIXED_COLOURS.copy()
         self._colours.update(COLOURS)
@@ -189,11 +203,18 @@ class Game(game.AbstractGame):
             max_frames=self._max_frames["distractor"],
             apple_reward=self._apple_reward,
             fix_apple_reward_in_episode=self._fix_apple_reward_in_episode,
+            respawn_every=self._respawn_every,
         )
 
     def _make_reward_phase(self):
+        # Keep only one key and one player position.
+        reward_grid = common.keep_n_characters_in_grid(
+            self._REWARD_GRID, common.DOOR, 1
+        )
+        reward_grid = common.keep_n_characters_in_grid(reward_grid, common.PLAYER, 1)
+
         return ascii_art.ascii_art_to_game(
-            art=REWARD_GRID,
+            art=reward_grid,
             what_lies_beneath=" ",
             sprites={
                 common.PLAYER: PlayerSprite,
