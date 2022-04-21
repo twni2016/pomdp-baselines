@@ -42,7 +42,6 @@ ACTION_WEST = 2
 ACTION_EAST = 3
 
 NUM_ACTIONS = 4
-DEFAULT_MAX_FRAMES_PER_PHASE = {"explore": 15, "distractor": 60, "reward": 15}
 
 # Reserved symbols.
 PLAYER = "+"

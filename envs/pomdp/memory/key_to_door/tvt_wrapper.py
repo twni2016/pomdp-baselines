@@ -13,6 +13,7 @@ class KeyToDoor(gym.Env):
         default_reward=0,
         respawn_every=20,
         REWARD_GRID=key_to_door.REWARD_GRID_SR,
+        max_frames=key_to_door.MAX_FRAMES_PER_PHASE_SR,
         crop=True,
         flatten_img=True,
         one_hot_actions=False,
@@ -28,6 +29,7 @@ class KeyToDoor(gym.Env):
             crop=crop,
             default_reward=default_reward,
             REWARD_GRID=REWARD_GRID,
+            max_frames=max_frames,
         )
 
         self.action_space = gym.spaces.Discrete(4)  # 4 directions

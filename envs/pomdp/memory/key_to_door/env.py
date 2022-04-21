@@ -24,7 +24,7 @@ import numpy as np
 from pycolab import rendering
 
 # from tvt.pycolab import active_visual_match
-from envs.pomdp.memory.key_to_door import key_to_door
+from envs.pomdp.memory.key_to_door import key_to_door, common
 from tensorflow import nest
 
 
@@ -42,6 +42,7 @@ class PycolabEnvironment(object):
         crop=True,
         default_reward=0,
         REWARD_GRID=key_to_door.REWARD_GRID_SR,
+        max_frames=key_to_door.MAX_FRAMES_PER_PHASE_SR,
     ):
         """Construct a `environment.Base` adapter that wraps a pycolab game."""
         rng = np.random.RandomState()
@@ -55,6 +56,7 @@ class PycolabEnvironment(object):
                 respawn_every=respawn_every,
                 crop=crop,
                 REWARD_GRID=REWARD_GRID,
+                max_frames=max_frames,
             )
         else:
             raise ValueError('Unsupported game "%s".' % game)

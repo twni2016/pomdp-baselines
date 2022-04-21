@@ -23,11 +23,12 @@ register(
         flatten_img=True,
         one_hot_actions=False,
         apple_reward=1.0,
-        final_reward=10.0,
+        final_reward=5.0,
         respawn_every=20,  # apple respawn after 20 steps
         REWARD_GRID=key_to_door.REWARD_GRID_SR,
+        max_frames=key_to_door.MAX_FRAMES_PER_PHASE_SR,
     ),
-    max_episode_steps=90,
+    max_episode_steps=sum(key_to_door.MAX_FRAMES_PER_PHASE_SR.values()),
 )
 
 # optimal expected return: 1.0 * 10 + 1.0 = 11
@@ -41,8 +42,9 @@ register(
         final_reward=1.0,
         respawn_every=0,  # apple never respawn
         REWARD_GRID=key_to_door.REWARD_GRID_CCA,
+        max_frames=key_to_door.MAX_FRAMES_PER_PHASE_CCA,
     ),
-    max_episode_steps=90,
+    max_episode_steps=sum(key_to_door.MAX_FRAMES_PER_PHASE_CCA.values()),
 )
 
 # optimal expected return: (1.0+10.0)/2 * 10 + 1.0 = 56
@@ -56,6 +58,7 @@ register(
         final_reward=1.0,
         respawn_every=0,  # apple never respawn
         REWARD_GRID=key_to_door.REWARD_GRID_CCA,
+        max_frames=key_to_door.MAX_FRAMES_PER_PHASE_CCA,
     ),
-    max_episode_steps=90,
+    max_episode_steps=sum(key_to_door.MAX_FRAMES_PER_PHASE_CCA.values()),
 )
