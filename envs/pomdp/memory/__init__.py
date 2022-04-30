@@ -15,7 +15,7 @@ for runs in [1, 2, 5, 10, 20, 40]:
         max_episode_steps=delay_fn(runs),
     )
 
-# optimal expected return: 1.0 * (~23) + 10.0 = 33. due to unknown number of respawned apples
+# optimal expected return: 1.0 * (~23) + 5.0 = 28. due to unknown number of respawned apples
 register(
     "KeytoDoor-SR-v0",
     entry_point="envs.pomdp.memory.key_to_door.tvt_wrapper:KeyToDoor",
@@ -47,6 +47,23 @@ register(
     max_episode_steps=sum(key_to_door.MAX_FRAMES_PER_PHASE_CCA.values()),
 )
 
+# optimal expected return: 1.0 * 10 + 5.0 = 15
+register(
+    "KeytoDoor-LowVar5-v0",
+    entry_point="envs.pomdp.memory.key_to_door.tvt_wrapper:KeyToDoor",
+    kwargs=dict(
+        flatten_img=True,
+        one_hot_actions=False,
+        apple_reward=1.0,
+        final_reward=5.0,
+        respawn_every=0,  # apple never respawn
+        REWARD_GRID=key_to_door.REWARD_GRID_CCA,
+        max_frames=key_to_door.MAX_FRAMES_PER_PHASE_CCA,
+    ),
+    max_episode_steps=sum(key_to_door.MAX_FRAMES_PER_PHASE_CCA.values()),
+)
+
+
 # optimal expected return: (1.0+10.0)/2 * 10 + 1.0 = 56
 register(
     "KeytoDoor-HighVar-v0",
@@ -56,6 +73,38 @@ register(
         one_hot_actions=False,
         apple_reward=(1.0, 10.0),  # random pick one as reward
         final_reward=1.0,
+        respawn_every=0,  # apple never respawn
+        REWARD_GRID=key_to_door.REWARD_GRID_CCA,
+        max_frames=key_to_door.MAX_FRAMES_PER_PHASE_CCA,
+    ),
+    max_episode_steps=sum(key_to_door.MAX_FRAMES_PER_PHASE_CCA.values()),
+)
+
+# optimal expected return: (1.0+10.0)/2 * 10 + 5.5 = 60.5
+register(
+    "KeytoDoor-HighVar5-v0",
+    entry_point="envs.pomdp.memory.key_to_door.tvt_wrapper:KeyToDoor",
+    kwargs=dict(
+        flatten_img=True,
+        one_hot_actions=False,
+        apple_reward=(1.0, 10.0),  # random pick one as reward
+        final_reward=5.5,
+        respawn_every=0,  # apple never respawn
+        REWARD_GRID=key_to_door.REWARD_GRID_CCA,
+        max_frames=key_to_door.MAX_FRAMES_PER_PHASE_CCA,
+    ),
+    max_episode_steps=sum(key_to_door.MAX_FRAMES_PER_PHASE_CCA.values()),
+)
+
+# optimal expected return: (1.0+10.0)/2 * 10 + 10 = 65
+register(
+    "KeytoDoor-HighVar10-v0",
+    entry_point="envs.pomdp.memory.key_to_door.tvt_wrapper:KeyToDoor",
+    kwargs=dict(
+        flatten_img=True,
+        one_hot_actions=False,
+        apple_reward=(1.0, 10.0),  # random pick one as reward
+        final_reward=10.0,
         respawn_every=0,  # apple never respawn
         REWARD_GRID=key_to_door.REWARD_GRID_CCA,
         max_frames=key_to_door.MAX_FRAMES_PER_PHASE_CCA,

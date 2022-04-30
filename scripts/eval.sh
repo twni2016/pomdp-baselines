@@ -228,7 +228,31 @@ export PYTHONPATH=${PWD}:$PYTHONPATH
 #     --name Delayed-Catch --best_variant sacd-lstm-279-o-separate
 
 # python scripts/merge_csv.py --base_path results/logs/pomdp/KeytoDoor/SR \
-#     --max_episode_len 90 --start_x 4500 --interval_x 4500
+#     --max_episode_len 85 --start_x 4250 --interval_x 4250
 # python scripts/plot_csv.py --csv_path results/data/pomdp/KeytoDoor/SR/final.csv \
-#     --window_size 10 --loc "right" --max_x 1400000 \
-#     --name Key-to-Door --best_variant sacd-lstm-90-o-separate
+#     --window_size 10 --loc "right" \
+#      --best_variant sacd-lstm-85-o-separate #--name Key-to-Door
+
+# python scripts/merge_csv.py --base_path results/logs/pomdp/KeytoDoor/LowVar \
+#     --max_episode_len 60 --start_x 6000 --interval_x 6000
+# python scripts/plot_csv.py --csv_path results/data/pomdp/KeytoDoor/LowVar/final.csv \
+#     --window_size 10 --loc "right" \
+#      --best_variant sacd-lstm-60-o-separate
+
+# python scripts/merge_csv.py --base_path results/logs/pomdp/KeytoDoor/LowVar5 \
+#     --max_episode_len 60 --start_x 6000 --interval_x 6000
+# python scripts/plot_csv.py --csv_path results/data/pomdp/KeytoDoor/LowVar5/final.csv \
+#     --window_size 10 --loc "right" \
+#      --best_variant sacd-lstm-60-o-separate
+
+# python scripts/merge_csv.py --base_path results/logs/pomdp/KeytoDoor/HighVar \
+#     --max_episode_len 60 --start_x 6000 --interval_x 6000
+# python scripts/plot_csv.py --csv_path results/data/pomdp/KeytoDoor/HighVar/final.csv \
+#     --window_size 10 --loc "right" \
+#      --best_variant sacd-lstm-60-o-separate
+
+# python scripts/merge_csv.py --base_path results/logs/pomdp/KeytoDoor/HighVar10 \
+#     --max_episode_len 60 --start_x 6000 --interval_x 6000
+# python scripts/plot_csv.py --csv_path results/data/pomdp/KeytoDoor/HighVar10/final.csv \
+#     --window_size 10 --loc "right" \
+#      --best_variant sacd-lstm-60-o-separate

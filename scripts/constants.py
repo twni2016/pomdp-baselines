@@ -2,7 +2,7 @@
 x_tag = ("z/env_steps", "env_steps")
 y_tags = [  ### raw_atg, processed tag
     ## reward/succ tags
-    # ("metrics/return_eval_total", "return"),
+    ("metrics/return_eval_total", "return"),
     # ("metrics/return_train_total", "return_train"),
     # ("metrics/success_rate_eval", "success_rate"),
     ("metrics/success_rate_eval", "door_opened"),
