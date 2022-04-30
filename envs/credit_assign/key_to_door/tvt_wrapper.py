@@ -1,6 +1,6 @@
 import numpy as np
 import gym
-from envs.pomdp.memory.key_to_door import env, key_to_door
+from envs.credit_assign.key_to_door import env, key_to_door
 
 
 class KeyToDoor(gym.Env):

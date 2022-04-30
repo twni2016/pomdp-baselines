@@ -24,7 +24,7 @@ from pycolab import things as plab_things
 from pycolab.prefab_parts import sprites as prefab_sprites
 
 # import six
-from envs.pomdp.memory.key_to_door import common
+from envs.credit_assign.key_to_door import common
 
 
 class PlayerSprite(prefab_sprites.MazeWalker):

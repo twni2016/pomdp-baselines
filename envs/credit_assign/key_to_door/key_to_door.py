@@ -31,9 +31,9 @@ from pycolab import ascii_art
 from pycolab import storytelling
 from pycolab import things as plab_things
 
-from envs.pomdp.memory.key_to_door import common
-from envs.pomdp.memory.key_to_door import game
-from envs.pomdp.memory.key_to_door import objects
+from envs.credit_assign.key_to_door import common
+from envs.credit_assign.key_to_door import game
+from envs.credit_assign.key_to_door import objects
 
 
 COLOURS = {

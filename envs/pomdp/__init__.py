@@ -252,4 +252,4 @@ register(
     max_episode_steps=1000,
 )
 
-import envs.pomdp.memory
+import envs.credit_assign

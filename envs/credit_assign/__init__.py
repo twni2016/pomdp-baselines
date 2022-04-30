@@ -1,12 +1,12 @@
 from gym.envs.registration import register
-from envs.pomdp.memory.key_to_door import key_to_door
+from envs.credit_assign.key_to_door import key_to_door
 
 delay_fn = lambda runs: (runs - 1) * 7 + 6
 
 for runs in [1, 2, 5, 10, 20, 40]:
     register(
         f"Catch-{runs}-v0",
-        entry_point="envs.pomdp.memory.catch:DelayedCatch",
+        entry_point="envs.credit_assign.catch:DelayedCatch",
         kwargs=dict(
             delay=delay_fn(runs),
             flatten_img=True,
@@ -18,7 +18,7 @@ for runs in [1, 2, 5, 10, 20, 40]:
 # optimal expected return: 1.0 * (~23) + 5.0 = 28. due to unknown number of respawned apples
 register(
     "KeytoDoor-SR-v0",
-    entry_point="envs.pomdp.memory.key_to_door.tvt_wrapper:KeyToDoor",
+    entry_point="envs.credit_assign.key_to_door.tvt_wrapper:KeyToDoor",
     kwargs=dict(
         flatten_img=True,
         one_hot_actions=False,
@@ -34,7 +34,7 @@ register(
 # optimal expected return: 1.0 * 10 + 1.0 = 11
 register(
     "KeytoDoor-LowVar-v0",
-    entry_point="envs.pomdp.memory.key_to_door.tvt_wrapper:KeyToDoor",
+    entry_point="envs.credit_assign.key_to_door.tvt_wrapper:KeyToDoor",
     kwargs=dict(
         flatten_img=True,
         one_hot_actions=False,
@@ -50,7 +50,7 @@ register(
 # optimal expected return: 1.0 * 10 + 5.0 = 15
 register(
     "KeytoDoor-LowVar5-v0",
-    entry_point="envs.pomdp.memory.key_to_door.tvt_wrapper:KeyToDoor",
+    entry_point="envs.credit_assign.key_to_door.tvt_wrapper:KeyToDoor",
     kwargs=dict(
         flatten_img=True,
         one_hot_actions=False,
@@ -67,7 +67,7 @@ register(
 # optimal expected return: (1.0+10.0)/2 * 10 + 1.0 = 56
 register(
     "KeytoDoor-HighVar-v0",
-    entry_point="envs.pomdp.memory.key_to_door.tvt_wrapper:KeyToDoor",
+    entry_point="envs.credit_assign.key_to_door.tvt_wrapper:KeyToDoor",
     kwargs=dict(
         flatten_img=True,
         one_hot_actions=False,
@@ -83,7 +83,7 @@ register(
 # optimal expected return: (1.0+10.0)/2 * 10 + 5.5 = 60.5
 register(
     "KeytoDoor-HighVar5-v0",
-    entry_point="envs.pomdp.memory.key_to_door.tvt_wrapper:KeyToDoor",
+    entry_point="envs.credit_assign.key_to_door.tvt_wrapper:KeyToDoor",
     kwargs=dict(
         flatten_img=True,
         one_hot_actions=False,
@@ -99,7 +99,7 @@ register(
 # optimal expected return: (1.0+10.0)/2 * 10 + 10 = 65
 register(
     "KeytoDoor-HighVar10-v0",
-    entry_point="envs.pomdp.memory.key_to_door.tvt_wrapper:KeyToDoor",
+    entry_point="envs.credit_assign.key_to_door.tvt_wrapper:KeyToDoor",
     kwargs=dict(
         flatten_img=True,
         one_hot_actions=False,

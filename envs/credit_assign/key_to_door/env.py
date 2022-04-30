@@ -24,7 +24,7 @@ import numpy as np
 from pycolab import rendering
 
 # from tvt.pycolab import active_visual_match
-from envs.pomdp.memory.key_to_door import key_to_door, common
+from envs.credit_assign.key_to_door import key_to_door, common
 from tensorflow import nest
 
 
