@@ -1,5 +1,7 @@
+import gym
 from gym.envs.registration import register
 from envs.credit_assign.key_to_door import key_to_door
+from envs.credit_assign.episodic_reward import MuJoCoEpisodicRewardEnv
 
 delay_fn = lambda runs: (runs - 1) * 7 + 6
 
@@ -111,3 +113,24 @@ register(
     ),
     max_episode_steps=sum(key_to_door.MAX_FRAMES_PER_PHASE_CCA.values()),
 )
+
+mujoco_list = [
+    "Ant-v2",
+    "HalfCheetah-v2",
+    "Walker2d-v2",
+    "Humanoid-v2",
+    "Reacher-v2",
+    "Swimmer-v2",
+    "Hopper-v2",
+    "HumanoidStandup-v2",
+]
+
+for env_name in mujoco_list:
+    register(
+        env_name.replace("-v2", "Ep-v2"),
+        entry_point="envs.credit_assign.episodic_reward:MuJoCoEpisodicRewardEnv",
+        kwargs=dict(
+            env=gym.make(env_name),
+        ),
+        max_episode_steps=1000,
+    )

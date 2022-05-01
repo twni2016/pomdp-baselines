@@ -2,14 +2,14 @@ seed: 73
 cuda: 0 # use_gpu
 # RAM: ~10G
 env:
-  env_type: pomdp
-  env_name: KeytoDoor-LowVar-v0 # KeytoDoor-LowVar5-v0
+  env_type: credit
+  env_name: KeytoDoor-HighVar-v0 # KeytoDoor-HighVar5-v0
 
   num_eval_tasks: 20 # num of eval episodes
 
 train:
-  # 150000*60 = 9M steps
-  num_iters: 150000 # number meta-training iterates
+  # 200000*60 = 12M steps
+  num_iters: 200000 # number meta-training iterates
   num_init_rollouts_pool: 5 # before training
   num_rollouts_per_iter: 1
 

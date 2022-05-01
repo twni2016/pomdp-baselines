@@ -62,7 +62,7 @@ class Learner:
     ):
 
         # initialize environment
-        assert env_type in ["meta", "pomdp", "rmdp", "metaworld", "generalize"]
+        assert env_type in ["meta", "pomdp", "credit", "rmdp", "metaworld", "generalize"]
         self.env_type = env_type
 
         if self.env_type == "meta":  # meta tasks: using varibad wrapper
@@ -100,7 +100,7 @@ class Learner:
             self.max_rollouts_per_task = max_rollouts_per_task
             self.max_trajectory_len = self.train_env.horizon_bamdp  # H^+ = k * H
 
-        elif self.env_type == "pomdp":  # pomdp/mdp task, using pomdp wrapper
+        elif self.env_type in ["pomdp", "credit"]:  # pomdp/mdp task, using pomdp wrapper
             import envs.pomdp
 
             assert num_eval_tasks > 0
@@ -493,7 +493,7 @@ class Learner:
                     self._successes_in_buffer += int(term)
                 elif self.env_type == "metaworld":
                     term = False  # generalize tasks done = False always
-                elif "image_space" in dir(self.train_env.unwrapped):  # catch, keytodoor
+                elif self.env_type == "credit":  # delayed rewards
                     term = done_rollout
                 else:
                     # term ignore time-out scenarios, but record early stopping
@@ -794,7 +794,7 @@ class Learner:
                         "metrics/success_rate_eval_sto", np.mean(success_rate_eval_sto)
                     )
 
-            for episode_idx in range(self.max_rollouts_per_task):
+            for episode_idx in range(self.max_rollouts_pfer_task):
                 if self.train_env.n_tasks is not None:
                     logger.record_tabular(
                         "metrics/return_train_episode_{}".format(episode_idx + 1),
@@ -914,7 +914,7 @@ class Learner:
                 "metrics/total_steps_eval_worst", total_steps_eval_worst.mean()
             )
 
-        elif self.env_type == "pomdp":
+        elif self.env_type in ["pomdp", "credit"]:
             returns_eval, success_rate_eval, _, total_steps_eval = self.evaluate(
                 self.eval_tasks
             )

@@ -2,7 +2,7 @@ seed: 73
 cuda: 0 # use_gpu
 # RAM: ~10G
 env:
-  env_type: pomdp
+  env_type: credit
   env_name: KeytoDoor-SR-v0
 
   num_eval_tasks: 20 # num of eval episodes
