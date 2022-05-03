@@ -116,6 +116,8 @@ if algo in ["sac", "sacd"]:
     elif "target_entropy" in v["policy"]:
         exp_id += f"ent-{v['policy']['target_entropy']}/"
 
+exp_id += f"gamma-{v['policy']['gamma']}/"
+
 if arch in ["lstm", "gru"]:
     exp_id += f"len-{v['train']['sampled_seq_len']}/bs-{v['train']['batch_size']}/"
     exp_id += f"baseline-{v['train']['sample_weight_baseline']}/"

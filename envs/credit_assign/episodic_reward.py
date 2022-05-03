@@ -39,8 +39,9 @@ class MuJoCoEpisodicRewardEnv(gym.Wrapper):
 
 if __name__ == "__main__":
 
+    raw_env = gym.make("Pendulum-v1")
     # raw_env = gym.make("Hopper-v2")
-    raw_env = gym.make("HalfCheetah-v2")
+    # raw_env = gym.make("HalfCheetah-v2")
     env = MuJoCoEpisodicRewardEnv(raw_env)
 
     obs = env.reset()

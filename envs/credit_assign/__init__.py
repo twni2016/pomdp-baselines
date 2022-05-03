@@ -114,23 +114,24 @@ register(
     max_episode_steps=sum(key_to_door.MAX_FRAMES_PER_PHASE_CCA.values()),
 )
 
-mujoco_list = [
-    "Ant-v2",
-    "HalfCheetah-v2",
-    "Walker2d-v2",
-    "Humanoid-v2",
-    "Reacher-v2",
-    "Swimmer-v2",
-    "Hopper-v2",
-    "HumanoidStandup-v2",
-]
+mujoco_dict = {
+    "Pendulum-v1": 200,
+    "Ant-v2": 1000,
+    "HalfCheetah-v2": 1000,
+    "Walker2d-v2": 1000,
+    "Humanoid-v2": 1000,
+    "Reacher-v2": 1000,
+    "Swimmer-v2": 1000,
+    "Hopper-v2": 1000,
+    "HumanoidStandup-v2": 1000,
+}
 
-for env_name in mujoco_list:
+for env_name, total_steps in mujoco_dict.items():
     register(
-        env_name.replace("-v2", "Ep-v2"),
+        env_name.replace("-v", "Ep-v"),
         entry_point="envs.credit_assign.episodic_reward:MuJoCoEpisodicRewardEnv",
         kwargs=dict(
             env=gym.make(env_name),
         ),
-        max_episode_steps=1000,
+        max_episode_steps=total_steps,
     )
