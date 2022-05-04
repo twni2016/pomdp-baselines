@@ -7,8 +7,8 @@ env:
   num_eval_tasks: 20 # num of eval episodes
 
 train:
-  # 2500*200 = 0.5M steps
-  num_iters: 2500 # number meta-training iterates
+  # 10000*200 = 2M steps
+  num_iters: 10000 # number meta-training iterates
   num_init_rollouts_pool: 5 # before training
   num_rollouts_per_iter: 1
 
