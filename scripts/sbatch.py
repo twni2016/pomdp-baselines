@@ -1,6 +1,6 @@
 # -*- coding: future_fstrings -*-
 """
-Run on compute node (notice the mem limit): use cases are gpu-shared experiments 
+Run on login node
 """
 import os, sys
 import subprocess
@@ -12,13 +12,34 @@ import datetime
 import dateutil.tz
 from pathlib import Path
 
-yaml = YAML()
-yaml.default_flow_style = None  # https://stackoverflow.com/a/56939573/9072850
-os.environ["PYTHONPATH"] = os.getcwd()  # export PYTHONPATH=${PWD}:$PYTHONPATH
-err_f = open("logs/error.log", "a")
+
+def get_sbatch_command(
+    time_limit="24:00:00", mem="10G", n_cpus=1, gpu="volta"
+):
+    cmd = ["sbatch"]
+    cmd.extend(["-o", "/dev/null"])
+    cmd.extend(["-e", "logs/error-%j.out"])
+    cmd.extend(["-t", time_limit])
+    cmd.extend(["-c", str(n_cpus)])
+    cmd.extend(["--mem", mem])
+    cmd.extend(["--gres", f"gpu:{gpu}:1"])
+
+    cmd = " ".join(cmd)
+    return cmd
+
+'''
+GPU list:
+- volta (v100)
+- 2080Ti
 
 
-def run(v, program):
+'''
+
+sbatch_cmd = get_sbatch_command(
+    time_limit="72:00:00", mem="5G", n_cpus=1, gpu="2080Ti",
+)
+
+def get_python_cmd(v, program):
     # v is a dictionary
     # program is program name
     def now_str():
@@ -31,24 +52,22 @@ def run(v, program):
 
     yaml.dump(v, Path(tmp_config_name))
 
-    command = f"python3 {program} --cfg {tmp_config_name}"
+    return program, tmp_config_name
 
-    with open(os.devnull, "w") as f:
-        subprocess.Popen(command, shell=True, stdout=f, stderr=err_f)
 
-    return command
-
+yaml = YAML()
+yaml.default_flow_style = None  # https://stackoverflow.com/a/56939573/9072850
 
 configs = [
     # ("configs/credit/catch/rnn.yml", "rnn"),
     # ("configs/credit/keytodoor/SR/rnn.yml", "rnn"),
     # ("configs/credit/keytodoor/LowVar/rnn.yml", "rnn"),
     # ("configs/credit/keytodoor/HighVar/rnn.yml", "rnn"),
-    ("configs/credit/pendulum/rnn.yml", "rnn"),
-    # ("configs/credit/ant/rnn.yml", "rnn"),
-    # ("configs/credit/halfcheetah/rnn.yml", "rnn"),
-    # ("configs/credit/hopper/rnn.yml", "rnn"),
-    # ("configs/credit/walker/rnn.yml", "rnn"),
+    # ("configs/credit/pendulum/rnn.yml", "rnn"),
+    ("configs/credit/ant/rnn.yml", "rnn"),
+    ("configs/credit/halfcheetah/rnn.yml", "rnn"),
+    ("configs/credit/hopper/rnn.yml", "rnn"),
+    ("configs/credit/walker/rnn.yml", "rnn"),
 ]
 
 programs = {
@@ -58,19 +77,15 @@ programs = {
 
 
 seeds = [
-    # 11,
+    11,
     # 13,
     # 15,
     # 17,
-    19,
-    21,
-    23,
-    25,
+    # 19,
+    # 21,
+    # 23,
+    # 25,
 ]
-
-num_gpus = torch.cuda.device_count()
-print("num_gpus", num_gpus)
-cuda_ids = cycle(list(range(num_gpus)) if num_gpus > 0 else [-1])
 
 algos = [
     "sac",
@@ -79,8 +94,8 @@ algos = [
 ]
 
 gammas = [
-    0.99,
-    # 0.999,
+    # 0.99,
+    0.999,
 ]
 
 entropies = [
@@ -102,7 +117,7 @@ for idx, (config, seed, algo, gamma) in enumerate(
     v = yaml.load(open(config))
 
     v["seed"] = seed
-    v["cuda"] = next(cuda_ids)  # NOTE: -1
+    v["cuda"] = 0  # NOTE
 
     v["train"]["sampled_seq_len"] = -1
     v["train"]["num_updates_per_iter"] = 0.25
@@ -113,6 +128,11 @@ for idx, (config, seed, algo, gamma) in enumerate(
     # v["policy"]["entropy_alpha"] = entropy
     # v["policy"]["target_entropy"] = entropy
 
-    command = run(v, program)
-    print(idx, seed, config, command)
+
+    program, tmp_config_name = get_python_cmd(v, program)
+
+    cmd = f"{sbatch_cmd} run {program} {tmp_config_name}"
+    print(cmd)
+    os.system(cmd)
+
     time.sleep(30)

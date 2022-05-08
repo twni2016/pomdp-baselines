@@ -12,7 +12,7 @@ train:
   num_init_rollouts_pool: 5 # before training
   num_rollouts_per_iter: 1
 
-  num_updates_per_iter: 0.1
+  num_updates_per_iter: 0.25
   # buffer params
   buffer_size: 1e6
   batch_size: 32 # to tune based on sampled_seq_len
