@@ -17,8 +17,15 @@ def get_sbatch_command(
     time_limit="24:00:00", mem="10G", n_cpus=1, gpu="volta"
 ):
     cmd = ["sbatch"]
+
+    cmd.extend(["--account", "rrg-bengioy-ad"]) # CC
+
+    cmd.extend(["--mail-user", "tianwei.ni@mila.quebec", 
+                "--mail-type", "BEGIN,END,TIME_LIMIT_80"])
+    
     cmd.extend(["-o", "/dev/null"])
     cmd.extend(["-e", "logs/error-%j.out"])
+
     cmd.extend(["-t", time_limit])
     cmd.extend(["-c", str(n_cpus)])
     cmd.extend(["--mem", mem])
@@ -31,12 +38,13 @@ def get_sbatch_command(
 GPU list:
 - volta (v100)
 - 2080Ti
+- a100
 
 
 '''
 
 sbatch_cmd = get_sbatch_command(
-    time_limit="72:00:00", mem="5G", n_cpus=1, gpu="2080Ti",
+    time_limit="72:00:00", mem="5G", n_cpus=1, gpu="a100",
 )
 
 def get_python_cmd(v, program):
@@ -77,10 +85,10 @@ programs = {
 
 
 seeds = [
-    11,
+    # 11,
     # 13,
-    # 15,
-    # 17,
+    15,
+    17,
     # 19,
     # 21,
     # 23,
