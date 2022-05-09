@@ -13,16 +13,20 @@ import dateutil.tz
 from pathlib import Path
 
 
-def get_sbatch_command(
-    time_limit="24:00:00", mem="10G", n_cpus=1, gpu="volta"
-):
+def get_sbatch_command(time_limit="24:00:00", mem="10G", n_cpus=1, gpu="volta"):
     cmd = ["sbatch"]
 
-    cmd.extend(["--account", "rrg-bengioy-ad"]) # CC
+    cmd.extend(["--account", "rrg-bengioy-ad"])  # CC
 
-    cmd.extend(["--mail-user", "tianwei.ni@mila.quebec", 
-                "--mail-type", "BEGIN,END,TIME_LIMIT_80"])
-    
+    cmd.extend(
+        [
+            "--mail-user",
+            "tianwei.ni@mila.quebec",
+            "--mail-type",
+            "BEGIN,END,TIME_LIMIT_80",
+        ]
+    )
+
     cmd.extend(["-o", "/dev/null"])
     cmd.extend(["-e", "logs/error-%j.out"])
 
@@ -34,18 +38,23 @@ def get_sbatch_command(
     cmd = " ".join(cmd)
     return cmd
 
-'''
+
+"""
 GPU list:
 - volta (v100)
 - 2080Ti
 - a100
 
 
-'''
+"""
 
 sbatch_cmd = get_sbatch_command(
-    time_limit="72:00:00", mem="5G", n_cpus=1, gpu="a100",
+    time_limit="72:00:00",
+    mem="8G",
+    n_cpus=1,
+    gpu="a100",
 )
+
 
 def get_python_cmd(v, program):
     # v is a dictionary
@@ -72,10 +81,14 @@ configs = [
     # ("configs/credit/keytodoor/LowVar/rnn.yml", "rnn"),
     # ("configs/credit/keytodoor/HighVar/rnn.yml", "rnn"),
     # ("configs/credit/pendulum/rnn.yml", "rnn"),
-    ("configs/credit/ant/rnn.yml", "rnn"),
-    ("configs/credit/halfcheetah/rnn.yml", "rnn"),
-    ("configs/credit/hopper/rnn.yml", "rnn"),
-    ("configs/credit/walker/rnn.yml", "rnn"),
+    # ("configs/credit/ant/rnn.yml", "rnn"),
+    # ("configs/credit/halfcheetah/rnn.yml", "rnn"),
+    # ("configs/credit/hopper/rnn.yml", "rnn"),
+    # ("configs/credit/walker/rnn.yml", "rnn"),
+    ("configs/credit/ant/rnn_mlp.yml", "rnn"),
+    ("configs/credit/halfcheetah/rnn_mlp.yml", "rnn"),
+    ("configs/credit/hopper/rnn_mlp.yml", "rnn"),
+    ("configs/credit/walker/rnn_mlp.yml", "rnn"),
 ]
 
 programs = {
@@ -85,8 +98,8 @@ programs = {
 
 
 seeds = [
-    # 11,
-    # 13,
+    11,
+    13,
     15,
     17,
     # 19,
@@ -135,7 +148,6 @@ for idx, (config, seed, algo, gamma) in enumerate(
     # v["policy"]["automatic_entropy_tuning"] = False
     # v["policy"]["entropy_alpha"] = entropy
     # v["policy"]["target_entropy"] = entropy
-
 
     program, tmp_config_name = get_python_cmd(v, program)
 

@@ -41,10 +41,12 @@ def run(v, program):
 
 configs = [
     # ("configs/credit/catch/rnn.yml", "rnn"),
+    # ("configs/credit/catch/rnn_mlp.yml", "rnn"),
     # ("configs/credit/keytodoor/SR/rnn.yml", "rnn"),
     # ("configs/credit/keytodoor/LowVar/rnn.yml", "rnn"),
     # ("configs/credit/keytodoor/HighVar/rnn.yml", "rnn"),
-    ("configs/credit/pendulum/rnn.yml", "rnn"),
+    # ("configs/credit/pendulum/rnn.yml", "rnn"),
+    ("configs/credit/pendulum/rnn_mlp.yml", "rnn"),
     # ("configs/credit/ant/rnn.yml", "rnn"),
     # ("configs/credit/halfcheetah/rnn.yml", "rnn"),
     # ("configs/credit/hopper/rnn.yml", "rnn"),
@@ -58,14 +60,14 @@ programs = {
 
 
 seeds = [
-    # 11,
-    # 13,
-    # 15,
-    # 17,
-    19,
-    21,
-    23,
-    25,
+    11,
+    13,
+    15,
+    17,
+    # 19,
+    # 21,
+    # 23,
+    # 25,
 ]
 
 num_gpus = torch.cuda.device_count()
