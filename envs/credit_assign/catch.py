@@ -94,19 +94,21 @@ class DelayedCatch(gym.Env):
 
     def step(self, action):
         self.time_step += 1
+        info = {}
+
         if self._is_over():
             obs = self.soft_reset()
+
             reward = self._get_reward()
+            info["reward"] = reward
             self.accumulated_reward += reward
-            return obs, 0, False, reward
+            return obs, 0, False, info
 
         self._update_state(action)
-        reward = self._get_reward()
-        self.accumulated_reward += reward
 
-        ## NOTE: change
-        info = {}
+        reward = self._get_reward()
         info["reward"] = reward
+        self.accumulated_reward += reward
 
         if not self.delayed:
             return self.observe(), reward, False, info
@@ -144,4 +146,5 @@ if __name__ == "__main__":
     done = False
     while not done:
         obs, rew, done, info = env.step(env.action_space.sample())
-        print(env.time_step, obs, rew, done)
+        # print(env.time_step, obs, rew, done, info)
+        print(env.time_step, info)
