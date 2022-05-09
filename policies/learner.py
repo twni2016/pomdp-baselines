@@ -9,9 +9,8 @@ from torch.nn import functional as F
 import random
 import gym
 
-from .models.policy_rnn import ModelFreeOffPolicy_Separate_RNN as Policy_RNN
-from .models.policy_rnn_shared import ModelFreeOffPolicy_Shared_RNN as Policy_Shared_RNN
-from .models.policy_mlp import ModelFreeOffPolicy_MLP as Policy_MLP
+from .models import AGENT_CLASSES, AGENT_ARCHS
+from torchkit.networks import ImageEncoder
 
 # Markov policy
 from buffers.simple_replay_buffer import SimpleReplayBuffer
@@ -27,8 +26,6 @@ from torchkit import pytorch_utils as ptu
 from utils import evaluation as utl_eval
 from utils import logger
 
-from torchkit.networks import ImageEncoder
-
 
 class Learner:
     """
@@ -41,7 +38,7 @@ class Learner:
 
         self.init_env(**env_args)
 
-        self.init_policy(**policy_args)
+        self.init_agent(**policy_args)
 
         self.init_train(**train_args)
 
@@ -62,7 +59,14 @@ class Learner:
     ):
 
         # initialize environment
-        assert env_type in ["meta", "pomdp", "credit", "rmdp", "metaworld", "generalize"]
+        assert env_type in [
+            "meta",
+            "pomdp",
+            "credit",
+            "rmdp",
+            "metaworld",
+            "generalize",
+        ]
         self.env_type = env_type
 
         if self.env_type == "meta":  # meta tasks: using varibad wrapper
@@ -100,7 +104,10 @@ class Learner:
             self.max_rollouts_per_task = max_rollouts_per_task
             self.max_trajectory_len = self.train_env.horizon_bamdp  # H^+ = k * H
 
-        elif self.env_type in ["pomdp", "credit"]:  # pomdp/mdp task, using pomdp wrapper
+        elif self.env_type in [
+            "pomdp",
+            "credit",
+        ]:  # pomdp/mdp task, using pomdp wrapper
             import envs.pomdp
 
             assert num_eval_tasks > 0
@@ -212,18 +219,23 @@ class Learner:
         self.obs_dim = self.train_env.observation_space.shape[0]  # include 1-dim done
         logger.log("obs_dim", self.obs_dim, "act_dim", self.act_dim)
 
-    def init_policy(self, arch, separate: bool = True, image_encoder=None, **kwargs):
-        # initialize policy
+    def init_agent(self, arch, separate: bool = True, image_encoder=None, **kwargs):
+        # initialize agent
         if arch == "mlp":
-            self.policy_arch = "mlp"
-            agent_class = Policy_MLP
+            agent_class = AGENT_CLASSES["Policy_MLP"]
+            rnn_encoder_type = None
+        elif "-mlp" in arch:
+            agent_class = AGENT_CLASSES["Policy_RNN_MLP"]
+            rnn_encoder_type = arch.split("-")[0]
         else:
-            self.policy_arch = "memory"
+            rnn_encoder_type = arch
             if separate == True:
-                agent_class = Policy_RNN
+                agent_class = AGENT_CLASSES["Policy_Separate_RNN"]
             else:
-                agent_class = Policy_Shared_RNN
-                logger.log("WARNING: YOU ARE USING SHARED ACTOR-CRITIC ARCH !!!!!!!")
+                agent_class = AGENT_CLASSES["Policy_Shared_RNN"]
+
+        self.agent_arch = agent_class.ARCH
+        logger.log(agent_class, self.agent_arch)
 
         if image_encoder is not None:  # Catch, keytodoor
             image_encoder_fn = lambda: ImageEncoder(
@@ -233,7 +245,7 @@ class Learner:
             image_encoder_fn = lambda: None
 
         self.agent = agent_class(
-            encoder=arch,  # redundant for Policy_MLP
+            encoder=rnn_encoder_type,
             obs_dim=self.obs_dim,
             action_dim=self.act_dim,
             image_encoder_fn=image_encoder_fn,
@@ -263,7 +275,7 @@ class Learner:
         # if int, it means absolute value; if float, it means the multiplier of collected env steps
         self.num_updates_per_iter = num_updates_per_iter
 
-        if self.policy_arch == "mlp":
+        if self.agent_arch == AGENT_ARCHS.Markov:
             self.policy_storage = SimpleReplayBuffer(
                 max_replay_buffer_size=int(buffer_size),
                 observation_dim=self.obs_dim,
@@ -272,7 +284,7 @@ class Learner:
                 add_timeout=False,  # no timeout storage
             )
 
-        else:  # rnn
+        else:  # memory, memory-markov
             if sampled_seq_len == -1:
                 sampled_seq_len = self.max_trajectory_len
 
@@ -442,9 +454,7 @@ class Learner:
             obs = obs.reshape(1, obs.shape[-1])
             done_rollout = False
 
-            # get hidden state at timestep=0, None for mlp
-            if self.policy_arch == "memory":
-                action, reward, internal_state = self.agent.get_initial_info()
+            if self.agent_arch in [AGENT_ARCHS.Memory, AGENT_ARCHS.Memory_Markov]:
                 # temporary storage
                 obs_list, act_list, rew_list, next_obs_list, term_list = (
                     [],
@@ -453,6 +463,10 @@ class Learner:
                     [],
                     [],
                 )
+
+            if self.agent_arch == AGENT_ARCHS.Memory:
+                # get hidden state at timestep=0, None for markov
+                action, reward, internal_state = self.agent.get_initial_info()
 
             while not done_rollout:
                 if random_actions:
@@ -463,10 +477,10 @@ class Learner:
                         action = F.one_hot(
                             action.long(), num_classes=self.act_dim
                         ).float()  # (1, A)
-                else:  # policy takes hidden state as input for rnn, while takes obs for mlp
-                    if self.policy_arch == "mlp":
-                        action, _, _, _ = self.agent.act(obs, deterministic=False)
-                    else:
+                else:
+                    # policy takes hidden state as input for memory-based actor,
+                    # while takes obs for markov actor
+                    if self.agent_arch == AGENT_ARCHS.Memory:
                         (action, _, _, _), internal_state = self.agent.act(
                             prev_internal_state=internal_state,
                             prev_action=action,
@@ -474,6 +488,8 @@ class Learner:
                             obs=obs,
                             deterministic=False,
                         )
+                    else:
+                        action, _, _, _ = self.agent.act(obs, deterministic=False)
 
                 # observe reward and next obs (B=1, dim)
                 next_obs, reward, done, info = utl.env_step(
@@ -504,8 +520,8 @@ class Learner:
                         else done_rollout
                     )
 
-                # add data to policy buffer - (s+, a, r, s'+, term')
-                if self.policy_arch == "mlp":
+                # add data to policy buffer
+                if self.agent_arch == AGENT_ARCHS.Markov:
                     self.policy_storage.add_sample(
                         observation=ptu.get_numpy(obs.squeeze(dim=0)),
                         action=ptu.get_numpy(
@@ -534,7 +550,8 @@ class Learner:
                 ):
                     break  # has to manually break
 
-            if self.policy_arch == "memory":  # add collected sequence to buffer
+            if self.agent_arch in [AGENT_ARCHS.Memory, AGENT_ARCHS.Memory_Markov]:
+                # add collected sequence to buffer
                 act_buffer = torch.cat(act_list, dim=0)  # (L, dim)
                 if not self.act_continuous:
                     act_buffer = torch.argmax(
@@ -559,9 +576,9 @@ class Learner:
 
     def sample_rl_batch(self, batch_size):
         """sample batch of episodes for vae training"""
-        if self.policy_arch == "mlp":
+        if self.agent_arch == AGENT_ARCHS.Markov:
             batch = self.policy_storage.random_batch(batch_size)
-        else:  # rnn: # all items are (sampled_seq_len, B, dim)
+        else:  # rnn: all items are (sampled_seq_len, B, dim)
             batch = self.policy_storage.random_episodes(batch_size)
         return ptu.np_to_pytorch_batch(batch)
 
@@ -640,23 +657,23 @@ class Learner:
 
             obs = obs.reshape(1, obs.shape[-1])
 
-            if self.policy_arch == "memory":
+            if self.agent_arch == AGENT_ARCHS.Memory:
                 action, reward, internal_state = self.agent.get_initial_info()
 
             for episode_idx in range(num_episodes):
                 running_reward = 0.0
                 for _ in range(num_steps_per_episode):
-                    if self.policy_arch == "mlp":
-                        action, _, _, _ = self.agent.act(
-                            obs, deterministic=deterministic
-                        )
-                    else:
+                    if self.agent_arch == AGENT_ARCHS.Memory:
                         (action, _, _, _), internal_state = self.agent.act(
                             prev_internal_state=internal_state,
                             prev_action=action,
                             reward=reward,
                             obs=obs,
                             deterministic=deterministic,
+                        )
+                    else:
+                        action, _, _, _ = self.agent.act(
+                            obs, deterministic=deterministic
                         )
 
                     # observe reward and next obs
@@ -708,7 +725,7 @@ class Learner:
         for k, v in train_stats.items():
             logger.record_tabular("rl_loss/" + k, v)
         ## gradient norms
-        if self.policy_arch == "memory":
+        if self.agent_arch in [AGENT_ARCHS.Memory, AGENT_ARCHS.Memory_Markov]:
             results = self.agent.report_grad_norm()
             for k, v in results.items():
                 logger.record_tabular("rl_loss/" + k, v)

@@ -23,6 +23,8 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
     depends on the task where partially observation is
     """
 
+    ARCH = "memory"
+
     TD3_name = "td3"
     SAC_name = "sac"
     LSTM_name = "lstm"

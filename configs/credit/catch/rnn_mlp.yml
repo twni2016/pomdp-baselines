@@ -29,8 +29,7 @@ eval:
   log_tensorboard: true
 
 policy:
-  separate: True
-  arch: lstm # [lstm, gru]
+  arch: lstm-mlp # [lstm-mlp, gru-mlp]
   algo: sacd # only support sac-discrete
 
   action_embedding_size: 0 # no need for catch

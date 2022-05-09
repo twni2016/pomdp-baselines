@@ -1,10 +1,5 @@
-""" Recommended Arch
-Separate RNN arch is inspired by a popular RL repo
-https://github.com/quantumiracle/Popular-RL-Algorithms/blob/master/POMDP/common/value_networks.py#L110
-which has another branch to encode current state (and action)
-
-Hidden state update functions get_hidden_state() is inspired by varibad encoder 
-https://github.com/lmzintgraf/varibad/blob/master/models/encoder.py
+""" 
+Experimental code
 """
 
 import torch
@@ -17,22 +12,21 @@ from utils import helpers as utl
 import torchkit.pytorch_utils as ptu
 from torchkit.recurrent_critic import Critic_RNN
 from torchkit.recurrent_actor import Actor_RNN
+from torchkit.actor import DeterministicPolicy, TanhGaussianPolicy, CategoricalPolicy
 from utils import logger
 
 
-class ModelFreeOffPolicy_Separate_RNN(nn.Module):
-    """Recommended Arch
-    RNN TD3/SAC (Recurrent Policy) with separate RNNs
-            it may have advantages over shared RNN arch
-            by avoiding rnn gradient explosion
-            and q loss explosion
-    the input trajectory include obs,
-            and/or action (action_embedding_size != 0),
-            and/or reward (reward_embedding_size != 0).
-    depends on the task where partially observation is
+class ModelFreeOffPolicy_RNN_MLP(nn.Module):
+    """
+    Critic uses RNN, while Actor uses MLP.
+    In other word, history-dependent Q value function,
+        while Markov policy.
+    It may be more effective on some special cases of POMDPs,
+        where the reward is history-dependent, but Markov actor
+        is sufficient to solve the task.
     """
 
-    ARCH = "memory"
+    ARCH = "memory-markov"
 
     TD3_name = Actor_RNN.TD3_name
     SAC_name = Actor_RNN.SAC_name
@@ -96,29 +90,37 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         self.critic_target = deepcopy(self.critic)
 
         # Actor
-        self.actor = Actor_RNN(
-            obs_dim,
-            action_dim,
-            encoder,
-            algo,
-            action_embedding_size,
-            state_embedding_size,
-            reward_embedding_size,
-            rnn_hidden_size,
-            policy_layers,
-            rnn_num_layers,
-            image_encoder=image_encoder_fn(),  # separate weight
-        )
-
         if self.algo == self.TD3_name:
+            self.actor = DeterministicPolicy(
+                obs_dim=obs_dim,
+                action_dim=action_dim,
+                hidden_sizes=policy_layers,
+                image_encoder=image_encoder_fn(),  # separate weight
+            )
+
             # NOTE: td3 has a target policy (actor)
             self.actor_target = deepcopy(self.actor)
             self.exploration_noise = exploration_noise
             self.target_noise = target_noise
             self.target_noise_clip = target_noise_clip
 
-        else:
-            ## automatic entropy coefficient tuning (recommended)
+        elif self.algo == self.SAC_name:
+            self.actor = TanhGaussianPolicy(
+                obs_dim=obs_dim,
+                action_dim=action_dim,
+                hidden_sizes=policy_layers,
+                image_encoder=image_encoder_fn(),  # separate weight
+            )
+
+        else:  # sac-discrete
+            self.actor = CategoricalPolicy(
+                obs_dim=obs_dim,
+                action_dim=action_dim,
+                hidden_sizes=policy_layers,
+                image_encoder=image_encoder_fn(),  # separate weight
+            )
+
+        if self.algo in [self.SAC_name, self.SACD_name]:
             self.automatic_entropy_tuning = automatic_entropy_tuning
             if self.automatic_entropy_tuning:
                 if target_entropy is not None:
@@ -141,37 +143,31 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         self.critic_optimizer = Adam(self.critic.parameters(), lr=lr)
         self.actor_optimizer = Adam(self.actor.parameters(), lr=lr)
 
-    @torch.no_grad()
-    def get_initial_info(self):
-        return self.actor.get_initial_info()
-
-    @torch.no_grad()
     def act(
-        self,
-        prev_internal_state,
-        prev_action,
-        reward,
-        obs,
-        deterministic=False,
-        return_log_prob=False,
+        self, obs, deterministic=False, return_log_prob=False, use_target_policy=False
     ):
-        prev_action = prev_action.unsqueeze(0)  # (1, B, dim)
-        reward = reward.unsqueeze(0)  # (1, B, 1)
-        obs = obs.unsqueeze(0)  # (1, B, dim)
-
-        current_action_tuple, current_internal_state = self.actor.act(
-            prev_internal_state=prev_internal_state,
-            prev_action=prev_action,
-            reward=reward,
-            obs=obs,
-            deterministic=deterministic,
-            return_log_prob=return_log_prob,
-            exploration_noise=self.exploration_noise
-            if self.algo == self.TD3_name
-            else 0.0,
-        )
-
-        return current_action_tuple, current_internal_state
+        if self.algo == self.TD3_name:
+            if use_target_policy:
+                mean = self.actor_target(obs)
+            else:
+                mean = self.actor(obs)
+            if deterministic:
+                return mean, mean, None, None
+            # only use in exploration
+            action = (mean + torch.randn_like(mean) * self.exploration_noise).clamp(
+                -1, 1
+            )  # NOTE
+            return action, mean, None, None
+        elif self.algo == self.SAC_name:
+            action, mean, log_std, log_prob = self.actor(
+                obs, deterministic=deterministic, return_log_prob=return_log_prob
+            )
+            return action, mean, log_std, log_prob
+        else:
+            action, prob, log_prob = self.actor(
+                obs, deterministic=deterministic, return_log_prob=return_log_prob
+            )
+            return action, prob, log_prob, None
 
     def forward(self, actions, rewards, observs, dones, masks):
         """
@@ -203,23 +199,21 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         ### 1. Critic loss
         # Q^tar(h(t+1), pi(h(t+1))) + H[pi(h(t+1))]
         with torch.no_grad():
-            # first next_actions from target/current policy, (T+1, B, dim) including reaction to last obs
+            # first next_actions from target/current policy, (T+1, B, dim)
             if self.algo == self.TD3_name:
-                new_actions, _ = self.actor_target(
-                    prev_actions=actions, rewards=rewards, observs=observs
+                new_actions, _, _, _ = self.act(
+                    observs, deterministic=True, use_target_policy=True
                 )
                 action_noise = (
                     torch.randn_like(new_actions) * self.target_noise
                 ).clamp(-self.target_noise_clip, self.target_noise_clip)
                 new_actions = (new_actions + action_noise).clamp(-1, 1)  # NOTE
             elif self.algo == self.SAC_name:
-                new_actions, new_log_probs = self.actor(
-                    prev_actions=actions, rewards=rewards, observs=observs
+                new_actions, _, _, new_log_probs = self.act(
+                    observs, return_log_prob=True
                 )
             else:
-                new_probs, new_log_probs = self.actor(
-                    prev_actions=actions, rewards=rewards, observs=observs
-                )
+                _, new_probs, new_log_probs, _ = self.act(observs, return_log_prob=True)
 
             next_q1, next_q2 = self.critic_target(
                 prev_actions=actions,
@@ -282,16 +276,16 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
 
         ### 2. Actor loss
         if self.algo == self.TD3_name:
-            new_actions, _ = self.actor(
-                prev_actions=actions, rewards=rewards, observs=observs
+            new_actions, _, _, _ = self.act(
+                observs, deterministic=True, use_target_policy=False
             )  # (T+1, B, A)
         elif self.algo == self.SAC_name:
-            new_actions, log_probs = self.actor(
-                prev_actions=actions, rewards=rewards, observs=observs
+            new_actions, _, _, log_probs = self.act(
+                observs, return_log_prob=True
             )  # (T+1, B, A)
         else:
-            new_probs, log_probs = self.actor(
-                prev_actions=actions, rewards=rewards, observs=observs
+            _, new_probs, log_probs, _ = self.act(
+                observs, return_log_prob=True
             )  # (T+1, B, A)
 
         q1, q2 = self.critic(
@@ -369,7 +363,6 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             "q_grad_norm": utl.get_grad_norm(self.critic),
             "q_rnn_grad_norm": utl.get_grad_norm(self.critic.rnn),
             "pi_grad_norm": utl.get_grad_norm(self.actor),
-            "pi_rnn_grad_norm": utl.get_grad_norm(self.actor.rnn),
         }
 
     def update(self, batch):

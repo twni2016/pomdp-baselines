@@ -86,7 +86,7 @@ else:
     oracle = False
 
 arch, algo = v["policy"]["arch"], v["policy"]["algo"]
-assert arch in ["mlp", "lstm", "gru"]
+assert arch in ["mlp", "lstm", "gru", "lstm-mlp", "gru-mlp"]
 assert algo in ["td3", "sac", "sacd"]
 if arch == "mlp":
     if oracle:
@@ -118,7 +118,7 @@ if algo in ["sac", "sacd"]:
 
 exp_id += f"gamma-{v['policy']['gamma']}/"
 
-if arch in ["lstm", "gru"]:
+if arch != "mlp":
     exp_id += f"len-{v['train']['sampled_seq_len']}/bs-{v['train']['batch_size']}/"
     exp_id += f"baseline-{v['train']['sample_weight_baseline']}/"
     exp_id += f"freq-{v['train']['num_updates_per_iter']}/"

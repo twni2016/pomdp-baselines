@@ -21,6 +21,8 @@ class ModelFreeOffPolicy_MLP(nn.Module):
     NOTE: it can only solve MDP problem, not POMDP
     """
 
+    ARCH = "markov"
+
     TD3_name = "td3"
     SAC_name = "sac"
     SACD_name = "sacd"
