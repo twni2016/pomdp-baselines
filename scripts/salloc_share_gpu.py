@@ -41,12 +41,12 @@ def run(v, program):
 
 configs = [
     # ("configs/credit/catch/rnn.yml", "rnn"),
-    # ("configs/credit/catch/rnn_mlp.yml", "rnn"),
-    # ("configs/credit/keytodoor/SR/rnn.yml", "rnn"),
+    ("configs/credit/keytodoor/SR/rnn.yml", "rnn"),
     # ("configs/credit/keytodoor/LowVar/rnn.yml", "rnn"),
     # ("configs/credit/keytodoor/HighVar/rnn.yml", "rnn"),
+
     # ("configs/credit/pendulum/rnn.yml", "rnn"),
-    ("configs/credit/pendulum/rnn_mlp.yml", "rnn"),
+    # ("configs/credit/pendulum/rnn_mlp.yml", "rnn"),
     # ("configs/credit/ant/rnn.yml", "rnn"),
     # ("configs/credit/halfcheetah/rnn.yml", "rnn"),
     # ("configs/credit/hopper/rnn.yml", "rnn"),
@@ -64,8 +64,8 @@ seeds = [
     13,
     15,
     17,
-    # 19,
-    # 21,
+    19,
+    21,
     # 23,
     # 25,
 ]
@@ -75,9 +75,9 @@ print("num_gpus", num_gpus)
 cuda_ids = cycle(list(range(num_gpus)) if num_gpus > 0 else [-1])
 
 algos = [
-    "sac",
-    "td3",
-    # "sacd",
+    # "sac",
+    # "td3",
+    "sacd",
 ]
 
 gammas = [
@@ -108,6 +108,8 @@ for idx, (config, seed, algo, gamma) in enumerate(
 
     v["train"]["sampled_seq_len"] = -1
     v["train"]["num_updates_per_iter"] = 0.25
+
+    v["policy"]["arch"] = "lstm-mlp"
     v["policy"]["algo"] = algo
     v["policy"]["gamma"] = gamma
 

@@ -28,7 +28,8 @@ def get_sbatch_command(time_limit="24:00:00", mem="10G", n_cpus=1, gpu="volta"):
     )
 
     cmd.extend(["-o", "/dev/null"])
-    cmd.extend(["-e", "logs/error-%j.out"])
+    os.makedirs("logs/error/", exist_ok=True)
+    cmd.extend(["-e", "logs/error/%j.out"])
 
     cmd.extend(["-t", time_limit])
     cmd.extend(["-c", str(n_cpus)])
