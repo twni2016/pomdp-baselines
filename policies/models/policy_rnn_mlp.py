@@ -9,6 +9,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 from torch.optim import Adam
 from utils import helpers as utl
+from torchkit.constant import *
 import torchkit.pytorch_utils as ptu
 from torchkit.recurrent_critic import Critic_RNN
 from torchkit.recurrent_actor import Actor_RNN
@@ -27,10 +28,6 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
     """
 
     ARCH = "memory-markov"
-
-    TD3_name = Actor_RNN.TD3_name
-    SAC_name = Actor_RNN.SAC_name
-    SACD_name = Actor_RNN.SACD_name
 
     def __init__(
         self,
@@ -68,7 +65,7 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
         self.gamma = gamma
         self.tau = tau
 
-        assert algo in [self.TD3_name, self.SAC_name, self.SACD_name]
+        assert algo in [TD3_name, SAC_name, SACD_name]
         self.algo = algo
 
         # Critics
@@ -90,7 +87,7 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
         self.critic_target = deepcopy(self.critic)
 
         # Actor
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             self.actor = DeterministicPolicy(
                 obs_dim=obs_dim,
                 action_dim=action_dim,
@@ -104,7 +101,7 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
             self.target_noise = target_noise
             self.target_noise_clip = target_noise_clip
 
-        elif self.algo == self.SAC_name:
+        elif self.algo == SAC_name:
             self.actor = TanhGaussianPolicy(
                 obs_dim=obs_dim,
                 action_dim=action_dim,
@@ -120,16 +117,16 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
                 image_encoder=image_encoder_fn(),  # separate weight
             )
 
-        if self.algo in [self.SAC_name, self.SACD_name]:
+        if self.algo in [SAC_name, SACD_name]:
             self.automatic_entropy_tuning = automatic_entropy_tuning
             if self.automatic_entropy_tuning:
                 if target_entropy is not None:
-                    if self.algo == self.SAC_name:
+                    if self.algo == SAC_name:
                         self.target_entropy = float(target_entropy)
                     else:  # sac-discrete: beta * log(|A|)
                         self.target_entropy = float(target_entropy) * np.log(action_dim)
                 else:
-                    assert self.algo == self.SAC_name
+                    assert self.algo == SAC_name
                     self.target_entropy = -float(action_dim)
                 self.log_alpha_entropy = torch.zeros(
                     1, requires_grad=True, device=ptu.device
@@ -146,7 +143,7 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
     def act(
         self, obs, deterministic=False, return_log_prob=False, use_target_policy=False
     ):
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             if use_target_policy:
                 mean = self.actor_target(obs)
             else:
@@ -158,7 +155,7 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
                 -1, 1
             )  # NOTE
             return action, mean, None, None
-        elif self.algo == self.SAC_name:
+        elif self.algo == SAC_name:
             action, mean, log_std, log_prob = self.actor(
                 obs, deterministic=deterministic, return_log_prob=return_log_prob
             )
@@ -200,7 +197,7 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
         # Q^tar(h(t+1), pi(h(t+1))) + H[pi(h(t+1))]
         with torch.no_grad():
             # first next_actions from target/current policy, (T+1, B, dim)
-            if self.algo == self.TD3_name:
+            if self.algo == TD3_name:
                 new_actions, _, _, _ = self.act(
                     observs, deterministic=True, use_target_policy=True
                 )
@@ -208,7 +205,7 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
                     torch.randn_like(new_actions) * self.target_noise
                 ).clamp(-self.target_noise_clip, self.target_noise_clip)
                 new_actions = (new_actions + action_noise).clamp(-1, 1)  # NOTE
-            elif self.algo == self.SAC_name:
+            elif self.algo == SAC_name:
                 new_actions, _, _, new_log_probs = self.act(
                     observs, return_log_prob=True
                 )
@@ -220,18 +217,18 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
                 rewards=rewards,
                 observs=observs,
                 current_actions=new_actions
-                if self.algo in [self.TD3_name, self.SAC_name]
+                if self.algo in [TD3_name, SAC_name]
                 else new_probs,
             )  # (T+1, B, 1 or A)
 
             min_next_q_target = torch.min(next_q1, next_q2)
 
-            if self.algo in [self.SAC_name, self.SACD_name]:
+            if self.algo in [SAC_name, SACD_name]:
                 min_next_q_target += self.alpha_entropy * (
                     -new_log_probs
                 )  # (T+1, B, 1 or A)
 
-            if self.algo == self.SACD_name:  # E_{a'\sim \pi}[Q(h',a')], (T+1, B, 1)
+            if self.algo == SACD_name:  # E_{a'\sim \pi}[Q(h',a')], (T+1, B, 1)
                 min_next_q_target = (new_probs * min_next_q_target).sum(
                     dim=-1, keepdims=True
                 )
@@ -250,7 +247,7 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
             current_actions=actions[1:],
         )  # (T, B, 1 or A)
 
-        if self.algo == self.SACD_name:
+        if self.algo == SACD_name:
             stored_actions = actions[1:]  # (T, B, A)
             stored_actions = torch.argmax(
                 stored_actions, dim=-1, keepdims=True
@@ -275,11 +272,11 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
         self.critic_optimizer.step()
 
         ### 2. Actor loss
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             new_actions, _, _, _ = self.act(
                 observs, deterministic=True, use_target_policy=False
             )  # (T+1, B, A)
-        elif self.algo == self.SAC_name:
+        elif self.algo == SAC_name:
             new_actions, _, _, log_probs = self.act(
                 observs, return_log_prob=True
             )  # (T+1, B, A)
@@ -293,19 +290,19 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
             rewards=rewards,
             observs=observs,
             current_actions=new_actions
-            if self.algo in [self.TD3_name, self.SAC_name]
+            if self.algo in [TD3_name, SAC_name]
             else new_probs,
         )  # (T+1, B, 1 or A)
         min_q_new_actions = torch.min(q1, q2)  # (T+1,B,1 or A)
 
         policy_loss = -min_q_new_actions
         if self.algo in [
-            self.SAC_name,
-            self.SACD_name,
+            SAC_name,
+            SACD_name,
         ]:  # Q(h(t), pi(h(t))) + H[pi(h(t))]
             policy_loss += self.alpha_entropy * log_probs
 
-        if self.algo == self.SACD_name:  # E_{a\sim \pi}[Q(h,a)]
+        if self.algo == SACD_name:  # E_{a\sim \pi}[Q(h,a)]
             policy_loss = (new_probs * policy_loss).sum(
                 axis=-1, keepdims=True
             )  # (T+1,B,1)
@@ -322,9 +319,9 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
         self.soft_target_update()
 
         ### 4. update alpha
-        if self.algo in [self.SAC_name, self.SACD_name]:
+        if self.algo in [SAC_name, SACD_name]:
             # extract valid log_probs
-            if self.algo == self.SACD_name:  # -> negative entropy (T+1, B, 1)
+            if self.algo == SACD_name:  # -> negative entropy (T+1, B, 1)
                 log_probs = (new_probs * log_probs).sum(axis=-1, keepdims=True)
             with torch.no_grad():
                 current_log_probs = (log_probs[:-1] * masks).sum() / num_valid
@@ -346,7 +343,7 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
             "qf2_loss": qf2_loss.item(),
             "policy_loss": policy_loss.item(),
         }
-        if self.algo in [self.SAC_name, self.SACD_name]:
+        if self.algo in [SAC_name, SACD_name]:
             outputs.update(
                 {"policy_entropy": -current_log_probs, "alpha": self.alpha_entropy}
             )
@@ -354,7 +351,7 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
 
     def soft_target_update(self):
         ptu.soft_update_from_to(self.critic, self.critic_target, self.tau)
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             ptu.soft_update_from_to(self.actor, self.actor_target, self.tau)
 
     def report_grad_norm(self):
@@ -369,7 +366,7 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
         # all are 3D tensor (T,B,dim)
         actions, rewards, dones = batch["act"], batch["rew"], batch["term"]
         _, batch_size, _ = actions.shape
-        if self.algo == self.SACD_name:
+        if self.algo == SACD_name:
             # for discrete action space, convert to one-hot vectors
             actions = F.one_hot(
                 actions.squeeze(-1).long(), num_classes=self.action_dim

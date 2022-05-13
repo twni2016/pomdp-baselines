@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import Adam
+from torchkit.constant import *
 import torchkit.pytorch_utils as ptu
 from torchkit.networks import FlattenMlp
 from torchkit.actor import DeterministicPolicy, TanhGaussianPolicy, CategoricalPolicy
@@ -22,10 +23,6 @@ class ModelFreeOffPolicy_MLP(nn.Module):
     """
 
     ARCH = "markov"
-
-    TD3_name = "td3"
-    SAC_name = "sac"
-    SACD_name = "sacd"
 
     def __init__(
         self,
@@ -55,11 +52,11 @@ class ModelFreeOffPolicy_MLP(nn.Module):
         self.gamma = gamma
         self.tau = tau
 
-        assert algo in [self.TD3_name, self.SAC_name, self.SACD_name]
+        assert algo in [TD3_name, SAC_name, SACD_name]
         self.algo = algo
 
         # q networks - use two network to mitigate positive bias
-        if self.algo in [self.TD3_name, self.SAC_name]:
+        if self.algo in [TD3_name, SAC_name]:
             extra_input_size = action_dim
             output_size = 1
         else:  # sac-discrete
@@ -84,7 +81,7 @@ class ModelFreeOffPolicy_MLP(nn.Module):
         self.qf1_target = copy.deepcopy(self.qf1)
         self.qf2_target = copy.deepcopy(self.qf2)
 
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             self.policy = DeterministicPolicy(
                 obs_dim=obs_dim, action_dim=action_dim, hidden_sizes=policy_layers
             )
@@ -95,7 +92,7 @@ class ModelFreeOffPolicy_MLP(nn.Module):
             self.target_noise = target_noise
             self.target_noise_clip = target_noise_clip
 
-        elif self.algo == self.SAC_name:
+        elif self.algo == SAC_name:
             self.policy = TanhGaussianPolicy(
                 obs_dim=obs_dim, action_dim=action_dim, hidden_sizes=policy_layers
             )
@@ -105,16 +102,16 @@ class ModelFreeOffPolicy_MLP(nn.Module):
                 obs_dim=obs_dim, action_dim=action_dim, hidden_sizes=policy_layers
             )
 
-        if self.algo in [self.SAC_name, self.SACD_name]:
+        if self.algo in [SAC_name, SACD_name]:
             self.automatic_entropy_tuning = automatic_entropy_tuning
             if self.automatic_entropy_tuning:
                 if target_entropy is not None:
-                    if self.algo == self.SAC_name:
+                    if self.algo == SAC_name:
                         self.target_entropy = float(target_entropy)
                     else:  # sac-discrete: beta * log(|A|)
                         self.target_entropy = float(target_entropy) * np.log(action_dim)
                 else:
-                    assert self.algo == self.SAC_name
+                    assert self.algo == SAC_name
                     self.target_entropy = -float(action_dim)
                 self.log_alpha_entropy = torch.zeros(
                     1, requires_grad=True, device=ptu.device
@@ -129,7 +126,7 @@ class ModelFreeOffPolicy_MLP(nn.Module):
     def act(
         self, obs, deterministic=False, return_log_prob=False, use_target_policy=False
     ):
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             if use_target_policy:
                 mean = self.policy_target(obs)
             else:
@@ -141,7 +138,7 @@ class ModelFreeOffPolicy_MLP(nn.Module):
                 -1, 1
             )  # NOTE
             return action, mean, None, None
-        elif self.algo == self.SAC_name:
+        elif self.algo == SAC_name:
             action, mean, log_std, log_prob = self.policy(
                 obs, deterministic=deterministic, return_log_prob=return_log_prob
             )
@@ -158,7 +155,7 @@ class ModelFreeOffPolicy_MLP(nn.Module):
 
         # computation of critic loss
         with torch.no_grad():
-            if self.algo == self.TD3_name:
+            if self.algo == TD3_name:
                 next_action, _, _, _ = self.act(
                     next_obs, deterministic=True, use_target_policy=True
                 )
@@ -166,7 +163,7 @@ class ModelFreeOffPolicy_MLP(nn.Module):
                     torch.randn_like(next_action) * self.target_noise
                 ).clamp(-self.target_noise_clip, self.target_noise_clip)
                 next_action = (next_action + action_noise).clamp(-1, 1)  # NOTE
-            elif self.algo == self.SAC_name:
+            elif self.algo == SAC_name:
                 next_action, _, _, next_log_prob = self.act(
                     next_obs, return_log_prob=True
                 )
@@ -175,7 +172,7 @@ class ModelFreeOffPolicy_MLP(nn.Module):
                     next_obs, return_log_prob=True
                 )  # (B, A), (B, A)
 
-            if self.algo in [self.TD3_name, self.SAC_name]:
+            if self.algo in [TD3_name, SAC_name]:
                 next_q1 = self.qf1_target(next_obs, next_action)  # (B, 1)
                 next_q2 = self.qf2_target(next_obs, next_action)
             else:
@@ -184,17 +181,17 @@ class ModelFreeOffPolicy_MLP(nn.Module):
 
             min_next_q_target = torch.min(next_q1, next_q2)
 
-            if self.algo in [self.SAC_name, self.SACD_name]:
+            if self.algo in [SAC_name, SACD_name]:
                 min_next_q_target += self.alpha_entropy * (-next_log_prob)
 
-            if self.algo == self.SACD_name:  # E_{a'\sim \pi}[Q(s',a')], (B, 1)
+            if self.algo == SACD_name:  # E_{a'\sim \pi}[Q(s',a')], (B, 1)
                 min_next_q_target = (next_prob * min_next_q_target).sum(
                     dim=-1, keepdims=True
                 )
 
             q_target = reward + (1.0 - done) * self.gamma * min_next_q_target
 
-        if self.algo in [self.TD3_name, self.SAC_name]:
+        if self.algo in [TD3_name, SAC_name]:
             q1_pred = self.qf1(obs, action)
             q2_pred = self.qf2(obs, action)
         else:
@@ -219,16 +216,16 @@ class ModelFreeOffPolicy_MLP(nn.Module):
         self.soft_target_update()
 
         # computation of actor loss
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             new_action, _, _, _ = self.act(
                 obs, deterministic=True, use_target_policy=False
             )
-        elif self.algo == self.SAC_name:
+        elif self.algo == SAC_name:
             new_action, _, _, log_prob = self.act(obs, return_log_prob=True)
         else:
             _, new_prob, log_prob, _ = self.act(obs, return_log_prob=True)
 
-        if self.algo in [self.TD3_name, self.SAC_name]:
+        if self.algo in [TD3_name, SAC_name]:
             q1 = self.qf1(obs, new_action)
             q2 = self.qf2(obs, new_action)
         else:
@@ -238,10 +235,10 @@ class ModelFreeOffPolicy_MLP(nn.Module):
         min_q_new_actions = torch.min(q1, q2)
 
         policy_loss = -min_q_new_actions
-        if self.algo in [self.SAC_name, self.SACD_name]:
+        if self.algo in [SAC_name, SACD_name]:
             policy_loss += self.alpha_entropy * log_prob
 
-        if self.algo == self.SACD_name:  # E_{a\sim \pi}[Q(s,a)]
+        if self.algo == SACD_name:  # E_{a\sim \pi}[Q(s,a)]
             policy_loss = (new_prob * policy_loss).sum(axis=-1, keepdims=True)  # (B,1)
 
         policy_loss = policy_loss.mean()
@@ -251,8 +248,8 @@ class ModelFreeOffPolicy_MLP(nn.Module):
         policy_loss.backward()
         self.policy_optim.step()
 
-        if self.algo in [self.SAC_name, self.SACD_name]:
-            if self.algo == self.SACD_name:  # -> negative entropy (B, 1)
+        if self.algo in [SAC_name, SACD_name]:
+            if self.algo == SACD_name:  # -> negative entropy (B, 1)
                 log_prob = (new_prob * log_prob).sum(axis=-1, keepdims=True)
 
             current_log_prob = log_prob.mean().item()
@@ -273,7 +270,7 @@ class ModelFreeOffPolicy_MLP(nn.Module):
             "qf2_loss": qf2_loss.item(),
             "policy_loss": policy_loss.item(),
         }
-        if self.algo in [self.SAC_name, self.SACD_name]:
+        if self.algo in [SAC_name, SACD_name]:
             outputs.update(
                 {"policy_entropy": -current_log_prob, "alpha": self.alpha_entropy}
             )
@@ -282,5 +279,5 @@ class ModelFreeOffPolicy_MLP(nn.Module):
     def soft_target_update(self):
         ptu.soft_update_from_to(self.qf1, self.qf1_target, self.tau)
         ptu.soft_update_from_to(self.qf2, self.qf2_target, self.tau)
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             ptu.soft_update_from_to(self.policy, self.policy_target, self.tau)

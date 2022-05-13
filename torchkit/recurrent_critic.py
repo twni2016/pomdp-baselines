@@ -3,18 +3,12 @@ import torch.nn as nn
 from torch.nn import functional as F
 from utils import helpers as utl
 from torchkit.networks import FlattenMlp
+from torchkit.constant import *
 import torchkit.pytorch_utils as ptu
 from torchkit.recurrent_actor import Actor_RNN
 
 
 class Critic_RNN(nn.Module):
-    TD3_name = Actor_RNN.TD3_name
-    SAC_name = Actor_RNN.SAC_name
-    SACD_name = Actor_RNN.SACD_name
-    LSTM_name = Actor_RNN.LSTM_name
-    GRU_name = Actor_RNN.GRU_name
-    RNNs = Actor_RNN.RNNs
-
     def __init__(
         self,
         obs_dim,
@@ -59,10 +53,10 @@ class Critic_RNN(nn.Module):
         )
         self.rnn_hidden_size = rnn_hidden_size
 
-        assert encoder in self.RNNs
+        assert encoder in RNNs
         self.encoder = encoder
 
-        self.rnn = self.RNNs[encoder](
+        self.rnn = RNNs[encoder](
             input_size=rnn_input_size,
             hidden_size=self.rnn_hidden_size,
             num_layers=rnn_num_layers,
@@ -76,7 +70,7 @@ class Critic_RNN(nn.Module):
             elif "weight" in name:
                 nn.init.orthogonal_(param)
 
-        if self.algo in [self.TD3_name, self.SAC_name]:
+        if self.algo in [TD3_name, SAC_name]:
             extra_input_size = action_dim
             output_size = 1
         else:  # sac-discrete
@@ -154,7 +148,7 @@ class Critic_RNN(nn.Module):
         # 2. another branch for state & **current** action
         if current_actions.shape[0] == observs.shape[0]:
             # current_actions include last obs's action, i.e. we have a'[T] in reaction to o[T]
-            if self.algo in [self.TD3_name, self.SAC_name]:
+            if self.algo in [TD3_name, SAC_name]:
                 curr_embed = self._get_shortcut_obs_act_embedding(
                     observs, current_actions
                 )  # (T+1, B, dim)
@@ -168,7 +162,7 @@ class Critic_RNN(nn.Module):
             )  # (T+1, B, dim)
         else:
             # current_actions does NOT include last obs's action
-            if self.algo in [self.TD3_name, self.SAC_name]:
+            if self.algo in [TD3_name, SAC_name]:
                 curr_embed = self._get_shortcut_obs_act_embedding(
                     observs[:-1], current_actions
                 )  # (T, B, dim)

@@ -2,21 +2,12 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from utils import helpers as utl
+from torchkit.constant import *
 from torchkit.actor import DeterministicPolicy, TanhGaussianPolicy, CategoricalPolicy
 import torchkit.pytorch_utils as ptu
 
 
 class Actor_RNN(nn.Module):
-    TD3_name = "td3"
-    SAC_name = "sac"
-    SACD_name = "sacd"
-    LSTM_name = "lstm"
-    GRU_name = "gru"
-    RNNs = {
-        LSTM_name: nn.LSTM,
-        GRU_name: nn.GRU,
-    }
-
     def __init__(
         self,
         obs_dim,
@@ -37,7 +28,7 @@ class Actor_RNN(nn.Module):
         self.obs_dim = obs_dim
         self.action_dim = action_dim
 
-        assert algo in [self.TD3_name, self.SAC_name, self.SACD_name]
+        assert algo in [TD3_name, SAC_name, SACD_name]
         self.algo = algo
 
         ### Build Model
@@ -63,11 +54,11 @@ class Actor_RNN(nn.Module):
         )
         self.rnn_hidden_size = rnn_hidden_size
 
-        assert encoder in self.RNNs
+        assert encoder in RNNs
         self.encoder = encoder
         self.num_layers = rnn_num_layers
 
-        self.rnn = self.RNNs[encoder](
+        self.rnn = RNNs[encoder](
             input_size=rnn_input_size,
             hidden_size=self.rnn_hidden_size,
             num_layers=self.num_layers,
@@ -92,13 +83,13 @@ class Actor_RNN(nn.Module):
             )
 
         ## 4. build policy
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             self.policy = DeterministicPolicy(
                 obs_dim=self.rnn_hidden_size + state_embedding_size,
                 action_dim=self.action_dim,
                 hidden_sizes=policy_layers,
             )
-        elif self.algo == self.SAC_name:
+        elif self.algo == SAC_name:
             self.policy = TanhGaussianPolicy(
                 obs_dim=self.rnn_hidden_size + state_embedding_size,
                 action_dim=self.action_dim,
@@ -165,10 +156,10 @@ class Actor_RNN(nn.Module):
         joint_embeds = torch.cat((hidden_states, curr_embed), dim=-1)  # (T+1, B, dim)
 
         # 4. Actor
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             new_actions = self.policy(joint_embeds)
             return new_actions, None  # (T+1, B, dim), None
-        elif self.algo == self.SAC_name:
+        elif self.algo == SAC_name:
             new_actions, _, _, log_probs = self.policy(
                 joint_embeds, return_log_prob=True
             )
@@ -186,7 +177,7 @@ class Actor_RNN(nn.Module):
         reward = ptu.zeros((1, 1)).float()
 
         hidden_state = ptu.zeros((self.num_layers, 1, self.rnn_hidden_size)).float()
-        if self.encoder == self.GRU_name:
+        if self.encoder == GRU_name:
             internal_state = hidden_state
         else:
             cell_state = ptu.zeros((self.num_layers, 1, self.rnn_hidden_size)).float()
@@ -228,7 +219,7 @@ class Actor_RNN(nn.Module):
             joint_embeds = joint_embeds.squeeze(0)  # (B, dim)
 
         # 4. Actor head, generate action tuple
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             mean = self.policy(joint_embeds)
             if deterministic:
                 action_tuple = (mean, mean, None, None)
@@ -237,7 +228,7 @@ class Actor_RNN(nn.Module):
                     -1, 1
                 )  # NOTE
                 action_tuple = (action, mean, None, None)
-        elif self.algo == self.SAC_name:
+        elif self.algo == SAC_name:
             action_tuple = self.policy(
                 joint_embeds, False, deterministic, return_log_prob
             )
