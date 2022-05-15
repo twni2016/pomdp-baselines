@@ -66,6 +66,7 @@ class Learner:
             "rmdp",
             "metaworld",
             "generalize",
+            "atari",
         ]
         self.env_type = env_type
 
@@ -112,6 +113,23 @@ class Learner:
 
             assert num_eval_tasks > 0
             self.train_env = gym.make(env_name)
+            self.train_env.seed(self.seed)
+            self.train_env.action_space.np_random.seed(self.seed)  # crucial
+
+            self.eval_env = self.train_env
+            self.eval_env.seed(self.seed + 1)
+
+            self.train_tasks = []
+            self.eval_tasks = num_eval_tasks * [None]
+
+            self.max_rollouts_per_task = 1
+            self.max_trajectory_len = self.train_env._max_episode_steps
+
+        elif self.env_type == "atari":
+            from envs.atari import create_env
+
+            assert num_eval_tasks > 0
+            self.train_env = create_env(env_name)
             self.train_env.seed(self.seed)
             self.train_env.action_space.np_random.seed(self.seed)  # crucial
 
@@ -219,7 +237,14 @@ class Learner:
         self.obs_dim = self.train_env.observation_space.shape[0]  # include 1-dim done
         logger.log("obs_dim", self.obs_dim, "act_dim", self.act_dim)
 
-    def init_agent(self, arch, separate: bool = True, image_encoder=None, **kwargs):
+    def init_agent(
+        self,
+        arch,
+        separate: bool = True,
+        image_encoder=None,
+        reward_clip=False,
+        **kwargs
+    ):
         # initialize agent
         if arch == "mlp":
             agent_class = AGENT_CLASSES["Policy_MLP"]
@@ -252,6 +277,8 @@ class Learner:
             **kwargs,
         ).to(ptu.device)
         logger.log(self.agent)
+
+        self.reward_clip = reward_clip  # for atari
 
     def init_train(
         self,
@@ -466,6 +493,7 @@ class Learner:
 
             if self.agent_arch == AGENT_ARCHS.Memory:
                 # get hidden state at timestep=0, None for markov
+                # NOTE: assume initial reward = 0.0 (no need to clip)
                 action, reward, internal_state = self.agent.get_initial_info()
 
             while not done_rollout:
@@ -495,6 +523,9 @@ class Learner:
                 next_obs, reward, done, info = utl.env_step(
                     self.train_env, action.squeeze(dim=0)
                 )
+                if self.reward_clip and self.env_type == "atari":
+                    reward = torch.tanh(reward)
+
                 done_rollout = False if ptu.get_numpy(done[0][0]) == 0.0 else True
                 # update statistics
                 steps += 1
@@ -658,6 +689,7 @@ class Learner:
             obs = obs.reshape(1, obs.shape[-1])
 
             if self.agent_arch == AGENT_ARCHS.Memory:
+                # assume initial reward = 0.0
                 action, reward, internal_state = self.agent.get_initial_info()
 
             for episode_idx in range(num_episodes):
@@ -680,7 +712,13 @@ class Learner:
                     next_obs, reward, done, info = utl.env_step(
                         self.eval_env, action.squeeze(dim=0)
                     )
+
+                    # add raw reward
                     running_reward += reward.item()
+                    # clip reward if necessary for policy inputs
+                    if self.reward_clip and self.env_type == "atari":
+                        reward = torch.tanh(reward)
+
                     step += 1
                     done_rollout = False if ptu.get_numpy(done[0][0]) == 0.0 else True
 
@@ -931,7 +969,7 @@ class Learner:
                 "metrics/total_steps_eval_worst", total_steps_eval_worst.mean()
             )
 
-        elif self.env_type in ["pomdp", "credit"]:
+        elif self.env_type in ["pomdp", "credit", "atari"]:
             returns_eval, success_rate_eval, _, total_steps_eval = self.evaluate(
                 self.eval_tasks
             )

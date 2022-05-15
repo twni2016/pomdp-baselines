@@ -2,10 +2,8 @@
 """
 Run on login node
 """
-import os, sys
-import subprocess
-from itertools import product, cycle
-import torch
+import os
+from itertools import product
 import time
 from ruamel.yaml import YAML
 import datetime
@@ -13,7 +11,9 @@ import dateutil.tz
 from pathlib import Path
 
 
-def get_sbatch_command(time_limit="24:00:00", mem="10G", n_cpus=1, gpu="volta"):
+def get_sbatch_command(
+    time_limit="24:00:00", mem="10G", n_cpus=1, gpu="volta", exclude_nodes=None
+):
     cmd = ["sbatch"]
 
     cmd.extend(["--account", "rrg-bengioy-ad"])  # CC
@@ -36,6 +36,9 @@ def get_sbatch_command(time_limit="24:00:00", mem="10G", n_cpus=1, gpu="volta"):
     cmd.extend(["--mem", mem])
     cmd.extend(["--gres", f"gpu:{gpu}:1"])
 
+    if exclude_nodes is not None:
+        cmd.extend(["-x", exclude_nodes])
+
     cmd = " ".join(cmd)
     return cmd
 
@@ -51,9 +54,10 @@ GPU list:
 
 sbatch_cmd = get_sbatch_command(
     time_limit="72:00:00",
-    mem="8G",
+    mem="20G",
     n_cpus=1,
-    gpu="a100",
+    gpu= "2080Ti", #"volta",  #
+    exclude_nodes="matrix-0-24",
 )
 
 
@@ -82,14 +86,18 @@ configs = [
     # ("configs/credit/keytodoor/LowVar/rnn.yml", "rnn"),
     # ("configs/credit/keytodoor/HighVar/rnn.yml", "rnn"),
     # ("configs/credit/pendulum/rnn.yml", "rnn"),
-    # ("configs/credit/ant/rnn.yml", "rnn"),
-    # ("configs/credit/halfcheetah/rnn.yml", "rnn"),
     # ("configs/credit/hopper/rnn.yml", "rnn"),
     # ("configs/credit/walker/rnn.yml", "rnn"),
-    ("configs/credit/ant/rnn_mlp.yml", "rnn"),
-    ("configs/credit/halfcheetah/rnn_mlp.yml", "rnn"),
-    ("configs/credit/hopper/rnn_mlp.yml", "rnn"),
-    ("configs/credit/walker/rnn_mlp.yml", "rnn"),
+    # ("configs/credit/hopper/rnn_mlp.yml", "rnn"),
+    # ("configs/credit/walker/rnn_mlp.yml", "rnn"),
+    ("configs/atari/rnn.yml", "rnn"),
+]
+
+env_names = [
+    "Pong",
+    "Bowling",
+    "Solaris",
+    "Venture",
 ]
 
 programs = {
@@ -100,9 +108,9 @@ programs = {
 
 seeds = [
     11,
-    13,
-    15,
-    17,
+    # 13,
+    # 15,
+    # 17,
     # 19,
     # 21,
     # 23,
@@ -110,9 +118,9 @@ seeds = [
 ]
 
 algos = [
-    "sac",
-    "td3",
-    # "sacd",
+    # "sac",
+    # "td3",
+    "sacd",
 ]
 
 gammas = [
@@ -129,8 +137,8 @@ entropies = [
     # 0.003,
 ]
 
-for idx, (config, seed, algo, gamma) in enumerate(
-    product(configs, seeds, algos, gammas)
+for idx, (config, seed, algo, env_name, gamma) in enumerate(
+    product(configs, seeds, algos, env_names, gammas)
 ):
     # for idx, (config, seed, entropy) in enumerate(product(configs, seeds, entropies)):
 
@@ -141,8 +149,10 @@ for idx, (config, seed, algo, gamma) in enumerate(
     v["seed"] = seed
     v["cuda"] = 0  # NOTE
 
-    v["train"]["sampled_seq_len"] = -1
-    v["train"]["num_updates_per_iter"] = 0.25
+    v["env"]["env_name"] = env_name
+
+    v["train"]["sampled_seq_len"] = 50  # -1
+    v["train"]["num_updates_per_iter"] = 0.01
     v["policy"]["algo"] = algo
     v["policy"]["gamma"] = gamma
 

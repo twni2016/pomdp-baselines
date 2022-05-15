@@ -1,0 +1,65 @@
+# try to match https://github.com/danijar/dreamerv2/blob/main/dreamerv2/configs.yaml#L81
+# but use a smaller network architecture
+
+seed: 73
+cuda: 0 # use_gpu
+# RAM: ~10G
+env:
+  env_type: atari
+  env_name: Pong
+
+  num_eval_tasks: 1 # num of eval episodes; dreamer uses 1
+
+train:
+  # 1852*27000 = 50M steps = 200M frames (action repeat = 4)
+  num_iters: 1852 # number meta-training iterates
+  num_init_rollouts_pool: 1 # before training
+  num_rollouts_per_iter: 1
+
+  num_updates_per_iter: 0.01 # dreamer uses 0.0625
+
+  # buffer params
+  buffer_type: seq_efficient
+  buffer_size: 2e6 # dreamer
+  batch_size: 50 # dreamer uses 50
+  sampled_seq_len: 50 # can be larger for LTCA. dreamer uses 50
+  sample_weight_baseline: 0.0
+
+eval:
+  eval_stochastic: false # also eval stochastic policy
+  log_interval: 10 # (9x more frequent than dreamer)
+  save_interval: -1
+  log_tensorboard: true
+
+policy:
+  separate: True
+  arch: gru # [lstm, gru] dreamer uses gru
+  algo: sacd # only support sac-discrete
+
+  action_embedding_size: 64 # 18-dim
+  state_embedding_size: 0 # use image encoder instead
+  image_encoder: 
+    from_flattened: True
+    normalize_pixel: True
+    depths: [32, 64, 128, 256] # make it smaller to match the world model
+    embed_size: 256
+    kernel_size: 4
+    stride: 2
+    activation: elu
+
+  reward_clip: true
+  reward_embedding_size: 16
+  rnn_hidden_size: 512 
+
+  dqn_layers: [400, 400]
+  policy_layers: [400, 400]
+  lr: 0.0003
+  gamma: 0.999 # dreamer
+  tau: 0.005
+
+  # sacd alpha
+  entropy_alpha: 0.1 # dreamer uses 0.001 which is too low for sacd
+  automatic_entropy_tuning: False
+  target_entropy: None # the ratio: target_entropy = ratio * log(|A|)
+  alpha_lr: 0.0003
+
