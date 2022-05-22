@@ -5,7 +5,7 @@ This repo provides some simple baselines for POMDPs, specifically the **recurren
 
 [[arXiv]](https://arxiv.org/abs/2110.05038) [[project site]](https://sites.google.com/view/pomdp-baselines) [[numeric results]](https://drive.google.com/file/d/1dfulN8acol-qaNR2h4PDpIaWBg9Ck4pY/view?usp=sharing)
 
-by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-eysenbach.github.io/) and [Ruslan Salakhutdinov](http://www.cs.cmu.edu/~rsalakhu/).
+by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-eysenbach.github.io/) and [Ruslan Salakhutdinov](http://www.cs.cmu.edu/~rsalakhu/). **To show in ICML 2022.**
 
 ## Motivation
 
@@ -24,6 +24,7 @@ There are many other (more complicated or specialized) methods for POMDPs and it
 Note that current repo should be run smoothly.
 
 DONE:
+* May 2022: this work has been accepted to **ICML 2022**! 
 * Mar 2022: introduce recurrent [SAC-discrete](https://arxiv.org/abs/1910.07207) for **discrete action** space and see [this PR for instructions](https://github.com/twni2016/pomdp-baselines/pull/1). As a baseline, it [greatly improves sample efficiency](https://github.com/twni2016/pomdp-baselines/pull/2), compared to a specialized method IMPALA+SR, on their long-term credit assignment benchmark.
 * Feb 2022: simplify `--oracle` commands, and upload the plotting scripts
 * Jan 2022: introduce new meta RL environments (*-Dir), and replace re-implementation of off-policy variBAD with original implementation
