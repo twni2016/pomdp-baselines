@@ -53,11 +53,11 @@ GPU list:
 """
 
 sbatch_cmd = get_sbatch_command(
-    time_limit="72:00:00",
+    time_limit="108:00:00",
     mem="20G",
     n_cpus=1,
-    gpu= "2080Ti", #"volta",  #
-    exclude_nodes="matrix-0-24",
+    gpu="a100", # "2080Ti", #"volta",  #
+    # exclude_nodes="matrix-0-24",
 )
 
 
@@ -108,7 +108,7 @@ programs = {
 
 seeds = [
     11,
-    # 13,
+    13,
     # 15,
     # 17,
     # 19,
@@ -129,16 +129,16 @@ gammas = [
 ]
 
 entropies = [
-    # 1.0,
-    # 0.3,
     # 0.1,
     # 0.03,
-    # 0.01,
+    0.01,
     # 0.003,
+    0.001,
+    0.0001,
 ]
 
-for idx, (config, seed, algo, env_name, gamma) in enumerate(
-    product(configs, seeds, algos, env_names, gammas)
+for idx, (config, seed, algo, env_name, gamma, entropy) in enumerate(
+    product(configs, seeds, algos, env_names, gammas, entropies)
 ):
     # for idx, (config, seed, entropy) in enumerate(product(configs, seeds, entropies)):
 
@@ -156,8 +156,8 @@ for idx, (config, seed, algo, env_name, gamma) in enumerate(
     v["policy"]["algo"] = algo
     v["policy"]["gamma"] = gamma
 
-    # v["policy"]["automatic_entropy_tuning"] = False
-    # v["policy"]["entropy_alpha"] = entropy
+    v["policy"]["automatic_entropy_tuning"] = False
+    v["policy"]["entropy_alpha"] = entropy
     # v["policy"]["target_entropy"] = entropy
 
     program, tmp_config_name = get_python_cmd(v, program)
