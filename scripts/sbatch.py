@@ -53,7 +53,7 @@ GPU list:
 """
 
 sbatch_cmd = get_sbatch_command(
-    time_limit="108:00:00",
+    time_limit="72:00:00",
     mem="20G",
     n_cpus=1,
     gpu="a100", # "2080Ti", #"volta",  #
@@ -95,9 +95,9 @@ configs = [
 
 env_names = [
     "Pong",
-    "Bowling",
-    "Solaris",
-    "Venture",
+    #"Bowling",
+    #"Solaris",
+    #"Venture",
 ]
 
 programs = {
@@ -107,11 +107,11 @@ programs = {
 
 
 seeds = [
-    11,
+    # 11,
     13,
-    # 15,
-    # 17,
-    # 19,
+    15,
+    17,
+    19,
     # 21,
     # 23,
     # 25,
@@ -124,17 +124,20 @@ algos = [
 ]
 
 gammas = [
-    # 0.99,
-    0.999,
+    0.99,
+    #0.999,
 ]
 
 entropies = [
     # 0.1,
-    # 0.03,
+    #0.03,
     0.01,
-    # 0.003,
-    0.001,
-    0.0001,
+    #0.003,
+   # 0.001,
+    #0.9,
+    #0.7,
+    #0.5,
+    #0.3,
 ]
 
 for idx, (config, seed, algo, env_name, gamma, entropy) in enumerate(

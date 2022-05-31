@@ -8,7 +8,7 @@ env:
   env_type: atari
   env_name: Pong
 
-  num_eval_tasks: 1 # num of eval episodes; dreamer uses 1
+  num_eval_tasks: 5 # num of eval episodes; dreamer uses 1
 
 train:
   # 1852*27000 = 50M steps = 200M frames (action repeat = 4)
