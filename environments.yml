@@ -195,6 +195,7 @@ dependencies:
     - cloudpickle==1.6.0
     - cocos2d==0.6.5
     - cython==0.29.21
+    - data==0.4
     - deepdish==0.3.6
     - dm-control==0.0.425341097
     - dm-env==1.5
@@ -203,6 +204,7 @@ dependencies:
     - fasteners==0.16
     - filelock==3.0.12
     - flatbuffers==1.12
+    - funcsigs==1.0.2
     - future==0.18.2
     - future-fstrings==1.2.0
     - gast==0.3.3
@@ -237,6 +239,7 @@ dependencies:
     - oauthlib==3.1.0
     - opencv-python==4.5.1.48
     - opt-einsum==3.3.0
+    - ordered-set==4.1.0
     - packaging==21.3
     - pathspec==0.9.0
     - patsy==0.5.2
@@ -252,6 +255,7 @@ dependencies:
     - pybullet==3.1.0
     - pycolab==1.2
     - pyglet==1.5.0
+    - pylatex==1.4.1
     - pyopengl==3.1.5
     - pywavelets==1.1.1
     - regex==2021.4.4
@@ -263,9 +267,11 @@ dependencies:
     - sacremoses==0.0.45
     - scikit-image==0.18.1
     - setuptools==60.10.0
+    - shutilwhich==1.1.0
     - statsmodels==0.13.2
     - tables==3.6.1
     - tabulate==0.8.9
+    - tempdir==0.7.1
     - tensorboard==2.8.0
     - tensorboard-data-server==0.6.1
     - tensorboard-plugin-wit==1.8.0
@@ -275,6 +281,7 @@ dependencies:
     - termcolor==1.1.0
     - tf-estimator-nightly==2.8.0.dev2021122109
     - tifffile==2021.2.26
+    - tokenize-rt==4.2.1
     - tokenizers==0.10.2
     - tomli==1.2.1
     - torch-tb-profiler==0.2.1
