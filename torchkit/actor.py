@@ -13,41 +13,71 @@ LOG_SIG_MIN = -20
 PROB_MIN = 1e-8
 
 
-class DeterministicPolicy(Mlp):
+class MarkovPolicyBase(Mlp):
+    def __init__(
+        self,
+        obs_dim,
+        action_dim,
+        hidden_sizes,
+        init_w=1e-3,
+        image_encoder=None,
+        **kwargs
+    ):
+        self.save_init_params(locals())
+        self.action_dim = action_dim
+
+        if image_encoder is None:
+            self.input_size = obs_dim
+        else:
+            self.input_size = image_encoder.embed_size
+
+        # first register MLP
+        super().__init__(
+            hidden_sizes,
+            input_size=self.input_size,
+            output_size=self.action_dim,
+            init_w=init_w,
+            **kwargs,
+        )
+
+        # then register image encoder
+        self.image_encoder = image_encoder  # None or nn.Module
+
+    def forward(self, obs):
+        """
+        :param obs: Observation, usually 2D (B, dim), but maybe 3D (T, B, dim)
+        return action (*, dim)
+        """
+        x = self.preprocess(obs)
+        return super().forward(x)
+
+    def preprocess(self, obs):
+        x = obs
+        if self.image_encoder is not None:
+            x = self.image_encoder(x)
+        return x
+
+
+class DeterministicPolicy(MarkovPolicyBase):
     """
     Usage: TD3
     ```
     policy = DeterministicPolicy(...)
     action = policy(obs)
+    ```
     NOTE: action space must be [-1,1]^d
     """
-
-    def __init__(self, obs_dim, action_dim, hidden_sizes, init_w=1e-3, **kwargs):
-        self.save_init_params(locals())
-        super().__init__(
-            hidden_sizes,
-            input_size=obs_dim,
-            output_size=action_dim,
-            init_w=init_w,
-            **kwargs,
-        )
-        self.obs_dim = obs_dim
-        self.action_dim = action_dim
 
     def forward(
         self,
         obs,
     ):
-        """
-        :param obs: Observation, usually 2D (B, dim), but maybe 3D (T, B, dim)
-        return action (*, dim)
-        """
         h = super().forward(obs)
         action = torch.tanh(h)  # map into [-1, 1]
         return action
 
 
-class TanhGaussianPolicy(Mlp):
+class TanhGaussianPolicy(MarkovPolicyBase):
     """
     Usage: SAC
     ```
@@ -65,23 +95,24 @@ class TanhGaussianPolicy(Mlp):
     """
 
     def __init__(
-        self, obs_dim, action_dim, hidden_sizes, std=None, init_w=1e-3, **kwargs
+        self,
+        obs_dim,
+        action_dim,
+        hidden_sizes,
+        std=None,
+        init_w=1e-3,
+        image_encoder=None,
+        **kwargs
     ):
         self.save_init_params(locals())
         super().__init__(
-            hidden_sizes,
-            input_size=obs_dim,
-            output_size=action_dim,
-            init_w=init_w,
-            **kwargs,
+            obs_dim, action_dim, hidden_sizes, init_w, image_encoder, **kwargs
         )
-        self.obs_dim = obs_dim
-        self.action_dim = action_dim
 
         self.log_std = None
         self.std = std
         if std is None:  # learn std
-            last_hidden_size = obs_dim
+            last_hidden_size = self.input_size
             if len(hidden_sizes) > 0:
                 last_hidden_size = hidden_sizes[-1]
             self.last_fc_log_std = nn.Linear(last_hidden_size, action_dim)
@@ -104,7 +135,7 @@ class TanhGaussianPolicy(Mlp):
         :param deterministic: If True, do not sample
         :param return_log_prob: If True, return a sample and its log probability
         """
-        h = obs
+        h = self.preprocess(obs)
         for fc in self.fcs:
             h = self.hidden_activation(fc(h))
         mean = self.last_fc(h)
@@ -144,7 +175,7 @@ class TanhGaussianPolicy(Mlp):
         return action, mean, log_std, log_prob
 
 
-class CategoricalPolicy(Mlp):
+class CategoricalPolicy(MarkovPolicyBase):
     """Based on https://github.com/ku2482/sac-discrete.pytorch/blob/master/sacd/model.py
     Usage: SAC-discrete
     ```
@@ -155,18 +186,6 @@ class CategoricalPolicy(Mlp):
     ```
     NOTE: action space must be discrete
     """
-
-    def __init__(self, obs_dim, action_dim, hidden_sizes, init_w=1e-3, **kwargs):
-        self.save_init_params(locals())
-        super().__init__(
-            hidden_sizes,
-            input_size=obs_dim,
-            output_size=action_dim,
-            init_w=init_w,
-            **kwargs,
-        )
-        self.obs_dim = obs_dim
-        self.action_dim = action_dim
 
     def forward(
         self,

@@ -6,12 +6,10 @@ import math
 import numpy as np
 import torch
 from torch.nn import functional as F
-import random
 import gym
 
-from .models.policy_rnn import ModelFreeOffPolicy_Separate_RNN as Policy_RNN
-from .models.policy_rnn_shared import ModelFreeOffPolicy_Shared_RNN as Policy_Shared_RNN
-from .models.policy_mlp import ModelFreeOffPolicy_MLP as Policy_MLP
+from .models import AGENT_CLASSES, AGENT_ARCHS
+from torchkit.networks import ImageEncoder
 
 # Markov policy
 from buffers.simple_replay_buffer import SimpleReplayBuffer
@@ -29,17 +27,12 @@ from utils import logger
 
 
 class Learner:
-    """
-    Learner class for SAC/TD3 x MLP/RNN
-    usage: a wide range of POMDP environments and corresponding tasks
-    """
-
     def __init__(self, env_args, train_args, eval_args, policy_args, seed, **kwargs):
         self.seed = seed
 
         self.init_env(**env_args)
 
-        self.init_policy(**policy_args)
+        self.init_agent(**policy_args)
 
         self.init_train(**train_args)
 
@@ -53,14 +46,20 @@ class Learner:
         num_tasks=None,
         num_train_tasks=None,
         num_eval_tasks=None,
-        report_eval_tasks=None,
         eval_envs=None,
         worst_percentile=None,
         **kwargs
     ):
 
         # initialize environment
-        assert env_type in ["meta", "pomdp", "rmdp", "metaworld", "generalize"]
+        assert env_type in [
+            "meta",
+            "pomdp",
+            "credit",
+            "rmdp",
+            "generalize",
+            "atari",
+        ]
         self.env_type = env_type
 
         if self.env_type == "meta":  # meta tasks: using varibad wrapper
@@ -98,11 +97,32 @@ class Learner:
             self.max_rollouts_per_task = max_rollouts_per_task
             self.max_trajectory_len = self.train_env.horizon_bamdp  # H^+ = k * H
 
-        elif self.env_type == "pomdp":  # pomdp/mdp task, using pomdp wrapper
+        elif self.env_type in [
+            "pomdp",
+            "credit",
+        ]:  # pomdp/mdp task, using pomdp wrapper
             import envs.pomdp
+            import envs.credit_assign
 
             assert num_eval_tasks > 0
             self.train_env = gym.make(env_name)
+            self.train_env.seed(self.seed)
+            self.train_env.action_space.np_random.seed(self.seed)  # crucial
+
+            self.eval_env = self.train_env
+            self.eval_env.seed(self.seed + 1)
+
+            self.train_tasks = []
+            self.eval_tasks = num_eval_tasks * [None]
+
+            self.max_rollouts_per_task = 1
+            self.max_trajectory_len = self.train_env._max_episode_steps
+
+        elif self.env_type == "atari":
+            from envs.atari import create_env
+
+            assert num_eval_tasks > 0
+            self.train_env = create_env(env_name)
             self.train_env.seed(self.seed)
             self.train_env.action_space.np_random.seed(self.seed)  # crucial
 
@@ -137,29 +157,6 @@ class Learner:
 
             self.max_rollouts_per_task = 1
             self.max_trajectory_len = self.train_env._max_episode_steps
-
-        elif self.env_type == "metaworld":
-            # Now we only support MetaWorld ML10 and ML45 benchmarks
-            assert env_name in ["ML10", "ML45"]
-            assert num_train_tasks in [10, 45]
-            assert num_eval_tasks == 5
-            import metaworld
-
-            if env_name == "ML10":
-                self.benchmark = metaworld.ML10(seed=self.seed)
-            else:
-                self.benchmark = metaworld.ML45(seed=self.seed)
-            for name, env_cls in self.benchmark.train_classes.items():
-                self.train_env = env_cls()
-                # NOTE: we temporarily assign self.train_env for common interface but won't use it later
-                break
-            self.num_train_tasks = num_train_tasks
-            self.num_eval_tasks = num_eval_tasks
-            self.max_rollouts_per_task = 1
-            self.max_trajectory_len = (
-                self.train_env.max_path_length
-            )  # constant for metaworld
-            assert self.max_trajectory_len == 500
 
         elif self.env_type == "generalize":
             sys.path.append("envs/rl-generalization")
@@ -210,26 +207,48 @@ class Learner:
         self.obs_dim = self.train_env.observation_space.shape[0]  # include 1-dim done
         logger.log("obs_dim", self.obs_dim, "act_dim", self.act_dim)
 
-    def init_policy(self, arch, separate: bool = True, **kwargs):
-        # initialize policy
+    def init_agent(
+        self,
+        arch,
+        separate: bool = True,
+        image_encoder=None,
+        reward_clip=False,
+        **kwargs
+    ):
+        # initialize agent
         if arch == "mlp":
-            self.policy_arch = "mlp"
-            agent_class = Policy_MLP
+            agent_class = AGENT_CLASSES["Policy_MLP"]
+            rnn_encoder_type = None
+        elif "-mlp" in arch:
+            agent_class = AGENT_CLASSES["Policy_RNN_MLP"]
+            rnn_encoder_type = arch.split("-")[0]
         else:
-            self.policy_arch = "memory"
+            rnn_encoder_type = arch
             if separate == True:
-                agent_class = Policy_RNN
+                agent_class = AGENT_CLASSES["Policy_Separate_RNN"]
             else:
-                agent_class = Policy_Shared_RNN
-                logger.log("WARNING: YOU ARE USING SHARED ACTOR-CRITIC ARCH !!!!!!!")
+                agent_class = AGENT_CLASSES["Policy_Shared_RNN"]
+
+        self.agent_arch = agent_class.ARCH
+        logger.log(agent_class, self.agent_arch)
+
+        if image_encoder is not None:  # catch, keytodoor
+            image_encoder_fn = lambda: ImageEncoder(
+                image_shape=self.train_env.image_space.shape, **image_encoder
+            )
+        else:
+            image_encoder_fn = lambda: None
 
         self.agent = agent_class(
-            encoder=arch,  # redundant for Policy_MLP
+            encoder=rnn_encoder_type,
             obs_dim=self.obs_dim,
             action_dim=self.act_dim,
+            image_encoder_fn=image_encoder_fn,
             **kwargs,
         ).to(ptu.device)
         logger.log(self.agent)
+
+        self.reward_clip = reward_clip  # for atari
 
     def init_train(
         self,
@@ -253,7 +272,7 @@ class Learner:
         # if int, it means absolute value; if float, it means the multiplier of collected env steps
         self.num_updates_per_iter = num_updates_per_iter
 
-        if self.policy_arch == "mlp":
+        if self.agent_arch == AGENT_ARCHS.Markov:
             self.policy_storage = SimpleReplayBuffer(
                 max_replay_buffer_size=int(buffer_size),
                 observation_dim=self.obs_dim,
@@ -262,7 +281,7 @@ class Learner:
                 add_timeout=False,  # no timeout storage
             )
 
-        else:  # rnn
+        else:  # memory, memory-markov
             if sampled_seq_len == -1:
                 sampled_seq_len = self.max_trajectory_len
 
@@ -285,10 +304,6 @@ class Learner:
         self.num_iters = num_iters
         self.num_init_rollouts_pool = num_init_rollouts_pool
         self.num_rollouts_per_iter = num_rollouts_per_iter
-        if self.env_type == "metaworld":
-            assert (
-                num_init_rollouts_pool == num_rollouts_per_iter == self.num_train_tasks
-            )
 
         total_rollouts = num_init_rollouts_pool + num_iters * num_rollouts_per_iter
         self.n_env_steps_total = self.max_trajectory_len * total_rollouts
@@ -328,10 +343,6 @@ class Learner:
     def train(self):
         """
         training loop
-        NOTE: the main difference from BORel to varibad is changing the alternation
-        of rollout collection and model updates: in varibad, one step collection is
-        followed by several model updates; while in borel, we collect several **entire**
-        trajectories from random sampled tasks for each model updates.
         """
 
         self._start_training()
@@ -342,10 +353,8 @@ class Learner:
                 self._n_env_steps_total
                 < self.num_init_rollouts_pool * self.max_trajectory_len
             ):
-                self.collect_rollouts(  # to make sure metaworld we sample a suite
-                    num_rollouts=self.num_init_rollouts_pool
-                    if self.env_type == "metaworld"
-                    else 1,
+                self.collect_rollouts(
+                    num_rollouts=1,
                     random_actions=True,
                 )
             logger.log(
@@ -399,29 +408,10 @@ class Learner:
         """collect num_rollouts of trajectories in task and save into policy buffer
         :param random_actions: whether to use policy to sample actions, or randomly sample action space
         """
-        if self.env_type == "metaworld":
-            assert num_rollouts == len(self.benchmark.train_classes)
-            training_envs = []
-            for name, env_cls in self.benchmark.train_classes.items():
-                env = env_cls()
-                # random sample a task for this training env
-                task = random.choice(
-                    [
-                        task
-                        for task in self.benchmark.train_tasks
-                        if task.env_name == name
-                    ]
-                )
-                env.set_task(task)  # must set here
-                training_envs.append(env)
 
         before_env_steps = self._n_env_steps_total
         for idx in range(num_rollouts):
             steps = 0
-
-            if self.env_type == "metaworld":
-                self.train_env = training_envs[idx]
-                print(self.train_env)
 
             if self.env_type == "meta" and self.train_env.n_tasks is not None:
                 task = self.train_tasks[np.random.randint(len(self.train_tasks))]
@@ -432,9 +422,7 @@ class Learner:
             obs = obs.reshape(1, obs.shape[-1])
             done_rollout = False
 
-            # get hidden state at timestep=0, None for mlp
-            if self.policy_arch == "memory":
-                action, reward, internal_state = self.agent.get_initial_info()
+            if self.agent_arch in [AGENT_ARCHS.Memory, AGENT_ARCHS.Memory_Markov]:
                 # temporary storage
                 obs_list, act_list, rew_list, next_obs_list, term_list = (
                     [],
@@ -443,6 +431,11 @@ class Learner:
                     [],
                     [],
                 )
+
+            if self.agent_arch == AGENT_ARCHS.Memory:
+                # get hidden state at timestep=0, None for markov
+                # NOTE: assume initial reward = 0.0 (no need to clip)
+                action, reward, internal_state = self.agent.get_initial_info()
 
             while not done_rollout:
                 if random_actions:
@@ -453,10 +446,10 @@ class Learner:
                         action = F.one_hot(
                             action.long(), num_classes=self.act_dim
                         ).float()  # (1, A)
-                else:  # policy takes hidden state as input for rnn, while takes obs for mlp
-                    if self.policy_arch == "mlp":
-                        action, _, _, _ = self.agent.act(obs, deterministic=False)
-                    else:
+                else:
+                    # policy takes hidden state as input for memory-based actor,
+                    # while takes obs for markov actor
+                    if self.agent_arch == AGENT_ARCHS.Memory:
                         (action, _, _, _), internal_state = self.agent.act(
                             prev_internal_state=internal_state,
                             prev_action=action,
@@ -464,16 +457,21 @@ class Learner:
                             obs=obs,
                             deterministic=False,
                         )
+                    else:
+                        action, _, _, _ = self.agent.act(obs, deterministic=False)
 
                 # observe reward and next obs (B=1, dim)
                 next_obs, reward, done, info = utl.env_step(
                     self.train_env, action.squeeze(dim=0)
                 )
+                if self.reward_clip and self.env_type == "atari":
+                    reward = torch.tanh(reward)
+
                 done_rollout = False if ptu.get_numpy(done[0][0]) == 0.0 else True
                 # update statistics
                 steps += 1
 
-                # add data to policy buffer - (s+, a, r, s'+, term')
+                ## determine terminal flag per environment
                 if self.env_type == "meta" and "is_goal_state" in dir(
                     self.train_env.unwrapped
                 ):
@@ -481,8 +479,8 @@ class Learner:
                     # the episode still continues.
                     term = self.train_env.unwrapped.is_goal_state()
                     self._successes_in_buffer += int(term)
-                elif self.env_type == "metaworld":
-                    term = False  # generalize tasks done = False always
+                elif self.env_type == "credit":  # delayed rewards
+                    term = done_rollout
                 else:
                     # term ignore time-out scenarios, but record early stopping
                     term = (
@@ -492,7 +490,8 @@ class Learner:
                         else done_rollout
                     )
 
-                if self.policy_arch == "mlp":
+                # add data to policy buffer
+                if self.agent_arch == AGENT_ARCHS.Markov:
                     self.policy_storage.add_sample(
                         observation=ptu.get_numpy(obs.squeeze(dim=0)),
                         action=ptu.get_numpy(
@@ -515,13 +514,9 @@ class Learner:
 
                 # set: obs <- next_obs
                 obs = next_obs.clone()
-                if (
-                    self.env_type == "metaworld"
-                    and steps >= self.train_env.max_path_length
-                ):
-                    break  # has to manually break
 
-            if self.policy_arch == "memory":  # add collected sequence to buffer
+            if self.agent_arch in [AGENT_ARCHS.Memory, AGENT_ARCHS.Memory_Markov]:
+                # add collected sequence to buffer
                 act_buffer = torch.cat(act_list, dim=0)  # (L, dim)
                 if not self.act_continuous:
                     act_buffer = torch.argmax(
@@ -546,9 +541,9 @@ class Learner:
 
     def sample_rl_batch(self, batch_size):
         """sample batch of episodes for vae training"""
-        if self.policy_arch == "mlp":
+        if self.agent_arch == AGENT_ARCHS.Markov:
             batch = self.policy_storage.random_batch(batch_size)
-        else:  # rnn: # all items are (sampled_seq_len, B, dim)
+        else:  # rnn: all items are (sampled_seq_len, B, dim)
             batch = self.policy_storage.random_episodes(batch_size)
         return ptu.np_to_pytorch_batch(batch)
 
@@ -575,24 +570,6 @@ class Learner:
 
     @torch.no_grad()
     def evaluate(self, tasks, deterministic=True):
-        if self.env_type == "metaworld":
-            assert tasks in ["train", "test"]
-            if tasks == "train":
-                env_classes = self.benchmark.train_classes
-                env_tasks = self.benchmark.train_tasks
-            else:
-                env_classes = self.benchmark.test_classes
-                env_tasks = self.benchmark.test_tasks
-            envs = []
-            for name, env_cls in env_classes.items():
-                env = env_cls()
-                # random sample **one** task for this env
-                task = random.choice(
-                    [task for task in env_tasks if task.env_name == name]
-                )
-                env.set_task(task)  # must set here
-                envs.append(env)
-            tasks = envs  # HACK: bad coding practice
 
         num_episodes = self.max_rollouts_per_task  # k
         # max_trajectory_len = k*H
@@ -606,18 +583,12 @@ class Learner:
                 0
             ]  # original size
             observations = np.zeros((len(tasks), self.max_trajectory_len + 1, obs_size))
-        elif self.env_type == "metaworld":
-            num_steps_per_episode = self.max_trajectory_len
-            observations = None
         else:  # pomdp, rmdp, generalize
             num_steps_per_episode = self.eval_env._max_episode_steps
             observations = None
 
         for task_idx, task in enumerate(tasks):
             step = 0
-            if self.env_type == "metaworld":
-                self.eval_env = task
-                print(self.eval_env)
 
             if self.env_type == "meta" and self.eval_env.n_tasks is not None:
                 obs = ptu.from_numpy(self.eval_env.reset(task=task))  # reset task
@@ -627,17 +598,14 @@ class Learner:
 
             obs = obs.reshape(1, obs.shape[-1])
 
-            if self.policy_arch == "memory":
+            if self.agent_arch == AGENT_ARCHS.Memory:
+                # assume initial reward = 0.0
                 action, reward, internal_state = self.agent.get_initial_info()
 
             for episode_idx in range(num_episodes):
                 running_reward = 0.0
                 for _ in range(num_steps_per_episode):
-                    if self.policy_arch == "mlp":
-                        action, _, _, _ = self.agent.act(
-                            obs, deterministic=deterministic
-                        )
-                    else:
+                    if self.agent_arch == AGENT_ARCHS.Memory:
                         (action, _, _, _), internal_state = self.agent.act(
                             prev_internal_state=internal_state,
                             prev_action=action,
@@ -645,12 +613,22 @@ class Learner:
                             obs=obs,
                             deterministic=deterministic,
                         )
+                    else:
+                        action, _, _, _ = self.agent.act(
+                            obs, deterministic=deterministic
+                        )
 
                     # observe reward and next obs
                     next_obs, reward, done, info = utl.env_step(
                         self.eval_env, action.squeeze(dim=0)
                     )
+
+                    # add raw reward
                     running_reward += reward.item()
+                    # clip reward if necessary for policy inputs
+                    if self.reward_clip and self.env_type == "atari":
+                        reward = torch.tanh(reward)
+
                     step += 1
                     done_rollout = False if ptu.get_numpy(done[0][0]) == 0.0 else True
 
@@ -668,13 +646,13 @@ class Learner:
                         and self.eval_env.unwrapped.is_goal_state()
                     ):
                         success_rate[task_idx] = 1.0  # ever once reach
-                    if self.env_type == "metaworld" and info["success"] == True:
-                        success_rate[task_idx] = 1.0  # ever once reach
-                    if (
+                    elif (
                         self.env_type == "generalize"
                         and self.eval_env.unwrapped.is_success()
                     ):
                         success_rate[task_idx] = 1.0  # ever once reach
+                    elif "success" in info and info["success"] == True:  # keytodoor
+                        success_rate[task_idx] = 1.0
 
                     if done_rollout:
                         # for all env types, same
@@ -693,7 +671,7 @@ class Learner:
         for k, v in train_stats.items():
             logger.record_tabular("rl_loss/" + k, v)
         ## gradient norms
-        if self.policy_arch == "memory":
+        if self.agent_arch in [AGENT_ARCHS.Memory, AGENT_ARCHS.Memory_Markov]:
             results = self.agent.report_grad_norm()
             for k, v in results.items():
                 logger.record_tabular("rl_loss/" + k, v)
@@ -779,7 +757,7 @@ class Learner:
                         "metrics/success_rate_eval_sto", np.mean(success_rate_eval_sto)
                     )
 
-            for episode_idx in range(self.max_rollouts_per_task):
+            for episode_idx in range(self.max_rollouts_pfer_task):
                 if self.train_env.n_tasks is not None:
                     logger.record_tabular(
                         "metrics/return_train_episode_{}".format(episode_idx + 1),
@@ -815,37 +793,6 @@ class Learner:
                     "metrics/return_eval_total_sto",
                     np.mean(np.sum(returns_eval_sto, axis=-1)),
                 )
-
-        elif self.env_type == "metaworld":
-            returns_train, success_rate_train = [], []
-            returns_eval, success_rate_eval = [], []
-            for _ in range(self.eval_num_episodes_per_task):
-                return_train, success_train, _, _ = self.evaluate("train")
-                return_eval, success_eval, _, _ = self.evaluate("test")
-                returns_train.append(return_train)
-                success_rate_train.append(success_train)
-                returns_eval.append(return_eval)
-                success_rate_eval.append(success_eval)
-            returns_train = np.stack(returns_train).mean(0).squeeze(-1)  # (Envs)
-            success_rate_train = np.stack(success_rate_train).mean(0)  # (Envs)
-            returns_eval = np.stack(returns_eval).mean(0).squeeze(-1)
-            success_rate_eval = np.stack(success_rate_eval).mean(0)
-
-            logger.record_tabular("metrics/return_train_avg", np.mean(returns_train))
-            logger.record_tabular("metrics/succ_train_avg", np.mean(success_rate_train))
-            for name, return_train, succ_train in zip(
-                self.benchmark.train_classes.keys(), returns_train, success_rate_train
-            ):  # order-preserve mapping
-                logger.record_tabular(f"metrics/return_train_{name}", return_train)
-                logger.record_tabular(f"metrics/succ_train_{name}", succ_train)
-
-            logger.record_tabular("metrics/return_eval_avg", np.mean(returns_eval))
-            logger.record_tabular("metrics/succ_eval_avg", np.mean(success_rate_eval))
-            for name, return_eval, succ_eval in zip(
-                self.benchmark.test_classes.keys(), returns_eval, success_rate_eval
-            ):  # order-preserve mapping
-                logger.record_tabular(f"metrics/return_eval_{name}", return_eval)
-                logger.record_tabular(f"metrics/succ_eval_{name}", succ_eval)
 
         elif self.env_type == "generalize":
             returns_eval, success_rate_eval, total_steps_eval = {}, {}, {}
@@ -899,7 +846,7 @@ class Learner:
                 "metrics/total_steps_eval_worst", total_steps_eval_worst.mean()
             )
 
-        elif self.env_type == "pomdp":
+        elif self.env_type in ["pomdp", "credit", "atari"]:
             returns_eval, success_rate_eval, _, total_steps_eval = self.evaluate(
                 self.eval_tasks
             )
@@ -915,6 +862,10 @@ class Learner:
             logger.record_tabular(
                 "metrics/return_eval_total", np.mean(np.sum(returns_eval, axis=-1))
             )
+            logger.record_tabular(
+                "metrics/success_rate_eval", np.mean(success_rate_eval)
+            )
+
             if self.eval_stochastic:
                 logger.record_tabular(
                     "metrics/total_steps_eval_sto", np.mean(total_steps_eval_sto)
@@ -922,6 +873,9 @@ class Learner:
                 logger.record_tabular(
                     "metrics/return_eval_total_sto",
                     np.mean(np.sum(returns_eval_sto, axis=-1)),
+                )
+                logger.record_tabular(
+                    "metrics/success_rate_eval_sto", np.mean(success_rate_eval_sto)
                 )
 
         else:
@@ -938,9 +892,7 @@ class Learner:
 
         logger.dump_tabular()
 
-        if self.env_type == "metaworld":
-            return np.mean(success_rate_eval)  # succ is more important
-        elif self.env_type == "generalize":
+        if self.env_type == "generalize":
             return sum([v.mean() for v in success_rate_eval.values()]) / len(
                 success_rate_eval
             )
@@ -952,3 +904,7 @@ class Learner:
             logger.get_dir(), "save", f"agent_{iter}_perf{perf:.3f}.pt"
         )
         torch.save(self.agent.state_dict(), save_path)
+
+    def load_model(self, ckpt_path):
+        self.agent.load_state_dict(torch.load(ckpt_path, map_location=ptu.device))
+        print("load successfully from", ckpt_path)

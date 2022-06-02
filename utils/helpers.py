@@ -200,7 +200,7 @@ def recompute_embeddings(
 
 class FeatureExtractor(nn.Module):
     """one-layer MLP with relu
-    Used for extracting features for states/actions/rewards
+    Used for extracting features for vector-based observations/actions/rewards
 
     NOTE: https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
     torch.linear is a linear transformation in the LAST dimension

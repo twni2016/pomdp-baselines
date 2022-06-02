@@ -15,7 +15,6 @@ class SimpleReplayBuffer(ReplayBuffer):
         **kwargs
     ):
         """
-        this buffer can track trajectories for sampling TODO: to deprecate sequence storage...
         :param max_replay_buffer_size:
         :param observation_dim:
         :param action_dim:

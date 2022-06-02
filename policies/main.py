@@ -16,6 +16,7 @@ from policies.learner import Learner
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("cfg", None, "path to configuration file")
+flags.DEFINE_string("env", None, "env_name")
 flags.DEFINE_string("algo", None, '["td3", "sac", "sacd"]')
 
 flags.DEFINE_boolean("automatic_entropy_tuning", None, "for [sac, sacd]")
@@ -35,6 +36,8 @@ yaml = YAML()
 v = yaml.load(open(FLAGS.cfg))
 
 # overwrite config params
+if FLAGS.env is not None:
+    v["env"]["env_name"] = FLAGS.env
 if FLAGS.algo is not None:
     v["policy"]["algo"] = FLAGS.algo
 
@@ -69,7 +72,7 @@ set_gpu_mode(torch.cuda.is_available() and v["cuda"] >= 0, v["cuda"])
 
 # logs
 exp_id = "logs/"
-# exp_id = 'debug/'
+# exp_id = "debug/"
 
 env_type = v["env"]["env_type"]
 if len(v["env"]["env_name"].split("-")) == 3:
@@ -86,7 +89,7 @@ else:
     oracle = False
 
 arch, algo = v["policy"]["arch"], v["policy"]["algo"]
-assert arch in ["mlp", "lstm", "gru"]
+assert arch in ["mlp", "lstm", "gru", "lstm-mlp", "gru-mlp"]
 assert algo in ["td3", "sac", "sacd"]
 if arch == "mlp":
     if oracle:
@@ -116,11 +119,13 @@ if algo in ["sac", "sacd"]:
     elif "target_entropy" in v["policy"]:
         exp_id += f"ent-{v['policy']['target_entropy']}/"
 
-if arch in ["lstm", "gru"]:
+exp_id += f"gamma-{v['policy']['gamma']}/"
+
+if arch != "mlp":
     exp_id += f"len-{v['train']['sampled_seq_len']}/bs-{v['train']['batch_size']}/"
-    exp_id += f"baseline-{v['train']['sample_weight_baseline']}/"
+    # exp_id += f"baseline-{v['train']['sample_weight_baseline']}/"
     exp_id += f"freq-{v['train']['num_updates_per_iter']}/"
-    assert v["policy"]["state_embedding_size"] > 0
+    # assert v["policy"]["observ_embedding_size"] > 0
     policy_input_str = "o"
     if v["policy"]["action_embedding_size"] > 0:
         policy_input_str += "a"

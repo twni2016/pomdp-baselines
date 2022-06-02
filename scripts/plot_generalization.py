@@ -1,7 +1,4 @@
-from re import A
 import matplotlib.pyplot as plt
-
-# %matplotlib inline
 import seaborn as sns
 
 sns.set()
@@ -9,8 +6,6 @@ import pandas as pd
 import numpy as np
 import os, sys
 from scripts.constants import *
-
-# https://abseil.io/docs/python/guides/flags
 from absl import flags
 
 FLAGS = flags.FLAGS

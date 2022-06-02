@@ -3,10 +3,12 @@ General networks for pytorch.
 
 Algorithm-specific networks should go else-where.
 """
+import numpy as np
 import torch
 from torch import nn as nn
 from torch.nn import functional as F
 
+from torchkit.constant import *
 from torchkit import pytorch_utils as ptu
 from torchkit.core import PyTorchModule
 from torchkit.modules import LayerNorm
@@ -82,3 +84,79 @@ class FlattenMlp(Mlp):
     def forward(self, *inputs, **kwargs):
         flat_inputs = torch.cat(inputs, dim=-1)
         return super().forward(flat_inputs, **kwargs)
+
+
+def conv_output_shape(h_w, kernel_size=1, stride=1, pad=0, dilation=1):
+    """
+    Utility function for computing output of convolutions
+    takes a tuple of (h,w) and returns a tuple of (h,w)
+    """
+    from math import floor
+
+    if type(kernel_size) is not tuple:
+        kernel_size = (kernel_size, kernel_size)
+    h = floor(
+        ((h_w[0] + (2 * pad) - (dilation * (kernel_size[0] - 1)) - 1) / stride) + 1
+    )
+    w = floor(
+        ((h_w[1] + (2 * pad) - (dilation * (kernel_size[1] - 1)) - 1) / stride) + 1
+    )
+    return h, w
+
+
+class ImageEncoder(nn.Module):
+    def __init__(
+        self,
+        image_shape,
+        embed_size=100,
+        depths=[8, 16],
+        kernel_size=2,
+        stride=1,
+        activation=relu_name,
+        from_flattened=False,
+        normalize_pixel=False,
+    ):
+        super(ImageEncoder, self).__init__()
+        self.shape = image_shape
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.depths = [image_shape[0]] + depths
+
+        layers = []
+        h_w = self.shape[-2:]
+
+        for i in range(len(self.depths) - 1):
+            layers.append(
+                nn.Conv2d(self.depths[i], self.depths[i + 1], kernel_size, stride)
+            )
+            layers.append(ACTIVATIONS[activation]())
+            h_w = conv_output_shape(h_w, kernel_size, stride)
+
+        self.cnn = nn.Sequential(*layers)
+
+        self.linear = nn.Linear(
+            h_w[0] * h_w[1] * self.depths[-1], embed_size
+        )  # dreamer does not use it
+
+        self.from_flattened = from_flattened
+        self.normalize_pixel = normalize_pixel
+        self.embed_size = embed_size
+
+    def forward(self, image):
+        # return embedding of shape [N, embed_size]
+        if self.from_flattened:
+            # image of size (T, B, C*H*W)
+            batch_size = image.shape[:-1]
+            img_shape = [np.prod(batch_size)] + list(self.shape)  # (T*B, C, H, W)
+            image = torch.reshape(image, img_shape)
+        else:  # image of size (N, C, H, W)
+            batch_size = [image.shape[0]]
+
+        if self.normalize_pixel:
+            image = image / 255.0
+
+        embed = self.cnn(image)  # (T*B, C, H, W)
+
+        embed = torch.reshape(embed, list(batch_size) + [-1])  # (T, B, C*H*W)
+        embed = self.linear(embed)  # (T, B, embed_size)
+        return embed

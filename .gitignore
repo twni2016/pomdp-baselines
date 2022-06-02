@@ -15,3 +15,5 @@ scripts/tmp_configs/
 
 # singularity
 *.sif
+
+third_party/

@@ -226,7 +226,6 @@ dependencies:
     - keras-nightly==2.5.0.dev2021032900
     - keras-preprocessing==1.1.2
     - labmaze==1.0.3
-    - latex==0.7.0
     - libclang==13.0.0
     - lockfile==0.12.2
     - lxml==4.6.2

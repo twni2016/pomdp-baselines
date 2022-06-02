@@ -8,6 +8,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 from torch.optim import Adam
 from utils import helpers as utl
+from torchkit.constant import *
 from torchkit.networks import FlattenMlp
 from torchkit.actor import DeterministicPolicy, TanhGaussianPolicy
 import torchkit.pytorch_utils as ptu
@@ -16,18 +17,10 @@ from utils import logger
 
 class ModelFreeOffPolicy_Shared_RNN(nn.Module):
     """
-    RNN TD3/SAC (Recurrent Policy) with shared RNN
-    the input trajectory include obs,
-            and/or action (action_embedding_size != 0),
-            and/or reward (reward_embedding_size != 0).
-    depends on the task where partially observation is
+    Recurrent Actor and Recurrent Critic with shared RNN
     """
 
-    TD3_name = "td3"
-    SAC_name = "sac"
-    LSTM_name = "lstm"
-    GRU_name = "gru"
-    RNNs = {LSTM_name: nn.LSTM, GRU_name: nn.GRU}
+    ARCH = "memory"
 
     def __init__(
         self,
@@ -36,7 +29,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         encoder,
         algo,
         action_embedding_size,
-        state_embedding_size,
+        observ_embedding_size,
         reward_embedding_size,
         rnn_hidden_size,
         dqn_layers,
@@ -62,12 +55,14 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         self.gamma = gamma
         self.tau = tau
 
-        assert algo in [self.TD3_name, self.SAC_name]
+        assert algo in [TD3_name, SAC_name]
         self.algo = algo
 
         ### Build Model
         ## 1. embed action, state, reward (Feed-forward layers first)
-        self.state_encoder = utl.FeatureExtractor(obs_dim, state_embedding_size, F.relu)
+        self.observ_encoder = utl.FeatureExtractor(
+            obs_dim, observ_embedding_size, F.relu
+        )
         self.action_encoder = utl.FeatureExtractor(
             action_dim, action_embedding_size, F.relu
         )
@@ -75,14 +70,14 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
 
         ## 2. build RNN model
         rnn_input_size = (
-            action_embedding_size + state_embedding_size + reward_embedding_size
+            action_embedding_size + observ_embedding_size + reward_embedding_size
         )
         self.rnn_hidden_size = rnn_hidden_size
 
-        assert encoder in [self.LSTM_name, self.GRU_name]
+        assert encoder in [LSTM_name, GRU_name]
         self.encoder = encoder
         self.num_layers = 1  # TODO as free param
-        self.rnn = self.RNNs[encoder](
+        self.rnn = RNNs[encoder](
             input_size=rnn_input_size,
             hidden_size=self.rnn_hidden_size,
             num_layers=self.num_layers,
@@ -119,19 +114,19 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
 
         # build another obs branch
         self.current_state_encoder = utl.FeatureExtractor(
-            obs_dim, state_embedding_size, F.relu
+            obs_dim, observ_embedding_size, F.relu
         )
 
         # policy networks
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             self.policy = DeterministicPolicy(
-                obs_dim=self.rnn_hidden_size + state_embedding_size,
+                obs_dim=self.rnn_hidden_size + observ_embedding_size,
                 action_dim=self.action_dim,
                 hidden_sizes=policy_layers,
             )
         else:
             self.policy = TanhGaussianPolicy(
-                obs_dim=self.rnn_hidden_size + state_embedding_size,
+                obs_dim=self.rnn_hidden_size + observ_embedding_size,
                 action_dim=self.action_dim,
                 hidden_sizes=policy_layers,
             )
@@ -140,7 +135,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         #  also exclude q targets
         self.optimizer = Adam(
             [
-                *self.state_encoder.parameters(),
+                *self.observ_encoder.parameters(),
                 *self.action_encoder.parameters(),
                 *self.reward_encoder.parameters(),
                 *self.rnn.parameters(),
@@ -153,7 +148,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
             lr=lr,
         )
 
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             # NOTE: td3 has a target policy (actor)
             self.policy_target = deepcopy(self.policy)
             self.exploration_noise = exploration_noise
@@ -185,7 +180,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         # get embedding of initial transition
         input_a = self.action_encoder(prev_actions)
         input_r = self.reward_encoder(rewards)
-        input_s = self.state_encoder(observs)
+        input_s = self.observ_encoder(observs)
         inputs = torch.cat((input_a, input_r, input_s), dim=-1)
 
         # feed into RNN: output (T+1, B, hidden_size)
@@ -239,7 +234,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         with torch.no_grad():
             # first next_actions from target/current policy, (T+1, B, dim) including reaction to last obs
             # new_next_actions: (T+1, B, dim), new_next_log_probs: (T+1, B, 1)
-            if self.algo == self.TD3_name:
+            if self.algo == TD3_name:
                 new_next_actions = self.policy_target(joint_policy_embeds)
                 action_noise = (
                     torch.randn_like(new_next_actions) * self.target_noise
@@ -264,7 +259,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
             min_next_q_target = torch.min(next_q1, next_q2)
 
             # min_next_q_target (T+1, B, 1)
-            if self.algo == self.SAC_name:
+            if self.algo == SAC_name:
                 min_next_q_target += self.alpha_entropy * (-new_next_log_probs)
 
             q_target = rewards + (1.0 - dones) * self.gamma * min_next_q_target
@@ -294,7 +289,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         ### 3. Actor loss
         # Q(h(t), pi(h(t))) + H[pi(h(t))]
         # new_actions: (T+1, B, dim)
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             new_actions = self.policy(joint_policy_embeds)
         else:
             new_actions, _, _, new_log_probs = self.policy(
@@ -313,7 +308,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         min_q_new_actions = torch.min(q1, q2)  # (T+1,B,1)
 
         policy_loss = -min_q_new_actions
-        if self.algo == self.SAC_name:  # Q(h(t), pi(h(t))) + H[pi(h(t))]
+        if self.algo == SAC_name:  # Q(h(t), pi(h(t))) + H[pi(h(t))]
             policy_loss += self.alpha_entropy * new_log_probs
 
         policy_loss = policy_loss[:-1]  # (T,B,1) remove the last obs
@@ -330,7 +325,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         self.soft_target_update()
 
         ### 6. update alpha
-        if self.algo == self.SAC_name:
+        if self.algo == SAC_name:
             # extract valid log_probs
             with torch.no_grad():
                 current_log_probs = (new_log_probs[:-1] * masks).sum() / num_valid
@@ -351,7 +346,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
             "qf2_loss": qf2_loss.item(),
             "policy_loss": policy_loss.item(),
         }
-        if self.algo == self.SAC_name:
+        if self.algo == SAC_name:
             outputs.update(
                 {"policy_entropy": -current_log_probs, "alpha": self.alpha_entropy}
             )
@@ -360,7 +355,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
     def soft_target_update(self):
         ptu.soft_update_from_to(self.qf1, self.qf1_target, self.tau)
         ptu.soft_update_from_to(self.qf2, self.qf2_target, self.tau)
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             ptu.soft_update_from_to(self.policy, self.policy_target, self.tau)
 
     def report_grad_norm(self):
@@ -400,7 +395,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         reward = ptu.zeros((1, 1)).float()
 
         hidden_state = ptu.zeros((self.num_layers, 1, self.rnn_hidden_size)).float()
-        if self.encoder == self.GRU_name:
+        if self.encoder == GRU_name:
             internal_state = hidden_state
         else:
             cell_state = ptu.zeros((self.num_layers, 1, self.rnn_hidden_size)).float()
@@ -444,7 +439,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
             joint_embeds = joint_embeds.squeeze(0)  # (B, dim)
 
         # 4. Actor head, generate action tuple
-        if self.algo == self.TD3_name:
+        if self.algo == TD3_name:
             mean = self.policy(joint_embeds)
             if deterministic:
                 action_tuple = (mean, mean, None, None)

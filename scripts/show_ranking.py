@@ -3,8 +3,6 @@ import numpy as np
 import os, sys
 import glob
 from scripts.constants import *
-
-# https://abseil.io/docs/python/guides/flags
 from absl import flags
 
 FLAGS = flags.FLAGS

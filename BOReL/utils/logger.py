@@ -1,13 +1,12 @@
 import os
 import sys
-import shutil
 import os.path as osp
 import json
 import time
 import datetime
 import dateutil.tz
 import tempfile
-from collections import defaultdict, OrderedDict, Set
+from collections import OrderedDict, Set
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -369,8 +368,7 @@ class Logger(object):
     CURRENT = None  # Current logger being used by the free functions above
 
     def __init__(self, dir, output_formats, precision=None):
-        self.name2val = OrderedDict()  # defaultdict(float)  # values this iteration
-        # self.name2cnt = defaultdict(int)
+        self.name2val = OrderedDict()
         self.level = INFO
         self.dir = dir
         self.output_formats = output_formats
@@ -383,14 +381,6 @@ class Logger(object):
             self.name2val[key] = round(val, self.precision)
         else:
             self.name2val[key] = val
-
-    # def logkv_mean(self, key, val):
-    #     if val is None:
-    #         self.name2val[key] = None
-    #         return
-    #     oldval, cnt = self.name2val[key], self.name2cnt[key]
-    #     self.name2val[key] = oldval * cnt / (cnt + 1) + val / (cnt + 1)
-    #     self.name2cnt[key] = cnt + 1
 
     def add_figure(self, *args):
         for fmt in self.output_formats:
@@ -409,7 +399,6 @@ class Logger(object):
             if isinstance(fmt, KVWriter):
                 fmt.writekvs(self.name2val)
         self.name2val.clear()
-        # self.name2cnt.clear()
 
     def log(self, *args, level=INFO):
         if self.level <= level:
@@ -458,120 +447,3 @@ def configure(dir=None, format_strs=None, log_suffix="", precision=None):
 
     Logger.CURRENT = Logger(dir=dir, output_formats=output_formats, precision=precision)
     log("Logging to %s" % dir)
-
-
-def reset():
-    if Logger.CURRENT is not Logger.DEFAULT:
-        Logger.CURRENT.close()
-        Logger.CURRENT = Logger.DEFAULT
-        log("Reset logger")
-
-
-class scoped_configure(object):
-    def __init__(self, dir=None, format_strs=None):
-        self.dir = dir
-        self.format_strs = format_strs
-        self.prevlogger = None
-
-    def __enter__(self):
-        self.prevlogger = Logger.CURRENT
-        configure(dir=self.dir, format_strs=self.format_strs)
-
-    def __exit__(self, *args):
-        Logger.CURRENT.close()
-        Logger.CURRENT = self.prevlogger
-
-
-# ================================================================
-
-
-def _demo():
-    info("hi")
-    debug("shouldn't appear")
-    set_level(DEBUG)
-    debug("should appear")
-    dir = "/tmp/testlogging"
-    if os.path.exists(dir):
-        shutil.rmtree(dir)
-    configure(dir=dir)
-    logkv("a", 3)
-    logkv("b", 2.5)
-    dumpkvs()
-    logkv("b", -2.5)
-    logkv("a", 5.5)
-    dumpkvs()
-    info("^^^ should see a = 5.5")
-    logkv_mean("b", -22.5)
-    logkv_mean("b", -44.4)
-    logkv("a", 5.5)
-    dumpkvs()
-    info("^^^ should see b = 33.3")
-
-    logkv("b", -2.5)
-    dumpkvs()
-
-    logkv("a", "longasslongasslongasslongasslongasslongassvalue")
-    dumpkvs()
-
-
-# ================================================================
-# Readers
-# ================================================================
-
-
-def read_json(fname):
-    import pandas
-
-    ds = []
-    with open(fname, "rt") as fh:
-        for line in fh:
-            ds.append(json.loads(line))
-    return pandas.DataFrame(ds)
-
-
-def read_csv(fname):
-    import pandas
-
-    return pandas.read_csv(fname, index_col=None, comment="#")
-
-
-def read_tb(path):
-    """
-    path : a tensorboard file OR a directory, where we will find all TB files
-           of the form events.*
-    """
-    import pandas
-    import numpy as np
-    from glob import glob
-    from collections import defaultdict
-    import tensorflow as tf
-
-    if osp.isdir(path):
-        fnames = glob(osp.join(path, "events.*"))
-    elif osp.basename(path).startswith("events."):
-        fnames = [path]
-    else:
-        raise NotImplementedError(
-            "Expected tensorboard file or directory containing them. Got %s" % path
-        )
-    tag2pairs = defaultdict(list)
-    maxstep = 0
-    for fname in fnames:
-        for summary in tf.train.summary_iterator(fname):
-            if summary.step > 0:
-                for v in summary.summary.value:
-                    pair = (summary.step, v.simple_value)
-                    tag2pairs[v.tag].append(pair)
-                maxstep = max(summary.step, maxstep)
-    data = np.empty((maxstep, len(tag2pairs)))
-    data[:] = np.nan
-    tags = sorted(tag2pairs.keys())
-    for (colidx, tag) in enumerate(tags):
-        pairs = tag2pairs[tag]
-        for (step, value) in pairs:
-            data[step - 1, colidx] = value
-    return pandas.DataFrame(data, columns=tags)
-
-
-if __name__ == "__main__":
-    _demo()

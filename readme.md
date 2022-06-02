@@ -1,7 +1,7 @@
 # Recurrent Model-Free RL can be a Strong Baseline for Many POMDPs
 Welcome to the POMDP world! 
 
-This repo provides some simple baselines for POMDPs, specifically the **recurrent model-free RL**, on the benchmarks in **several subareas of POMDPs** (including meta RL, robust RL, and generalization in RL) for the following paper:
+This repo provides some simple baselines for POMDPs, specifically the **recurrent model-free RL**, on the benchmarks in **several subareas of POMDPs** (including meta RL, robust RL, generalization in RL, temporal credit assignment) for the following paper:
 
 [[arXiv]](https://arxiv.org/abs/2110.05038) [[project site]](https://sites.google.com/view/pomdp-baselines) [[numeric results]](https://drive.google.com/file/d/1dfulN8acol-qaNR2h4PDpIaWBg9Ck4pY/view?usp=sharing)
 
@@ -9,8 +9,8 @@ by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-e
 
 ## Motivation
 
-### RL mostly studies on MDP, why POMDP?
-While MDP prevails in RL research, POMDP prevails in real world and life. In many real problems (robotics, healthcare, finance, human interaction), we inevitably face with partial observability, e.g. noisy sensors and lack of sensors. Can we really observe the "states"? Where do "states" come from? 
+### RL mostly studies on MDPs, why POMDPs?
+While MDPs prevail in RL research, POMDPs prevail in real world and life. In many real problems (robotics, healthcare, finance, human interaction), we inevitably face with partial observability, e.g. noisy sensors and lack of sensors. Can we really observe the "states"? Where do "states" come from? 
 
 Moreover, in RL research, there are many problems that can be cast as POMDPs: meta RL, robust RL, and generalization in RL. Within a more suitable framework, we can develop better RL algorithms. 
 
@@ -70,17 +70,18 @@ We support several benchmarks in different subareas of POMDPs (see `envs/` for d
 * Meta RL: gridworld and MuJoCo benchmark
 * Robust RL: SunBlaze benchmark in Roboschool
 * Generalization in RL: SunBlaze benchmark in Roboschool
+* Temporal credit assignment: delayed rewards with pixel observation and discrete control
 
 See [run_commands.md](docs/run_commands.md) for our estimated difficulty levels of these environments.
 
 ### General Form of Commands
 **We use `.yml` file in `configs/` folder for training, and then we can overwrite the config file by command-line arguments for our implementation.**
 
-To run our implementation, Markovian, and Oracle, in <local_path> simply
+To run our implementation, Markovian, and oracle, in <local_path> simply
 ```
 export PYTHONPATH=${PWD}:$PYTHONPATH
 python3 policies/main.py --cfg configs/<subarea>/<env_name>/<algo_name>.yml \
-  [--algo {td3,sac,sacd} --seed <int> --cuda <int> --oracle
+  [--env <env_name> --algo {td3,sac,sacd} --seed <int> --cuda <int> --oracle
    --(no)automatic_entropy_tuning --target_entropy <float> --entropy_alpha <float>]
 ```
 where `algo_name` specifies the algorithm name:
@@ -123,7 +124,7 @@ If you find our code useful to your work, please consider citing our paper:
 ```
 
 ## Contribution
-Any suggestions on code refactor are welcome. Before pull request, please reformat your code:
+Before pull request, please reformat your code:
 ```bash
 black . -t py35 # avoid trailing commas issue after kwargs
 ```
