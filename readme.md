@@ -1,39 +1,30 @@
 # Recurrent Model-Free RL can be a Strong Baseline for Many POMDPs
 Welcome to the POMDP world! 
 
-This repo provides some simple baselines for POMDPs, specifically the **recurrent model-free RL**, on the benchmarks in **several subareas of POMDPs** (including meta RL, robust RL, generalization in RL, temporal credit assignment) for the following paper:
+This repository provides some simple baselines for POMDPs, specifically the **recurrent model-free RL**, on the benchmarks in **several subareas of POMDPs** (including meta RL, robust RL, generalization in RL, temporal credit assignment) for the following paper:
 
 [[arXiv]](https://arxiv.org/abs/2110.05038) [[project site]](https://sites.google.com/view/pomdp-baselines) [[numeric results]](https://drive.google.com/file/d/1dfulN8acol-qaNR2h4PDpIaWBg9Ck4pY/view?usp=sharing)
 
-by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-eysenbach.github.io/) and [Ruslan Salakhutdinov](http://www.cs.cmu.edu/~rsalakhu/). **To show in ICML 2022.**
+by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-eysenbach.github.io/) and [Ruslan Salakhutdinov](http://www.cs.cmu.edu/~rsalakhu/). **To appear in ICML 2022.**
 
 ## Motivation
 
 ### RL mostly studies on MDPs, why POMDPs?
-While MDPs prevail in RL research, POMDPs prevail in real world and life. In many real problems (robotics, healthcare, finance, human interaction), we inevitably face with partial observability, e.g. noisy sensors and lack of sensors. Can we really observe the "states"? Where do "states" come from? 
+While MDPs prevail in RL research, POMDPs prevail in the real world and life. In many real problems (robotics, healthcare, finance, human interaction), we inevitably face partial observability, e.g. noisy sensors and lack of sensors. Can we observe "states"? Where do "states" come from? 
 
-Moreover, in RL research, there are many problems that can be cast as POMDPs: meta RL, robust RL, and generalization in RL. Within a more suitable framework, we can develop better RL algorithms. 
+Moreover, in RL research, many problems can be cast as POMDPs: meta RL, robust RL, and generalization in RL. Within a more suitable framework, we can develop better RL algorithms. 
 
-### Why using recurrent model-free RL for POMDP? What about other methods? 
-It is an open research area on deep RL algorithms for POMDPs. Among them, recurrent model-free RL, developed with a long history, is simple to implement, easy to understand, and trained end-to-end. Nonetheless, there is a popular belief that it performs poorly in practice. This repo revisits it and provides some guildlines on the design of its key components, to make it stronger. 
+### Why use recurrent model-free RL for POMDP? What about other methods? 
+It is an open research area on deep RL algorithms for POMDPs. Among them, recurrent model-free RL, developed with a long history, is simple to implement, easy to understand, and trained end-to-end. Nonetheless, there is a popular belief that it performs poorly in practice. This work revisits it and provides some guidelines on the design of its key components, to make it stronger. 
 
-There are many other (more complicated or specialized) methods for POMDPs and its subareas. We show recurrent model-free RL, if well designed, can _often_ outperform _some_ of these methods in their benchmarks. It could be served as a strong baseline to incentivize future work. 
+There are many other (more complicated or specialized) methods for POMDPs and their subareas. We show recurrent model-free RL, if well designed, can _often_ outperform _some_ of these methods in their benchmarks. It could be served as a strong baseline to incentivize future work. 
 
 
 ## CHANGE LOG
-Note that current repo should be run smoothly.
 
-DONE:
+* Jun 2022: Cleaned the code for camera ready.
 * May 2022: this work has been accepted to **ICML 2022**! 
 * Mar 2022: introduce recurrent [SAC-discrete](https://arxiv.org/abs/1910.07207) for **discrete action** space and see [this PR for instructions](https://github.com/twni2016/pomdp-baselines/pull/1). As a baseline, it [greatly improves sample efficiency](https://github.com/twni2016/pomdp-baselines/pull/2), compared to a specialized method IMPALA+SR, on their long-term credit assignment benchmark.
-* Feb 2022: simplify `--oracle` commands, and upload the plotting scripts
-* Jan 2022: introduce new meta RL environments (*-Dir), and replace re-implementation of off-policy variBAD with original implementation
-* Dec 2021: add some command-line arguments to overwrite the config file and save the updated one
-* Dec 2021: fix [seed reproducibility issue](envs/readme.md#reproducibilty-issue-in-gym-environments) for gym v0.21 (but not for SunBlaze)
-* Nov 2021: add Markovian and Oracle policies training
-
-TODO:
-- Add documentation on our main code and log csv files 
 
 ## A Minimal Example to Run Our Implementation
 Here we provide a stand-alone minimal example with the least dependencies to run our implementation of recurrent model-free RL! 
@@ -42,7 +33,7 @@ Here we provide a stand-alone minimal example with the least dependencies to run
 Simply open the Jupyter Notebook [example.ipynb](example.ipynb) and it contains the training and evaluation procedure on a toy POMDP environment (Pendulum-V). It only costs < 20 min to run the whole process on a GPU.
 
 ## Installation
-First download this repo into your local directory (preferably on a cluster or a server) to <local_path>. Then we recommend to use a virtual env to install all the dependencies. We provide the yaml file to install using miniconda:
+First download this repository into your local directory (preferably on a cluster or a server) to <local_path>. Then we recommend using a virtual env to install all the dependencies. We provide the yaml file to install using miniconda:
 
 ```bash
 conda env create -f environments.yml
@@ -75,7 +66,7 @@ We support several benchmarks in different subareas of POMDPs (see `envs/` for d
 See [run_commands.md](docs/run_commands.md) for our estimated difficulty levels of these environments.
 
 ### General Form of Commands
-**We use `.yml` file in `configs/` folder for training, and then we can overwrite the config file by command-line arguments for our implementation.**
+**We use `.yml` file in `configs/` folder for training, and then we can overwrite the config file with command-line arguments for our implementation.**
 
 To run our implementation, Markovian, and oracle, in <local_path> simply
 ```
@@ -91,7 +82,7 @@ where `algo_name` specifies the algorithm name:
 - `vrm` corresponds to [VRM](https://github.com/oist-cnru/Variational-Recurrent-Models) compared in "standard" POMDPs
 - `MRPO` correspond to [MRPO](https://proceedings.mlr.press/v139/jiang21c.html) compared in robust RL
 
-> We have merged the prior methods above into our repository (there is no need to install other repositories), so that future work can use this single repository to run a number of baselines besides ours: A2C-GRU, PPO-GRU, VRM, off-policy variBAD, MRPO. 
+> We have merged the prior methods above into our repository (there is no need to install other repositories), so that future work can use this single repository to run several baselines besides ours: A2C-GRU, PPO-GRU, VRM, off-policy variBAD, MRPO. 
 >
 > Since our code is heavily drawn from those prior works, we encourage authors to [cite those prior papers or implementations](docs/acknowledge.md).
 >
@@ -126,9 +117,10 @@ If you find our code useful to your work, please consider citing our paper:
 ## Contribution
 Before pull request, please reformat your code:
 ```bash
-black . -t py35 # avoid trailing commas issue after kwargs
+# avoid trailing commas issue after kwargs
+black . -t py35
 ```
 
 ## Contact
-If you have any questions, please create an issue in this repo or contact Tianwei Ni (tianwei.ni@mila.quebec)
+If you have any questions, please create an issue in this repository or contact Tianwei Ni (tianwei.ni@mila.quebec)
 
