@@ -16,7 +16,7 @@ from policies.learner import Learner
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("cfg", None, "path to configuration file")
-flags.DEFINE_string("env", None, 'env_name')
+flags.DEFINE_string("env", None, "env_name")
 flags.DEFINE_string("algo", None, '["td3", "sac", "sacd"]')
 
 flags.DEFINE_boolean("automatic_entropy_tuning", None, "for [sac, sacd]")

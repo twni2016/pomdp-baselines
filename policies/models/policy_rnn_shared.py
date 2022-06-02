@@ -60,7 +60,9 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
 
         ### Build Model
         ## 1. embed action, state, reward (Feed-forward layers first)
-        self.observ_encoder = utl.FeatureExtractor(obs_dim, observ_embedding_size, F.relu)
+        self.observ_encoder = utl.FeatureExtractor(
+            obs_dim, observ_embedding_size, F.relu
+        )
         self.action_encoder = utl.FeatureExtractor(
             action_dim, action_embedding_size, F.relu
         )

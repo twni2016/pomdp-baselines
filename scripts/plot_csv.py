@@ -3,12 +3,14 @@ Plot selective variant of our method and all the compared methods
 """
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 sns.set()
 import pandas as pd
 import numpy as np
 import os, sys
 from scripts.constants import *
 from absl import flags
+
 FLAGS = flags.FLAGS
 
 ## Hparams

@@ -62,6 +62,7 @@ REWARD_GRID_SR = [
 
 MAX_FRAMES_PER_PHASE_SR = {"explore": 15, "distractor": 60, "reward": 10}
 
+
 class KeySprite(plab_things.Sprite):
     """Sprite for the key."""
 

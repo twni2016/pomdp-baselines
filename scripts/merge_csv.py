@@ -4,6 +4,7 @@ import os, sys
 import glob
 from scripts.constants import *
 from absl import flags
+
 FLAGS = flags.FLAGS
 
 ## Hparams
