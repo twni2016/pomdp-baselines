@@ -60,13 +60,13 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
 
         ### Build Model
         ## 1. embed action, state, reward (Feed-forward layers first)
-        self.observ_encoder = utl.FeatureExtractor(
+        self.observ_embedder = utl.FeatureExtractor(
             obs_dim, observ_embedding_size, F.relu
         )
-        self.action_encoder = utl.FeatureExtractor(
+        self.action_embedder = utl.FeatureExtractor(
             action_dim, action_embedding_size, F.relu
         )
-        self.reward_encoder = utl.FeatureExtractor(1, reward_embedding_size, F.relu)
+        self.reward_embedder = utl.FeatureExtractor(1, reward_embedding_size, F.relu)
 
         ## 2. build RNN model
         rnn_input_size = (
@@ -93,7 +93,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
 
         ## 3. build actor-critic
         # build another obs+act branch
-        self.current_state_action_encoder = utl.FeatureExtractor(
+        self.current_observ_action_embedder = utl.FeatureExtractor(
             obs_dim + action_dim, rnn_input_size, F.relu
         )
 
@@ -113,7 +113,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         self.qf2_target = deepcopy(self.qf2)
 
         # build another obs branch
-        self.current_state_encoder = utl.FeatureExtractor(
+        self.current_observ_embedder = utl.FeatureExtractor(
             obs_dim, observ_embedding_size, F.relu
         )
 
@@ -135,12 +135,12 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         #  also exclude q targets
         self.optimizer = Adam(
             [
-                *self.observ_encoder.parameters(),
-                *self.action_encoder.parameters(),
-                *self.reward_encoder.parameters(),
+                *self.observ_embedder.parameters(),
+                *self.action_embedder.parameters(),
+                *self.reward_embedder.parameters(),
                 *self.rnn.parameters(),
-                *self.current_state_action_encoder.parameters(),
-                *self.current_state_encoder.parameters(),
+                *self.current_observ_action_embedder.parameters(),
+                *self.current_observ_embedder.parameters(),
                 *self.qf1.parameters(),
                 *self.qf2.parameters(),
                 *self.policy.parameters(),
@@ -178,9 +178,9 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
     ):
         # all the input have the shape of (T+1, B, *)
         # get embedding of initial transition
-        input_a = self.action_encoder(prev_actions)
-        input_r = self.reward_encoder(rewards)
-        input_s = self.observ_encoder(observs)
+        input_a = self.action_embedder(prev_actions)
+        input_r = self.reward_embedder(rewards)
+        input_s = self.observ_embedder(observs)
         inputs = torch.cat((input_a, input_r, input_s), dim=-1)
 
         # feed into RNN: output (T+1, B, hidden_size)
@@ -224,7 +224,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
             prev_actions=actions, rewards=rewards, observs=observs
         )
 
-        obs_embeds = self.current_state_encoder(observs)  # (T+1, B, dim)
+        obs_embeds = self.current_observ_embedder(observs)  # (T+1, B, dim)
         joint_policy_embeds = torch.cat(
             (hidden_states, obs_embeds), dim=-1
         )  # (T+1, B, dim)
@@ -247,7 +247,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
                     joint_policy_embeds, return_log_prob=True
                 )
 
-            obs_act_embeds = self.current_state_action_encoder(
+            obs_act_embeds = self.current_observ_action_embedder(
                 torch.cat((observs, new_next_actions), dim=-1)
             )  # (T+1, B, dim)
             joint_q_embeds = torch.cat(
@@ -267,7 +267,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
 
         # Q(h(t), a(t)) (T, B, 1)
         # current_actions does NOT include last obs's action
-        curr_obs_act_embeds = self.current_state_action_encoder(
+        curr_obs_act_embeds = self.current_observ_action_embedder(
             torch.cat((observs[:-1], actions[1:]), dim=-1)
         )  # (T, B, dim)
         # 3. joint embeds
@@ -296,7 +296,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
                 joint_policy_embeds, return_log_prob=True
             )
 
-        new_obs_act_embeds = self.current_state_action_encoder(
+        new_obs_act_embeds = self.current_observ_action_embedder(
             torch.cat((observs, new_actions), dim=-1)
         )  # (T+1, B, dim)
         new_joint_q_embeds = torch.cat(
@@ -431,7 +431,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
             initial_internal_state=prev_internal_state,
         )
         # 2. another branch for current obs
-        curr_embed = self.current_state_encoder(obs)  # (1, B, dim)
+        curr_embed = self.current_observ_embedder(obs)  # (1, B, dim)
 
         # 3. joint embed
         joint_embeds = torch.cat((hidden_state, curr_embed), dim=-1)  # (1, B, dim)

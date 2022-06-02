@@ -36,17 +36,17 @@ class Actor_RNN(nn.Module):
 
         self.image_encoder = image_encoder
         if self.image_encoder is None:
-            self.observ_encoder = utl.FeatureExtractor(
+            self.observ_embedder = utl.FeatureExtractor(
                 obs_dim, observ_embedding_size, F.relu
             )
         else:  # for pixel observation, use external encoder
             assert observ_embedding_size == 0
             observ_embedding_size = self.image_encoder.embed_size  # reset it
 
-        self.action_encoder = utl.FeatureExtractor(
+        self.action_embedder = utl.FeatureExtractor(
             action_dim, action_embedding_size, F.relu
         )
-        self.reward_encoder = utl.FeatureExtractor(1, reward_embedding_size, F.relu)
+        self.reward_embedder = utl.FeatureExtractor(1, reward_embedding_size, F.relu)
 
         ## 2. build RNN model
         rnn_input_size = (
@@ -78,7 +78,7 @@ class Actor_RNN(nn.Module):
 
         ## 3. build another obs branch
         if self.image_encoder is None:
-            self.current_state_encoder = utl.FeatureExtractor(
+            self.current_observ_embedder = utl.FeatureExtractor(
                 obs_dim, observ_embedding_size, F.relu
             )
 
@@ -104,13 +104,13 @@ class Actor_RNN(nn.Module):
 
     def _get_obs_embedding(self, observs):
         if self.image_encoder is None:  # vector obs
-            return self.observ_encoder(observs)
+            return self.observ_embedder(observs)
         else:  # pixel obs
             return self.image_encoder(observs)
 
     def _get_shortcut_obs_embedding(self, observs):
         if self.image_encoder is None:  # vector obs
-            return self.current_state_encoder(observs)
+            return self.current_observ_embedder(observs)
         else:  # pixel obs
             return self.image_encoder(observs)
 
@@ -119,8 +119,8 @@ class Actor_RNN(nn.Module):
     ):
         # all the input have the shape of (1 or T+1, B, *)
         # get embedding of initial transition
-        input_a = self.action_encoder(prev_actions)
-        input_r = self.reward_encoder(rewards)
+        input_a = self.action_embedder(prev_actions)
+        input_r = self.reward_embedder(rewards)
         input_s = self._get_obs_embedding(observs)
         inputs = torch.cat((input_a, input_r, input_s), dim=-1)
 

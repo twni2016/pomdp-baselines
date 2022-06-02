@@ -34,17 +34,17 @@ class Critic_RNN(nn.Module):
 
         self.image_encoder = image_encoder
         if self.image_encoder is None:
-            self.observ_encoder = utl.FeatureExtractor(
+            self.observ_embedder = utl.FeatureExtractor(
                 obs_dim, observ_embedding_size, F.relu
             )
         else:  # for pixel observation, use external encoder
             assert observ_embedding_size == 0
             observ_embedding_size = self.image_encoder.embed_size  # reset it
 
-        self.action_encoder = utl.FeatureExtractor(
+        self.action_embedder = utl.FeatureExtractor(
             action_dim, action_embedding_size, F.relu
         )
-        self.reward_encoder = utl.FeatureExtractor(1, reward_embedding_size, F.relu)
+        self.reward_embedder = utl.FeatureExtractor(1, reward_embedding_size, F.relu)
 
         ## 2. build RNN model
         rnn_input_size = (
@@ -73,18 +73,18 @@ class Critic_RNN(nn.Module):
         shortcut_embedding_size = rnn_input_size
         if self.algo in [TD3_name, SAC_name] and self.image_encoder is None:
             # for vector-based continuous action problems
-            self.current_shortcut_encoder = utl.FeatureExtractor(
+            self.current_shortcut_embedder = utl.FeatureExtractor(
                 obs_dim + action_dim, shortcut_embedding_size, F.relu
             )
         elif self.algo in [TD3_name, SAC_name] and self.image_encoder is not None:
             # for image-based continuous action problems
-            self.current_shortcut_encoder = utl.FeatureExtractor(
+            self.current_shortcut_embedder = utl.FeatureExtractor(
                 action_dim, shortcut_embedding_size, F.relu
             )
             shortcut_embedding_size += self.image_encoder.embed_size
         elif self.algo == SACD_name and self.image_encoder is None:
             # for vector-based discrete action problems
-            self.current_shortcut_encoder = utl.FeatureExtractor(
+            self.current_shortcut_embedder = utl.FeatureExtractor(
                 obs_dim, shortcut_embedding_size, F.relu
             )
         elif self.algo == SACD_name and self.image_encoder is not None:
@@ -111,14 +111,14 @@ class Critic_RNN(nn.Module):
 
     def _get_obs_embedding(self, observs):
         if self.image_encoder is None:  # vector obs
-            return self.observ_encoder(observs)
+            return self.observ_embedder(observs)
         else:  # pixel obs
             return self.image_encoder(observs)
 
     def _get_shortcut_obs_act_embedding(self, observs, current_actions):
         if self.algo in [TD3_name, SAC_name] and self.image_encoder is None:
             # for vector-based continuous action problems
-            return self.current_shortcut_encoder(
+            return self.current_shortcut_embedder(
                 torch.cat([observs, current_actions], dim=-1)
             )
         elif self.algo in [TD3_name, SAC_name] and self.image_encoder is not None:
@@ -126,13 +126,13 @@ class Critic_RNN(nn.Module):
             return torch.cat(
                 [
                     self.image_encoder(observs),
-                    self.current_shortcut_encoder(current_actions),
+                    self.current_shortcut_embedder(current_actions),
                 ],
                 dim=-1,
             )
         elif self.algo == SACD_name and self.image_encoder is None:
             # for vector-based discrete action problems (not using actions)
-            return self.current_shortcut_encoder(observs)
+            return self.current_shortcut_embedder(observs)
         elif self.algo == SACD_name and self.image_encoder is not None:
             # for image-based discrete action problems (not using actions)
             return self.image_encoder(observs)
@@ -142,8 +142,8 @@ class Critic_RNN(nn.Module):
     def get_hidden_states(self, prev_actions, rewards, observs):
         # all the input have the shape of (T+1, B, *)
         # get embedding of initial transition
-        input_a = self.action_encoder(prev_actions)
-        input_r = self.reward_encoder(rewards)
+        input_a = self.action_embedder(prev_actions)
+        input_r = self.reward_embedder(rewards)
         input_s = self._get_obs_embedding(observs)
         inputs = torch.cat((input_a, input_r, input_s), dim=-1)
 
