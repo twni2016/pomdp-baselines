@@ -15,7 +15,7 @@ class Critic_RNN(nn.Module):
         encoder,
         algo,
         action_embedding_size,
-        state_embedding_size,
+        observ_embedding_size,
         reward_embedding_size,
         rnn_hidden_size,
         dqn_layers,
@@ -34,12 +34,12 @@ class Critic_RNN(nn.Module):
 
         self.image_encoder = image_encoder
         if self.image_encoder is None:
-            self.state_encoder = utl.FeatureExtractor(
-                obs_dim, state_embedding_size, F.relu
+            self.observ_encoder = utl.FeatureExtractor(
+                obs_dim, observ_embedding_size, F.relu
             )
         else:  # for pixel observation, use external encoder
-            assert state_embedding_size == 0
-            state_embedding_size = self.image_encoder.embed_size  # reset it
+            assert observ_embedding_size == 0
+            observ_embedding_size = self.image_encoder.embed_size  # reset it
 
         self.action_encoder = utl.FeatureExtractor(
             action_dim, action_embedding_size, F.relu
@@ -48,7 +48,7 @@ class Critic_RNN(nn.Module):
 
         ## 2. build RNN model
         rnn_input_size = (
-            action_embedding_size + state_embedding_size + reward_embedding_size
+            action_embedding_size + observ_embedding_size + reward_embedding_size
         )
         self.rnn_hidden_size = rnn_hidden_size
 
@@ -111,7 +111,7 @@ class Critic_RNN(nn.Module):
 
     def _get_obs_embedding(self, observs):
         if self.image_encoder is None:  # vector obs
-            return self.state_encoder(observs)
+            return self.observ_encoder(observs)
         else:  # pixel obs
             return self.image_encoder(observs)
 

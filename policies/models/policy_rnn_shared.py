@@ -17,11 +17,7 @@ from utils import logger
 
 class ModelFreeOffPolicy_Shared_RNN(nn.Module):
     """
-    RNN TD3/SAC (Recurrent Policy) with shared RNN
-    the input trajectory include obs,
-            and/or action (action_embedding_size != 0),
-            and/or reward (reward_embedding_size != 0).
-    depends on the task where partially observation is
+    Recurrent Actor and Recurrent Critic with shared RNN
     """
 
     ARCH = "memory"
@@ -33,7 +29,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         encoder,
         algo,
         action_embedding_size,
-        state_embedding_size,
+        observ_embedding_size,
         reward_embedding_size,
         rnn_hidden_size,
         dqn_layers,
@@ -64,7 +60,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
 
         ### Build Model
         ## 1. embed action, state, reward (Feed-forward layers first)
-        self.state_encoder = utl.FeatureExtractor(obs_dim, state_embedding_size, F.relu)
+        self.observ_encoder = utl.FeatureExtractor(obs_dim, observ_embedding_size, F.relu)
         self.action_encoder = utl.FeatureExtractor(
             action_dim, action_embedding_size, F.relu
         )
@@ -72,7 +68,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
 
         ## 2. build RNN model
         rnn_input_size = (
-            action_embedding_size + state_embedding_size + reward_embedding_size
+            action_embedding_size + observ_embedding_size + reward_embedding_size
         )
         self.rnn_hidden_size = rnn_hidden_size
 
@@ -116,19 +112,19 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
 
         # build another obs branch
         self.current_state_encoder = utl.FeatureExtractor(
-            obs_dim, state_embedding_size, F.relu
+            obs_dim, observ_embedding_size, F.relu
         )
 
         # policy networks
         if self.algo == TD3_name:
             self.policy = DeterministicPolicy(
-                obs_dim=self.rnn_hidden_size + state_embedding_size,
+                obs_dim=self.rnn_hidden_size + observ_embedding_size,
                 action_dim=self.action_dim,
                 hidden_sizes=policy_layers,
             )
         else:
             self.policy = TanhGaussianPolicy(
-                obs_dim=self.rnn_hidden_size + state_embedding_size,
+                obs_dim=self.rnn_hidden_size + observ_embedding_size,
                 action_dim=self.action_dim,
                 hidden_sizes=policy_layers,
             )
@@ -137,7 +133,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         #  also exclude q targets
         self.optimizer = Adam(
             [
-                *self.state_encoder.parameters(),
+                *self.observ_encoder.parameters(),
                 *self.action_encoder.parameters(),
                 *self.reward_encoder.parameters(),
                 *self.rnn.parameters(),
@@ -182,7 +178,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         # get embedding of initial transition
         input_a = self.action_encoder(prev_actions)
         input_r = self.reward_encoder(rewards)
-        input_s = self.state_encoder(observs)
+        input_s = self.observ_encoder(observs)
         inputs = torch.cat((input_a, input_r, input_s), dim=-1)
 
         # feed into RNN: output (T+1, B, hidden_size)

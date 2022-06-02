@@ -1,5 +1,5 @@
 ## Atari Environments
-https://github.com/jurgisp/pydreamer/tree/main/pydreamer/envs
+The code follows Dreamerv2's Atari setting https://github.com/jurgisp/pydreamer/tree/main/pydreamer/envs
 
 ### installation
 ```bash

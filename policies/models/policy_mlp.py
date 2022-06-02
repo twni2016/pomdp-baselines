@@ -2,7 +2,6 @@
 Based on https://github.com/pranz24/pytorch-soft-actor-critic
 """
 
-import os
 import numpy as np
 import copy
 import torch
@@ -19,7 +18,7 @@ class ModelFreeOffPolicy_MLP(nn.Module):
     """
     standard off-policy Markovian Policy using MLP
     including TD3 and SAC
-    NOTE: it can only solve MDP problem, not POMDP
+    NOTE: it can only solve MDP problem, not POMDPs
     """
 
     ARCH = "markov"

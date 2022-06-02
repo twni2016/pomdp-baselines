@@ -1,4 +1,0 @@
-#!/bin/bash
-
-export PYTHONPATH=${PWD}:$PYTHONPATH
-python3 $1 --cfg $2

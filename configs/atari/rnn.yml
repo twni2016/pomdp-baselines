@@ -1,5 +1,5 @@
 # try to match https://github.com/danijar/dreamerv2/blob/main/dreamerv2/configs.yaml#L81
-# but use a smaller network architecture
+# the differences of hparams are mentioned in comments
 
 seed: 73
 cuda: 0 # use_gpu
@@ -21,8 +21,8 @@ train:
   # buffer params
   buffer_type: seq_efficient
   buffer_size: 2e6 # dreamer
-  batch_size: 50 # dreamer uses 50
-  sampled_seq_len: 50 # can be larger for LTCA. dreamer uses 50
+  batch_size: 50 # dreamer
+  sampled_seq_len: 50 # dreamer
   sample_weight_baseline: 0.0
 
 eval:
@@ -37,7 +37,7 @@ policy:
   algo: sacd # only support sac-discrete
 
   action_embedding_size: 64 # 18-dim
-  state_embedding_size: 0 # use image encoder instead
+  observ_embedding_size: 0 # use image encoder instead
   image_encoder: 
     from_flattened: True
     normalize_pixel: True
@@ -54,11 +54,11 @@ policy:
   dqn_layers: [400, 400]
   policy_layers: [400, 400]
   lr: 0.0003
-  gamma: 0.999 # dreamer
+  gamma: 0.99 # dreamer uses 0.999
   tau: 0.005
 
   # sacd alpha
-  entropy_alpha: 0.1 # dreamer uses 0.001
+  entropy_alpha: 0.01 # dreamer uses 0.001
   automatic_entropy_tuning: False
   target_entropy: None # the ratio: target_entropy = ratio * log(|A|)
   alpha_lr: 0.0003

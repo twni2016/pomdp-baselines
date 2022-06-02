@@ -88,5 +88,3 @@ if __name__ == "__main__":
         t += 1
         obs, rew, done, info = env.step(env.action_space.sample())
         print(t, rew, info)
-
-    # import ipdb; ipdb.set_trace()

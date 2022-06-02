@@ -36,7 +36,7 @@ policy:
   algo: sac # [td3, sac]
 
   action_embedding_size: 8 # has action input
-  state_embedding_size: 32
+  observ_embedding_sizee: 32
   reward_embedding_size: 0 # no reward input
   rnn_hidden_size: 64
 

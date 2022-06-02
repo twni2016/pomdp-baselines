@@ -6,7 +6,6 @@ import numpy as np
 class DictWrapper(gym.ObservationWrapper):
     def __init__(self, env):
         super().__init__(env)
-        # self.observation_space = ...  # TODO
 
     def observation(self, obs_img):
         if len(obs_img.shape) == 1:

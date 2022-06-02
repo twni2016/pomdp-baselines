@@ -33,7 +33,7 @@ policy:
   algo: sacd # only support sac-discrete
 
   action_embedding_size: 0 # no need for catch
-  state_embedding_size: 0 # use image encoder instead
+  observ_embedding_size: 0 # use image encoder instead
   image_encoder: 
     from_flattened: True
 

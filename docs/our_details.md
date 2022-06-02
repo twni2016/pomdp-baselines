@@ -8,10 +8,10 @@ The **decision factors** discussed in the method section in our paper, can be fo
     - Recommmend to set it as `True`
 - Encoder: `policy: arch: <lstm|gru>`
     - We also support `mlp` option for Markovian policies
-- RL: `policy: algo: <td3|sac>`
+- RL: `policy: algo: <td3|sac|sacd>`
 - Len: `train: sampled_seq_len: <5|64|any positive integer>`
 - Inputs: we use the embedding size to control the inputs. 
-    - To use past observations, simply set `policy: state_embedding_size` a positive integer
+    - To use past observations, simply set `policy: observ_embedding_size` a positive integer
     - To use past actions, set `policy: action_embedding_size` a positive integer
     - To use past rewards, set `policy: reward_embedding_size` a positive integer
     - Otherwise, if you want to disable any of them, set the corresponding embedding size as 0.

@@ -1,14 +1,13 @@
-import numpy as np
-
-import gym
-
-
-# Perceptual catch
-
 """
+Perceptual catch. Original author: Michel Ma.
+
 Delay = (Number of runs - 1) * 7 + 6
 Time_steps = (Number of runs - 1) * 7 + 6
 """
+
+
+import numpy as np
+import gym
 
 
 class DelayedCatch(gym.Env):
@@ -19,7 +18,7 @@ class DelayedCatch(gym.Env):
         self.grid_size = grid_size
         self.delay = delay
         self.num_catches = (delay + 1) // 7
-        self.action_space = gym.spaces.Discrete(3)  # vectorize it
+        self.action_space = gym.spaces.Discrete(3)
 
         self.image_space = gym.spaces.MultiDiscrete(
             [[[2 for i in range(grid_size)] for i in range(grid_size)]]
@@ -75,7 +74,7 @@ class DelayedCatch(gym.Env):
             if fruit_col == basket:
                 return 1
             else:
-                return 0  # change it from -1 to 0, to match IMPALA+SR
+                return 0
         else:
             return 0
 
@@ -129,7 +128,6 @@ class DelayedCatch(gym.Env):
         return obs
 
     def soft_reset(self):
-        # TODO: to make this efficient, generate them at the beginning of the episode
         n = self.ns[self.catch_count]
         m = self.ms[self.catch_count]
         self.state = np.asarray([0, n, m])[np.newaxis]
@@ -146,5 +144,4 @@ if __name__ == "__main__":
     done = False
     while not done:
         obs, rew, done, info = env.step(env.action_space.sample())
-        # print(env.time_step, obs, rew, done, info)
         print(env.time_step, info)

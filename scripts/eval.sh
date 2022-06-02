@@ -219,7 +219,10 @@ export PYTHONPATH=${PWD}:$PYTHONPATH
 #     --window_size 10 --name Hopper-Generalize --factors RL,Len,Inputs --best_variant td3-lstm-64-o-separate \
 #     --other_methods oracle_sac,Markovian_sac
 
-## Long-term credit assignments
+
+
+
+## Long-term credit assignment
 
 # python scripts/merge_csv.py --base_path results/logs/credit/Catch/40 \
 #     --max_episode_len 279 --start_x 13950 --interval_x 13950
@@ -227,32 +230,8 @@ export PYTHONPATH=${PWD}:$PYTHONPATH
 #     --window_size 10 --loc "right" --max_x 2500000 \
 #     --name Delayed-Catch --best_variant sacd-lstm-279-o-separate
 
-# python scripts/merge_csv.py --base_path results/logs/credit/KeytoDoor/SR \
+# python scripts/merge_csv.py --base_path results/logs/credit/KeytoDoor \
 #     --max_episode_len 85 --start_x 4250 --interval_x 4250
-# python scripts/plot_csv.py --csv_path results/data/credit/KeytoDoor/SR/final.csv \
+# python scripts/plot_csv.py --csv_path results/data/credit/KeytoDoor/final.csv \
 #     --window_size 10 --loc "right" \
 #      --best_variant sacd-lstm-85-o-separate #--name Key-to-Door
-
-# python scripts/merge_csv.py --base_path results/logs/credit/KeytoDoor/LowVar \
-#     --max_episode_len 60 --start_x 6000 --interval_x 6000
-# python scripts/plot_csv.py --csv_path results/data/credit/KeytoDoor/LowVar/final.csv \
-#     --window_size 10 --loc "right" \
-#      --best_variant sacd-lstm-60-o-separate
-
-# python scripts/merge_csv.py --base_path results/logs/credit/KeytoDoor/LowVar5 \
-#     --max_episode_len 60 --start_x 6000 --interval_x 6000
-# python scripts/plot_csv.py --csv_path results/data/credit/KeytoDoor/LowVar5/final.csv \
-#     --window_size 10 --loc "right" \
-#      --best_variant sacd-lstm-60-o-separate
-
-# python scripts/merge_csv.py --base_path results/logs/credit/KeytoDoor/HighVar \
-#     --max_episode_len 60 --start_x 6000 --interval_x 6000
-# python scripts/plot_csv.py --csv_path results/data/credit/KeytoDoor/HighVar/final.csv \
-#     --window_size 10 --loc "right" \
-#      --best_variant sacd-lstm-60-o-separate
-
-# python scripts/merge_csv.py --base_path results/logs/credit/KeytoDoor/HighVar10 \
-#     --max_episode_len 60 --start_x 6000 --interval_x 6000
-# python scripts/plot_csv.py --csv_path results/data/credit/KeytoDoor/HighVar10/final.csv \
-#     --window_size 10 --loc "right" \
-#      --best_variant sacd-lstm-60-o-separate

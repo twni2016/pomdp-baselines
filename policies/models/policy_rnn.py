@@ -1,4 +1,4 @@
-""" Recommended Arch
+""" Recommended Architecture
 Separate RNN arch is inspired by a popular RL repo
 https://github.com/quantumiracle/Popular-RL-Algorithms/blob/master/POMDP/common/value_networks.py#L110
 which has another branch to encode current state (and action)
@@ -22,15 +22,8 @@ from utils import logger
 
 
 class ModelFreeOffPolicy_Separate_RNN(nn.Module):
-    """Recommended Arch
-    RNN TD3/SAC (Recurrent Policy) with separate RNNs
-            it may have advantages over shared RNN arch
-            by avoiding rnn gradient explosion
-            and q loss explosion
-    the input trajectory include obs,
-            and/or action (action_embedding_size != 0),
-            and/or reward (reward_embedding_size != 0).
-    depends on the task where partially observation is
+    """Recommended Architecture
+    Recurrent Actor and Recurrent Critic with separate RNNs
     """
 
     ARCH = "memory"
@@ -42,7 +35,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         encoder,
         algo,
         action_embedding_size,
-        state_embedding_size,
+        observ_embedding_size,
         reward_embedding_size,
         rnn_hidden_size,
         dqn_layers,
@@ -81,7 +74,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             encoder,
             algo,
             action_embedding_size,
-            state_embedding_size,
+            observ_embedding_size,
             reward_embedding_size,
             rnn_hidden_size,
             dqn_layers,
@@ -99,7 +92,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             encoder,
             algo,
             action_embedding_size,
-            state_embedding_size,
+            observ_embedding_size,
             reward_embedding_size,
             rnn_hidden_size,
             policy_layers,

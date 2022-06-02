@@ -1,6 +1,6 @@
 from gym.envs.registration import register
 
-## off-policy varibad benchmark
+## off-policy variBAD benchmark
 
 register(
     "PointRobot-v0",
@@ -29,18 +29,7 @@ register(
     max_episode_steps=200,
 )
 
-# register(
-#     'AntDir2D-v0',
-#     entry_point='envs.meta.wrappers:mujoco_wrapper',
-#     kwargs={'entry_point': 'envs.meta.mujoco.ant_dir:AntDirEnv',
-#             'max_episode_steps': 200,
-#             'forward_backward': False,
-#             },
-#     max_episode_steps=200
-# )
-
-
-## on-policy varibad benchmark
+## on-policy variBAD benchmark
 
 register(
     "AntDir-v0",

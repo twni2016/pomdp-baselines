@@ -251,5 +251,3 @@ register(
     ),  # vel
     max_episode_steps=1000,
 )
-
-import envs.credit_assign

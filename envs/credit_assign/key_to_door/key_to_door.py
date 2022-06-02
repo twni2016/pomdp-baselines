@@ -60,19 +60,7 @@ REWARD_GRID_SR = [
     "           ",
 ]
 
-REWARD_GRID_CCA = [
-    "  #######  ",
-    "  #+++++#  ",
-    "  #+++++#  ",
-    "  ##   ##  ",
-    "  #ddddd#  ",
-    "  #ddddd#  ",
-    "  #######  ",
-]
-
 MAX_FRAMES_PER_PHASE_SR = {"explore": 15, "distractor": 60, "reward": 10}
-MAX_FRAMES_PER_PHASE_CCA = {"explore": 15, "distractor": 30, "reward": 15}
-
 
 class KeySprite(plab_things.Sprite):
     """Sprite for the key."""

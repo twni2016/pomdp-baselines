@@ -1,7 +1,3 @@
-""" 
-Experimental code
-"""
-
 import torch
 import numpy as np
 from copy import deepcopy
@@ -12,16 +8,13 @@ from utils import helpers as utl
 from torchkit.constant import *
 import torchkit.pytorch_utils as ptu
 from torchkit.recurrent_critic import Critic_RNN
-from torchkit.recurrent_actor import Actor_RNN
 from torchkit.actor import DeterministicPolicy, TanhGaussianPolicy, CategoricalPolicy
 from utils import logger
 
 
 class ModelFreeOffPolicy_RNN_MLP(nn.Module):
     """
-    Critic uses RNN, while Actor uses MLP.
-    In other word, history-dependent Q value function,
-        while Markov policy.
+    Markov Actor and Recurrent Critic
     It may be more effective on some special cases of POMDPs,
         where the reward is history-dependent, but Markov actor
         is sufficient to solve the task.
@@ -36,7 +29,7 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
         encoder,
         algo,
         action_embedding_size,
-        state_embedding_size,
+        observ_embedding_size,
         reward_embedding_size,
         rnn_hidden_size,
         dqn_layers,
@@ -75,7 +68,7 @@ class ModelFreeOffPolicy_RNN_MLP(nn.Module):
             encoder,
             algo,
             action_embedding_size,
-            state_embedding_size,
+            observ_embedding_size,
             reward_embedding_size,
             rnn_hidden_size,
             dqn_layers,

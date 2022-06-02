@@ -18,7 +18,8 @@ General form:
 ```
 export PYTHONPATH=${PWD}:$PYTHONPATH
 python3 policies/main.py --cfg configs/<subarea>/<env_name>/<algo_name>.yml \
-  [--algo {td3,sac} --seed <int> --cuda <int> --oracle]
+  [--env <env_name> --algo {td3,sac,sacd} --seed <int> --cuda <int> --oracle
+   --(no)automatic_entropy_tuning --target_entropy <float> --entropy_alpha <float>]
 ```
 
 ### "Standard" POMDP
@@ -118,4 +119,21 @@ python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/RD-RR-RE/m
 python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/RD-RR-RE/mlp.yml --algo sac --oracle
 
 # For PPO, A2C, EPOpt-PPO-FF, we use the figures from SunBlaze paper
+```
+
+### Temporal Credit Assignment
+{Delayed-Catch, Key-to-Door} in the paper, corresponding to `configs/credit/<catch|keytodoor>`. Note that this is discrete control on pixel inputs, so the architecture is a bit different from the default one.
+
+To reproduce our results, please run:
+```bash
+python3 policies/main.py --cfg configs/credit/catch/rnn.yml
+python3 policies/main.py --cfg configs/credit/keytodoor/rnn.yml
+```
+
+### Atari
+Although Atari environments are **not** this paper's focus, we provide an implementation to train on a game, following the Dreamerv2 setting. The hyperparameters are **not** well-tuned, so the results are not expected to be good.
+
+```bash
+# train on Pong (confirmed it can work on Pong)
+python3 policies/main.py --cfg configs/atari/rnn.yml --env Pong
 ```
