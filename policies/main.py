@@ -30,6 +30,7 @@ flags.DEFINE_boolean(
     False,
     "whether observe the privileged information of POMDP, reduced to MDP",
 )
+flags.DEFINE_boolean("debug", False, "debug mode")
 
 flags.FLAGS(sys.argv)
 yaml = YAML()
@@ -71,8 +72,10 @@ if "SLURM_JOB_ID" in os.environ:
 set_gpu_mode(torch.cuda.is_available() and v["cuda"] >= 0, v["cuda"])
 
 # logs
-exp_id = "logs/"
-# exp_id = "debug/"
+if FLAGS.debug:
+    exp_id = "debug/"
+else:
+    exp_id = "logs/"
 
 env_type = v["env"]["env_type"]
 if len(v["env"]["env_name"].split("-")) == 3:

@@ -389,9 +389,9 @@ table_results = {
         },
     },
     "Delayed-Catch": {
-        "return": {"IMPALA+SR": 3.1},  # at 2.5M
+        "return": {"IMPALA+SR": 3.1, "Random": 5.93},  # at 2.5M
     },
     "Key-to-Door": {
-        "door_opened": {"IMPALA+SR": 0.57},  # at 4M
+        "door_opened": {"IMPALA+SR": 0.57, "Random": 0.022},  # at 4M
     },
 }

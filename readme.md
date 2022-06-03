@@ -72,8 +72,10 @@ To run our implementation, Markovian, and oracle, in <local_path> simply
 ```
 export PYTHONPATH=${PWD}:$PYTHONPATH
 python3 policies/main.py --cfg configs/<subarea>/<env_name>/<algo_name>.yml \
-  [--env <env_name> --algo {td3,sac,sacd} --seed <int> --cuda <int> --oracle
-   --(no)automatic_entropy_tuning --target_entropy <float> --entropy_alpha <float>]
+  [--env <env_name>  --oracle
+   --algo {td3,sac,sacd} --(no)automatic_entropy_tuning --target_entropy <float> --entropy_alpha <float>
+   --debug --seed <int> --cuda <int>
+  ]
 ```
 where `algo_name` specifies the algorithm name:
 - `mlp` correspond to **Markovian** policies
