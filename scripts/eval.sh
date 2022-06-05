@@ -234,4 +234,4 @@ export PYTHONPATH=${PWD}:$PYTHONPATH
 #     --max_episode_len 85 --start_x 4250 --interval_x 4250
 # python scripts/plot_csv.py --csv_path results/data/credit/KeytoDoor/SR/final.csv \
 #     --window_size 10 --loc "lower right" --max_x 4000000 \
-#     --best_variant sacd-lstm-85-o-separate #--name Key-to-Door
+#     --best_variant sacd-lstm-85-o-separate --name Key-to-Door

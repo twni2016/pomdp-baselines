@@ -5,7 +5,6 @@ y_tags = [  ### raw_atg, processed tag
     ("metrics/return_eval_total", "return"),
     # ("metrics/return_train_total", "return_train"),
     # ("metrics/success_rate_eval", "success_rate"),
-    # ("metrics/success_rate_eval", "door_opened"),
     ("metrics/return_eval_avg", "return_avg"),
     ("metrics/return_eval_worst", "return_worst"),
     ("metrics/succ_eval_DD", "succ_DD"),
@@ -392,6 +391,6 @@ table_results = {
         "return": {"IMPALA+SR": 3.1, "Random": 5.93},  # at 2.5M
     },
     "Key-to-Door": {
-        "door_opened": {"IMPALA+SR": 0.57, "Random": 0.022},  # at 4M
+        "success_rate": {"IMPALA+SR": 0.57, "Random": 0.022},  # at 4M
     },
 }

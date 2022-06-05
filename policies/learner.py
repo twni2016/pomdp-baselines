@@ -757,7 +757,7 @@ class Learner:
                         "metrics/success_rate_eval_sto", np.mean(success_rate_eval_sto)
                     )
 
-            for episode_idx in range(self.max_rollouts_pfer_task):
+            for episode_idx in range(self.max_rollouts_per_task):
                 if self.train_env.n_tasks is not None:
                     logger.record_tabular(
                         "metrics/return_train_episode_{}".format(episode_idx + 1),
