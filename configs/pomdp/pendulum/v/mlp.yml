@@ -21,7 +21,7 @@ eval:
   log_tensorboard: true
 
 policy:
-  arch: mlp
+  seq_model: mlp
   algo: sac # [td3, sac]
 
   dqn_layers: [128, 128]

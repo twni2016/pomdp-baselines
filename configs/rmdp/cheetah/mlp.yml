@@ -21,10 +21,10 @@ eval:
   eval_stochastic: false # also eval stochastic policy
   log_interval: 50 # 100 # num of iters
   save_interval: 50 # -1
-  log_tensorboard: false
+  log_tensorboard: true
 
 policy:
-  arch: mlp
+  seq_model: mlp
   algo: sac # [td3, sac]
 
   dqn_layers: [256, 256]

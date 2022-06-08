@@ -91,10 +91,10 @@ if "oracle" in v["env"] and v["env"]["oracle"] == True:
 else:
     oracle = False
 
-arch, algo = v["policy"]["arch"], v["policy"]["algo"]
-assert arch in ["mlp", "lstm", "gru", "lstm-mlp", "gru-mlp"]
+seq_model, algo = v["policy"]["seq_model"], v["policy"]["algo"]
+assert seq_model in ["mlp", "lstm", "gru", "lstm-mlp", "gru-mlp"]
 assert algo in ["td3", "sac", "sacd"]
-if arch == "mlp":
+if seq_model == "mlp":
     if oracle:
         algo_name = f"oracle_{algo}"
     else:
@@ -111,7 +111,7 @@ else:  # rnn
             rnn_num_layers = str(rnn_num_layers)
     else:
         rnn_num_layers = ""
-    exp_id += f"{algo}_{rnn_num_layers}{arch}"
+    exp_id += f"{algo}_{rnn_num_layers}{seq_model}"
     if "separate" in v["policy"] and v["policy"]["separate"] == False:
         exp_id += "_shared"
 exp_id += "/"
@@ -124,7 +124,7 @@ if algo in ["sac", "sacd"]:
 
 exp_id += f"gamma-{v['policy']['gamma']}/"
 
-if arch != "mlp":
+if seq_model != "mlp":
     exp_id += f"len-{v['train']['sampled_seq_len']}/bs-{v['train']['batch_size']}/"
     # exp_id += f"baseline-{v['train']['sample_weight_baseline']}/"
     exp_id += f"freq-{v['train']['num_updates_per_iter']}/"

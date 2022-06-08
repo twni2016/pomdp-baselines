@@ -26,10 +26,10 @@ train:
 eval:
   log_interval: 4 # 10 num of iters
   save_interval: 100 # -1
-  log_tensorboard: false
+  log_tensorboard: true
 
 policy:
-  arch: mlp
+  seq_model: mlp
   algo: sac # [td3, sac]
 
   dqn_layers: [128, 128]

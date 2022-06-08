@@ -21,7 +21,7 @@ eval:
   log_tensorboard: true
 
 policy:
-  arch: mlp
+  seq_model: mlp
   algo: sacd # only support sac-discrete
 
   dqn_layers: [128, 128]

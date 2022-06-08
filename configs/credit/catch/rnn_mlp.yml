@@ -29,7 +29,7 @@ eval:
   log_tensorboard: true
 
 policy:
-  arch: lstm-mlp # [lstm-mlp, gru-mlp]
+  seq_model: lstm-mlp # [lstm-mlp, gru-mlp]
   algo: sacd # only support sac-discrete
 
   action_embedding_size: 0 # no need for catch

@@ -33,7 +33,7 @@ eval:
 
 policy:
   separate: True
-  arch: gru # [lstm, gru] dreamer uses gru
+  seq_model: gru # [lstm, gru] dreamer uses gru
   algo: sacd # only support sac-discrete
 
   action_embedding_size: 64 # 18-dim

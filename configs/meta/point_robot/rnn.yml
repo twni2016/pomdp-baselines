@@ -34,7 +34,7 @@ eval:
 
 policy:
   separate: True
-  arch: gru # [lstm, gru]
+  seq_model: gru # [lstm, gru]
   algo: sac # [td3, sac]
 
   action_embedding_size: 0 # no action input

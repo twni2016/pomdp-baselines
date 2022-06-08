@@ -28,10 +28,10 @@ eval:
   eval_stochastic: false # also eval stochastic policy
   log_interval: 4 # num of iters
   save_interval: -1
-  log_tensorboard: false
+  log_tensorboard: true
 
 policy:
-  arch: gru # [lstm, gru]
+  seq_model: gru # [lstm, gru]
   algo: sac # [td3, sac]
 
   action_embedding_size: 16

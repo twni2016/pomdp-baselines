@@ -1,5 +1,5 @@
 """ Recommended Architecture
-Separate RNN arch is inspired by a popular RL repo
+Separate RNN architecture is inspired by a popular RL repo
 https://github.com/quantumiracle/Popular-RL-Algorithms/blob/master/POMDP/common/value_networks.py#L110
 which has another branch to encode current state (and action)
 
