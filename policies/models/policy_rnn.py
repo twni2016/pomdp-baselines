@@ -14,10 +14,10 @@ import torch.nn as nn
 from torch.nn import functional as F
 from torch.optim import Adam
 from utils import helpers as utl
-from torchkit.constant import *
+from policies.rl.constant import *
 import torchkit.pytorch_utils as ptu
-from torchkit.recurrent_critic import Critic_RNN
-from torchkit.recurrent_actor import Actor_RNN
+from policies.rl.recurrent_critic import Critic_RNN
+from policies.rl.recurrent_actor import Actor_RNN
 from utils import logger
 
 

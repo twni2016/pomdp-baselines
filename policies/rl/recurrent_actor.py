@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from utils import helpers as utl
-from torchkit.constant import *
-from torchkit.actor import DeterministicPolicy, TanhGaussianPolicy, CategoricalPolicy
+from policies.rl.constant import *
+from policies.rl.actor import DeterministicPolicy, TanhGaussianPolicy, CategoricalPolicy
 import torchkit.pytorch_utils as ptu
 
 

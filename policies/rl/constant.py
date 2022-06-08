@@ -10,10 +10,3 @@ RNNs = {
     LSTM_name: nn.LSTM,
     GRU_name: nn.GRU,
 }
-
-relu_name = "relu"
-elu_name = "elu"
-ACTIVATIONS = {
-    relu_name: nn.ReLU,
-    elu_name: nn.ELU,
-}

@@ -8,10 +8,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import Adam
-from torchkit.constant import *
+from policies.rl.constant import *
 import torchkit.pytorch_utils as ptu
 from torchkit.networks import FlattenMlp
-from torchkit.actor import DeterministicPolicy, TanhGaussianPolicy, CategoricalPolicy
+from policies.rl.actor import DeterministicPolicy, TanhGaussianPolicy, CategoricalPolicy
 
 
 class ModelFreeOffPolicy_MLP(nn.Module):

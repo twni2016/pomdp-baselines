@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 from utils import helpers as utl
 from torchkit.networks import FlattenMlp
-from torchkit.constant import *
+from policies.rl.constant import *
 import torchkit.pytorch_utils as ptu
 
 

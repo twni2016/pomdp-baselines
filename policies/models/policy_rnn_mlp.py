@@ -5,10 +5,10 @@ import torch.nn as nn
 from torch.nn import functional as F
 from torch.optim import Adam
 from utils import helpers as utl
-from torchkit.constant import *
+from policies.rl.constant import *
 import torchkit.pytorch_utils as ptu
-from torchkit.recurrent_critic import Critic_RNN
-from torchkit.actor import DeterministicPolicy, TanhGaussianPolicy, CategoricalPolicy
+from policies.rl.recurrent_critic import Critic_RNN
+from policies.rl.actor import DeterministicPolicy, TanhGaussianPolicy, CategoricalPolicy
 from utils import logger
 
 
