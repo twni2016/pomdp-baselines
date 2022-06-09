@@ -28,7 +28,7 @@ eval:
 policy:
   separate: True
   seq_model: lstm # [lstm, gru]
-  algo: sacd # only support sac-discrete
+  algo_name: sacd # only support sac-discrete
 
   action_embedding_size: 8 # no action input
   observ_embedding_size: 32

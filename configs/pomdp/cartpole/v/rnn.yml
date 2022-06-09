@@ -28,7 +28,7 @@ eval:
 policy:
   separate: True
   seq_model: lstm # [lstm, gru]
-  algo: sacd # only support sac-discrete
+  algo_name: sacd # only support sac-discrete
 
   action_embedding_size: 8 # no action input
   observ_embedding_sizee: 32
@@ -41,9 +41,9 @@ policy:
   gamma: 0.9
   tau: 0.005
 
-  # sacd alpha
-  entropy_alpha: null
-  automatic_entropy_tuning: true
-  target_entropy: 0.7 # the ratio: target_entropy = ratio * log(|A|)
-  alpha_lr: 0.0003
+  sacd:
+    entropy_alpha: null
+    automatic_entropy_tuning: true
+    target_entropy: 0.7 # the ratio: target_entropy = ratio * log(|A|)
+    alpha_lr: 0.0003
 

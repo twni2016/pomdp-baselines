@@ -22,7 +22,7 @@ eval:
 
 policy:
   seq_model: mlp
-  algo: sacd # only support sac-discrete
+  algo_name: sacd # only support sac-discrete
 
   dqn_layers: [128, 128]
   policy_layers: [128, 128]

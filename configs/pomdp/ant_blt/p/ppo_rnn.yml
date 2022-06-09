@@ -16,4 +16,4 @@ eval:
   log_tensorboard: true
 
 policy:
-  algo: ppo
+  algo_name: ppo

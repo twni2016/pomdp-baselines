@@ -34,7 +34,7 @@ eval:
 policy:
   separate: True
   seq_model: gru # [lstm, gru] dreamer uses gru
-  algo: sacd # only support sac-discrete
+  algo_name: sacd # only support sac-discrete
 
   action_embedding_size: 64 # 18-dim
   observ_embedding_size: 0 # use image encoder instead
@@ -57,9 +57,9 @@ policy:
   gamma: 0.99 # dreamer uses 0.999
   tau: 0.005
 
-  # sacd alpha
-  entropy_alpha: 0.01 # dreamer uses 0.001
-  automatic_entropy_tuning: False
-  target_entropy: None # the ratio: target_entropy = ratio * log(|A|)
-  alpha_lr: 0.0003
+  sacd:
+    entropy_alpha: 0.01 # dreamer uses 0.001
+    automatic_entropy_tuning: False
+    target_entropy: None # the ratio: target_entropy = ratio * log(|A|)
+    alpha_lr: 0.0003
 

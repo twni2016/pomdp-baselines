@@ -16,4 +16,4 @@ eval:
   log_tensorboard: true
 
 policy:
-  algo: a2c
+  algo_name: a2c
