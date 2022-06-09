@@ -2,15 +2,13 @@
 """
 
 import torch
-import numpy as np
 from copy import deepcopy
 import torch.nn as nn
 from torch.nn import functional as F
 from torch.optim import Adam
 from utils import helpers as utl
+from policies.rl import RL_ALGORITHMS
 from torchkit.constant import *
-from torchkit.networks import FlattenMlp
-from torchkit.actor import DeterministicPolicy, TanhGaussianPolicy
 import torchkit.pytorch_utils as ptu
 from utils import logger
 
@@ -27,7 +25,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         obs_dim,
         action_dim,
         encoder,
-        algo,
+        algo_name,
         action_embedding_size,
         observ_embedding_size,
         reward_embedding_size,
@@ -37,15 +35,6 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         lr=3e-4,
         gamma=0.99,
         tau=5e-3,
-        # td3 params
-        exploration_noise=0.1,
-        target_noise=0.2,
-        target_noise_clip=0.5,
-        # sac params
-        entropy_alpha=0.2,
-        automatic_entropy_tuning=True,
-        target_entropy=None,
-        alpha_lr=3e-4,
         **kwargs
     ):
         super().__init__()
@@ -55,8 +44,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         self.gamma = gamma
         self.tau = tau
 
-        assert algo in [TD3_name, SAC_name]
-        self.algo = algo
+        self.algo = RL_ALGORITHMS[algo_name](**kwargs[algo_name], action_dim=action_dim)
 
         ### Build Model
         ## 1. embed action, state, reward (Feed-forward layers first)
@@ -98,17 +86,12 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         )
 
         # q-value networks
-        self.qf1 = FlattenMlp(
+        self.qf1, self.qf2 = self.algo.build_critic(
             input_size=self.rnn_hidden_size + rnn_input_size,
-            output_size=1,
             hidden_sizes=dqn_layers,
+            action_dim=action_dim,
         )
-        self.qf2 = FlattenMlp(
-            input_size=self.rnn_hidden_size + rnn_input_size,
-            output_size=1,
-            hidden_sizes=dqn_layers,
-        )
-        # target networks NOTE: this may be the cause that q-learning is very unstable
+        # target networks
         self.qf1_target = deepcopy(self.qf1)
         self.qf2_target = deepcopy(self.qf2)
 
@@ -117,19 +100,15 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
             obs_dim, observ_embedding_size, F.relu
         )
 
-        # policy networks
-        if self.algo == TD3_name:
-            self.policy = DeterministicPolicy(
-                obs_dim=self.rnn_hidden_size + observ_embedding_size,
-                action_dim=self.action_dim,
-                hidden_sizes=policy_layers,
-            )
-        else:
-            self.policy = TanhGaussianPolicy(
-                obs_dim=self.rnn_hidden_size + observ_embedding_size,
-                action_dim=self.action_dim,
-                hidden_sizes=policy_layers,
-            )
+        # policy network
+        self.policy = self.algo.build_actor(
+            input_size=self.rnn_hidden_size + observ_embedding_size,
+            action_dim=self.action_dim,
+            hidden_sizes=policy_layers,
+        )
+        # target networks
+        self.policy_target = deepcopy(self.policy)
+
         # use joint optimizer
         #  to avoid forward rnn twice for actor and critic
         #  also exclude q targets
@@ -147,31 +126,6 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
             ],
             lr=lr,
         )
-
-        if self.algo == TD3_name:
-            # NOTE: td3 has a target policy (actor)
-            self.policy_target = deepcopy(self.policy)
-            self.exploration_noise = exploration_noise
-            self.target_noise = target_noise
-            self.target_noise_clip = target_noise_clip
-
-        else:
-            ## automatic entropy coefficient tuning
-            self.automatic_entropy_tuning = automatic_entropy_tuning
-            if self.automatic_entropy_tuning:
-                if target_entropy is not None:
-                    self.target_entropy = float(target_entropy)
-                else:
-                    self.target_entropy = -float(action_dim)
-                self.log_alpha_entropy = torch.zeros(
-                    1, requires_grad=True, device=ptu.device
-                )
-                self.alpha_entropy_optim = Adam([self.log_alpha_entropy], lr=alpha_lr)
-                self.alpha_entropy = self.log_alpha_entropy.exp().detach().item()
-            else:
-                self.alpha_entropy = entropy_alpha
-
-        # logger.log(self)
 
     def get_hidden_states(
         self, prev_actions, rewards, observs, initial_internal_state=None
@@ -230,22 +184,16 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         )  # (T+1, B, dim)
 
         ### 2. Critic loss
+
         # Q^tar(h(t+1), pi(h(t+1))) + H[pi(h(t+1))]
         with torch.no_grad():
             # first next_actions from target/current policy, (T+1, B, dim) including reaction to last obs
             # new_next_actions: (T+1, B, dim), new_next_log_probs: (T+1, B, 1)
-            if self.algo == TD3_name:
-                new_next_actions = self.policy_target(joint_policy_embeds)
-                action_noise = (
-                    torch.randn_like(new_next_actions) * self.target_noise
-                ).clamp(-self.target_noise_clip, self.target_noise_clip)
-                new_next_actions = (new_next_actions + action_noise).clamp(
-                    -1, 1
-                )  # NOTE
-            else:
-                new_next_actions, _, _, new_next_log_probs = self.policy(
-                    joint_policy_embeds, return_log_prob=True
-                )
+            new_next_actions, new_next_log_probs = self.algo.forward_actor_in_target(
+                actor=self.policy,
+                actor_target=self.policy_target,
+                next_observ=joint_policy_embeds,
+            )
 
             obs_act_embeds = self.current_observ_action_embedder(
                 torch.cat((observs, new_next_actions), dim=-1)
@@ -259,8 +207,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
             min_next_q_target = torch.min(next_q1, next_q2)
 
             # min_next_q_target (T+1, B, 1)
-            if self.algo == SAC_name:
-                min_next_q_target += self.alpha_entropy * (-new_next_log_probs)
+            min_next_q_target += self.algo.entropy_bonus(new_next_log_probs)
 
             q_target = rewards + (1.0 - dones) * self.gamma * min_next_q_target
             q_target = q_target[1:]  # (T, B, 1)
@@ -280,6 +227,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         # 	should depend on masks > 0.0, not a constant B*T
         q1_pred = self.qf1(curr_joint_q_embeds)
         q2_pred = self.qf2(curr_joint_q_embeds)
+
         q1_pred, q2_pred = q1_pred * masks, q2_pred * masks
         q_target = q_target * masks
 
@@ -289,12 +237,9 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         ### 3. Actor loss
         # Q(h(t), pi(h(t))) + H[pi(h(t))]
         # new_actions: (T+1, B, dim)
-        if self.algo == TD3_name:
-            new_actions = self.policy(joint_policy_embeds)
-        else:
-            new_actions, _, _, new_log_probs = self.policy(
-                joint_policy_embeds, return_log_prob=True
-            )
+        new_actions, new_log_probs = self.algo.forward_actor(
+            actor=self.policy, observ=joint_policy_embeds
+        )
 
         new_obs_act_embeds = self.current_observ_action_embedder(
             torch.cat((observs, new_actions), dim=-1)
@@ -308,8 +253,7 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         min_q_new_actions = torch.min(q1, q2)  # (T+1,B,1)
 
         policy_loss = -min_q_new_actions
-        if self.algo == SAC_name:  # Q(h(t), pi(h(t))) + H[pi(h(t))]
-            policy_loss += self.alpha_entropy * new_log_probs
+        policy_loss += -self.algo.entropy_bonus(new_log_probs)
 
         policy_loss = policy_loss[:-1]  # (T,B,1) remove the last obs
         policy_loss = (policy_loss * masks).sum() / num_valid
@@ -321,41 +265,31 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
         total_loss.backward()
         self.optimizer.step()
 
-        ### 5. soft update
-        self.soft_target_update()
-
-        ### 6. update alpha
-        if self.algo == SAC_name:
-            # extract valid log_probs
-            with torch.no_grad():
-                current_log_probs = (new_log_probs[:-1] * masks).sum() / num_valid
-                current_log_probs = current_log_probs.item()
-            if self.automatic_entropy_tuning:
-                alpha_entropy_loss = -self.log_alpha_entropy.exp() * (
-                    current_log_probs + self.target_entropy
-                )
-
-                self.alpha_entropy_optim.zero_grad()
-                alpha_entropy_loss.backward()
-                self.alpha_entropy_optim.step()
-
-                self.alpha_entropy = self.log_alpha_entropy.exp().item()
-
         outputs = {
             "qf1_loss": qf1_loss.item(),
             "qf2_loss": qf2_loss.item(),
             "policy_loss": policy_loss.item(),
         }
-        if self.algo == SAC_name:
-            outputs.update(
-                {"policy_entropy": -current_log_probs, "alpha": self.alpha_entropy}
-            )
+
+        ### 5. soft update
+        self.soft_target_update()
+
+        ### 6. update others like alpha
+        if new_log_probs is not None:
+            # extract valid log_probs
+            with torch.no_grad():
+                current_log_probs = (new_log_probs[:-1] * masks).sum() / num_valid
+                current_log_probs = current_log_probs.item()
+
+            other_info = self.algo.update_others(current_log_probs)
+            outputs.update(other_info)
+
         return outputs
 
     def soft_target_update(self):
         ptu.soft_update_from_to(self.qf1, self.qf1_target, self.tau)
         ptu.soft_update_from_to(self.qf2, self.qf2_target, self.tau)
-        if self.algo == TD3_name:
+        if self.algo.use_target_actor:
             ptu.soft_update_from_to(self.policy, self.policy_target, self.tau)
 
     def report_grad_norm(self):
@@ -439,19 +373,11 @@ class ModelFreeOffPolicy_Shared_RNN(nn.Module):
             joint_embeds = joint_embeds.squeeze(0)  # (B, dim)
 
         # 4. Actor head, generate action tuple
-        if self.algo == TD3_name:
-            mean = self.policy(joint_embeds)
-            if deterministic:
-                action_tuple = (mean, mean, None, None)
-            else:
-                action = (mean + torch.randn_like(mean) * self.exploration_noise).clamp(
-                    -1, 1
-                )  # NOTE
-                action_tuple = (action, mean, None, None)
-        else:
-            # sac
-            action_tuple = self.policy(
-                joint_embeds, False, deterministic, return_log_prob
-            )
+        action_tuple = self.algo.select_action(
+            actor=self.policy,
+            observ=joint_embeds,
+            deterministic=deterministic,
+            return_log_prob=return_log_prob,
+        )
 
         return action_tuple, current_internal_state

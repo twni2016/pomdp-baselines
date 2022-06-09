@@ -15,4 +15,4 @@ eval:
   eval_stochastic: false # also eval stochastic policy
   log_interval: 4 # 10 num of iters
   save_interval: 20 # -1
-  log_tensorboard: false
+  log_tensorboard: true

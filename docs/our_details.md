@@ -6,9 +6,9 @@ The **decision factors** discussed in the method section of our paper, can be fo
 
 - Arch: `policy: separate: <True|False>` 
     - Recommmend to set it as `True`
-- Encoder: `policy: arch: <lstm|gru>`
+- Encoder: `policy: seq_model: <lstm|gru>`
     - We also support `mlp` option for Markovian policies
-- RL: `policy: algo: <td3|sac|sacd>`
+- RL: `policy: algo_name: <td3|sac|sacd>`
 - Len: `train: sampled_seq_len: <5|64|any positive integer>`
 - Inputs: we use the embedding size to control the inputs. 
     - To use past observations, simply set `policy: observ_embedding_size` as a positive integer

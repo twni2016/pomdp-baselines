@@ -27,11 +27,11 @@ train:
 eval:
   log_interval: 5 # 10 num of iters
   save_interval: 100 # -1
-  log_tensorboard: false
+  log_tensorboard: true
 
 policy:
-  arch: mlp
-  algo: sac # [td3, sac]
+  seq_model: mlp
+  algo_name: sac # [td3, sac]
 
   dqn_layers: [128, 128]
   policy_layers: [128, 128]
@@ -39,14 +39,14 @@ policy:
   gamma: 0.9
   tau: 0.005
 
-  # sac alpha
-  entropy_alpha: 0.01 # tend to be det policy...
-  automatic_entropy_tuning: true
-  alpha_lr: 0.0003
+  sac:
+    entropy_alpha: 0.2
+    automatic_entropy_tuning: true
+    alpha_lr: 0.0003
 
-  # td3 noise 
-  ## since we normalize action space to [-1, 1]
-  ## the noise std is absolute value
-  exploration_noise: 0.1 
-  target_noise: 0.2
-  target_noise_clip: 0.5
+  td3:
+    ## since we normalize action space to [-1, 1]
+    ## the noise std is absolute value
+    exploration_noise: 0.1 
+    target_noise: 0.2
+    target_noise_clip: 0.5

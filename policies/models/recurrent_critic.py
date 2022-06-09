@@ -2,9 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from utils import helpers as utl
-from torchkit.networks import FlattenMlp
 from torchkit.constant import *
-import torchkit.pytorch_utils as ptu
 
 
 class Critic_RNN(nn.Module):
@@ -71,42 +69,33 @@ class Critic_RNN(nn.Module):
 
         ## 3. build another obs+act branch
         shortcut_embedding_size = rnn_input_size
-        if self.algo in [TD3_name, SAC_name] and self.image_encoder is None:
+        if self.algo.continuous_action and self.image_encoder is None:
             # for vector-based continuous action problems
             self.current_shortcut_embedder = utl.FeatureExtractor(
                 obs_dim + action_dim, shortcut_embedding_size, F.relu
             )
-        elif self.algo in [TD3_name, SAC_name] and self.image_encoder is not None:
+        elif self.algo.continuous_action and self.image_encoder is not None:
             # for image-based continuous action problems
             self.current_shortcut_embedder = utl.FeatureExtractor(
                 action_dim, shortcut_embedding_size, F.relu
             )
             shortcut_embedding_size += self.image_encoder.embed_size
-        elif self.algo == SACD_name and self.image_encoder is None:
+        elif not self.algo.continuous_action and self.image_encoder is None:
             # for vector-based discrete action problems
             self.current_shortcut_embedder = utl.FeatureExtractor(
                 obs_dim, shortcut_embedding_size, F.relu
             )
-        elif self.algo == SACD_name and self.image_encoder is not None:
+        elif not self.algo.continuous_action and self.image_encoder is not None:
             # for image-based discrete action problems
             shortcut_embedding_size = self.image_encoder.embed_size
         else:
             raise NotImplementedError
 
         ## 4. build q networks
-        if self.algo in [TD3_name, SAC_name]:
-            output_size = 1
-        else:  # sac-discrete
-            output_size = action_dim
-        self.qf1 = FlattenMlp(
+        self.qf1, self.qf2 = self.algo.build_critic(
             input_size=self.rnn_hidden_size + shortcut_embedding_size,
-            output_size=output_size,
             hidden_sizes=dqn_layers,
-        )
-        self.qf2 = FlattenMlp(
-            input_size=self.rnn_hidden_size + shortcut_embedding_size,
-            output_size=output_size,
-            hidden_sizes=dqn_layers,
+            action_dim=action_dim,
         )
 
     def _get_obs_embedding(self, observs):
@@ -116,12 +105,12 @@ class Critic_RNN(nn.Module):
             return self.image_encoder(observs)
 
     def _get_shortcut_obs_act_embedding(self, observs, current_actions):
-        if self.algo in [TD3_name, SAC_name] and self.image_encoder is None:
+        if self.algo.continuous_action and self.image_encoder is None:
             # for vector-based continuous action problems
             return self.current_shortcut_embedder(
                 torch.cat([observs, current_actions], dim=-1)
             )
-        elif self.algo in [TD3_name, SAC_name] and self.image_encoder is not None:
+        elif self.algo.continuous_action and self.image_encoder is not None:
             # for image-based continuous action problems
             return torch.cat(
                 [
@@ -130,14 +119,12 @@ class Critic_RNN(nn.Module):
                 ],
                 dim=-1,
             )
-        elif self.algo == SACD_name and self.image_encoder is None:
+        elif not self.algo.continuous_action and self.image_encoder is None:
             # for vector-based discrete action problems (not using actions)
             return self.current_shortcut_embedder(observs)
-        elif self.algo == SACD_name and self.image_encoder is not None:
+        elif not self.algo.continuous_action and self.image_encoder is not None:
             # for image-based discrete action problems (not using actions)
             return self.image_encoder(observs)
-        else:
-            raise NotImplementedError
 
     def get_hidden_states(self, prev_actions, rewards, observs):
         # all the input have the shape of (T+1, B, *)

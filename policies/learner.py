@@ -209,21 +209,23 @@ class Learner:
 
     def init_agent(
         self,
-        arch,
+        seq_model,
         separate: bool = True,
         image_encoder=None,
         reward_clip=False,
         **kwargs
     ):
         # initialize agent
-        if arch == "mlp":
+        if seq_model == "mlp":
             agent_class = AGENT_CLASSES["Policy_MLP"]
             rnn_encoder_type = None
-        elif "-mlp" in arch:
+            assert separate == True
+        elif "-mlp" in seq_model:
             agent_class = AGENT_CLASSES["Policy_RNN_MLP"]
-            rnn_encoder_type = arch.split("-")[0]
+            rnn_encoder_type = seq_model.split("-")[0]
+            assert separate == True
         else:
-            rnn_encoder_type = arch
+            rnn_encoder_type = seq_model
             if separate == True:
                 agent_class = AGENT_CLASSES["Policy_Separate_RNN"]
             else:

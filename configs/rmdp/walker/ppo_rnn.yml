@@ -14,7 +14,7 @@ train:
 eval:
   log_interval: 25 # num of iters
   save_interval: -1 # not 
-  log_tensorboard: false
+  log_tensorboard: true
 
 policy:
-  algo: ppo
+  algo_name: ppo

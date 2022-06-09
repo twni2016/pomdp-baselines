@@ -13,7 +13,7 @@ train:
 eval:
   log_interval: 200 # num of iters
   save_interval: 1000 # not 
-  log_tensorboard: false
+  log_tensorboard: true
 
 policy:
-  algo: a2c
+  algo_name: a2c

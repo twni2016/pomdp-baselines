@@ -40,14 +40,18 @@ v = yaml.load(open(FLAGS.cfg))
 if FLAGS.env is not None:
     v["env"]["env_name"] = FLAGS.env
 if FLAGS.algo is not None:
-    v["policy"]["algo"] = FLAGS.algo
+    v["policy"]["algo_name"] = FLAGS.algo
+
+seq_model, algo = v["policy"]["seq_model"], v["policy"]["algo_name"]
+assert seq_model in ["mlp", "lstm", "gru", "lstm-mlp", "gru-mlp"]
+assert algo in ["td3", "sac", "sacd"]
 
 if FLAGS.automatic_entropy_tuning is not None:
-    v["policy"]["automatic_entropy_tuning"] = FLAGS.automatic_entropy_tuning
+    v["policy"][algo]["automatic_entropy_tuning"] = FLAGS.automatic_entropy_tuning
 if FLAGS.entropy_alpha is not None:
-    v["policy"]["entropy_alpha"] = FLAGS.entropy_alpha
+    v["policy"][algo]["entropy_alpha"] = FLAGS.entropy_alpha
 if FLAGS.target_entropy is not None:
-    v["policy"]["target_entropy"] = FLAGS.target_entropy
+    v["policy"][algo]["target_entropy"] = FLAGS.target_entropy
 
 if FLAGS.seed is not None:
     v["seed"] = FLAGS.seed
@@ -91,10 +95,7 @@ if "oracle" in v["env"] and v["env"]["oracle"] == True:
 else:
     oracle = False
 
-arch, algo = v["policy"]["arch"], v["policy"]["algo"]
-assert arch in ["mlp", "lstm", "gru", "lstm-mlp", "gru-mlp"]
-assert algo in ["td3", "sac", "sacd"]
-if arch == "mlp":
+if seq_model == "mlp":
     if oracle:
         algo_name = f"oracle_{algo}"
     else:
@@ -111,20 +112,20 @@ else:  # rnn
             rnn_num_layers = str(rnn_num_layers)
     else:
         rnn_num_layers = ""
-    exp_id += f"{algo}_{rnn_num_layers}{arch}"
+    exp_id += f"{algo}_{rnn_num_layers}{seq_model}"
     if "separate" in v["policy"] and v["policy"]["separate"] == False:
         exp_id += "_shared"
 exp_id += "/"
 
 if algo in ["sac", "sacd"]:
-    if not v["policy"]["automatic_entropy_tuning"]:
-        exp_id += f"alpha-{v['policy']['entropy_alpha']}/"
+    if not v["policy"][algo]["automatic_entropy_tuning"]:
+        exp_id += f"alpha-{v['policy'][algo]['entropy_alpha']}/"
     elif "target_entropy" in v["policy"]:
-        exp_id += f"ent-{v['policy']['target_entropy']}/"
+        exp_id += f"ent-{v['policy'][algo]['target_entropy']}/"
 
 exp_id += f"gamma-{v['policy']['gamma']}/"
 
-if arch != "mlp":
+if seq_model != "mlp":
     exp_id += f"len-{v['train']['sampled_seq_len']}/bs-{v['train']['batch_size']}/"
     # exp_id += f"baseline-{v['train']['sample_weight_baseline']}/"
     exp_id += f"freq-{v['train']['num_updates_per_iter']}/"

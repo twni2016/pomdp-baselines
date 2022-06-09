@@ -21,8 +21,8 @@ eval:
   log_tensorboard: true
 
 policy:
-  arch: mlp
-  algo: sacd # only support sac-discrete
+  seq_model: mlp
+  algo_name: sacd # only support sac-discrete
 
   dqn_layers: [128, 128]
   policy_layers: [128, 128]
@@ -30,9 +30,9 @@ policy:
   gamma: 0.99
   tau: 0.005
 
-  # sac alpha
-  entropy_alpha: null
-  automatic_entropy_tuning: true
-  target_entropy: 0.7 # the ratio: target_entropy = ratio * log(|A|)
-  alpha_lr: 0.0003
+  sacd:
+    entropy_alpha: null
+    automatic_entropy_tuning: true
+    target_entropy: 0.7 # the ratio: target_entropy = ratio * log(|A|)
+    alpha_lr: 0.0003
 

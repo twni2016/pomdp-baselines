@@ -8,10 +8,16 @@ import torch
 from torch import nn as nn
 from torch.nn import functional as F
 
-from torchkit.constant import *
 from torchkit import pytorch_utils as ptu
 from torchkit.core import PyTorchModule
 from torchkit.modules import LayerNorm
+
+relu_name = "relu"
+elu_name = "elu"
+ACTIVATIONS = {
+    relu_name: nn.ReLU,
+    elu_name: nn.ELU,
+}
 
 
 class Mlp(PyTorchModule):
