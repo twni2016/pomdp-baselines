@@ -31,7 +31,7 @@ policy:
   algo_name: sacd # only support sac-discrete
 
   action_embedding_size: 8 # no action input
-  observ_embedding_sizee: 32
+  observ_embedding_size: 32
   reward_embedding_size: 8
   rnn_hidden_size: 128
 
