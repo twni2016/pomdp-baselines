@@ -2,8 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from utils import helpers as utl
-from policies.rl.constant import *
-from policies.rl.actor import DeterministicPolicy, TanhGaussianPolicy, CategoricalPolicy
+from torchkit.constant import *
 import torchkit.pytorch_utils as ptu
 
 
@@ -27,8 +26,6 @@ class Actor_RNN(nn.Module):
 
         self.obs_dim = obs_dim
         self.action_dim = action_dim
-
-        assert algo in [TD3_name, SAC_name, SACD_name]
         self.algo = algo
 
         ### Build Model
@@ -83,24 +80,11 @@ class Actor_RNN(nn.Module):
             )
 
         ## 4. build policy
-        if self.algo == TD3_name:
-            self.policy = DeterministicPolicy(
-                obs_dim=self.rnn_hidden_size + observ_embedding_size,
-                action_dim=self.action_dim,
-                hidden_sizes=policy_layers,
-            )
-        elif self.algo == SAC_name:
-            self.policy = TanhGaussianPolicy(
-                obs_dim=self.rnn_hidden_size + observ_embedding_size,
-                action_dim=self.action_dim,
-                hidden_sizes=policy_layers,
-            )
-        else:  # SAC-Discrete
-            self.policy = CategoricalPolicy(
-                obs_dim=self.rnn_hidden_size + observ_embedding_size,
-                action_dim=self.action_dim,
-                hidden_sizes=policy_layers,
-            )
+        self.policy = self.algo.build_actor(
+            input_size=self.rnn_hidden_size + observ_embedding_size,
+            action_dim=self.action_dim,
+            hidden_sizes=policy_layers,
+        )
 
     def _get_obs_embedding(self, observs):
         if self.image_encoder is None:  # vector obs
@@ -156,17 +140,7 @@ class Actor_RNN(nn.Module):
         joint_embeds = torch.cat((hidden_states, curr_embed), dim=-1)  # (T+1, B, dim)
 
         # 4. Actor
-        if self.algo == TD3_name:
-            new_actions = self.policy(joint_embeds)
-            return new_actions, None  # (T+1, B, dim), None
-        elif self.algo == SAC_name:
-            new_actions, _, _, log_probs = self.policy(
-                joint_embeds, return_log_prob=True
-            )
-            return new_actions, log_probs  # (T+1, B, dim), (T+1, B, 1)
-        else:  # sac-d
-            _, probs, log_probs = self.policy(joint_embeds, return_log_prob=True)
-            return probs, log_probs  # (T+1, B, dim), (T+1, B, dim)
+        return self.algo.forward_actor(actor=self.policy, observ=joint_embeds)
 
     @torch.no_grad()
     def get_initial_info(self):
@@ -194,7 +168,6 @@ class Actor_RNN(nn.Module):
         obs,
         deterministic=False,
         return_log_prob=False,
-        exploration_noise=0.0,
     ):
         # for evaluation (not training), so no target actor, and T = 1
         # a function that generates action, works like a pytorch module
@@ -219,23 +192,11 @@ class Actor_RNN(nn.Module):
             joint_embeds = joint_embeds.squeeze(0)  # (B, dim)
 
         # 4. Actor head, generate action tuple
-        if self.algo == TD3_name:
-            mean = self.policy(joint_embeds)
-            if deterministic:
-                action_tuple = (mean, mean, None, None)
-            else:
-                action = (mean + torch.randn_like(mean) * exploration_noise).clamp(
-                    -1, 1
-                )  # NOTE
-                action_tuple = (action, mean, None, None)
-        elif self.algo == SAC_name:
-            action_tuple = self.policy(
-                joint_embeds, False, deterministic, return_log_prob
-            )
-        else:
-            # sac-discrete
-            action, prob, log_prob = self.policy(
-                joint_embeds, deterministic, return_log_prob
-            )
-            action_tuple = (action, prob, log_prob, None)
+        action_tuple = self.algo.select_action(
+            actor=self.policy,
+            observ=joint_embeds,
+            deterministic=deterministic,
+            return_log_prob=return_log_prob,
+        )
+
         return action_tuple, current_internal_state

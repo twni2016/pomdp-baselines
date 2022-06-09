@@ -8,16 +8,15 @@ https://github.com/lmzintgraf/varibad/blob/master/models/encoder.py
 """
 
 import torch
-import numpy as np
 from copy import deepcopy
 import torch.nn as nn
 from torch.nn import functional as F
 from torch.optim import Adam
 from utils import helpers as utl
-from policies.rl.constant import *
+from policies.rl import RL_ALGORITHMS
 import torchkit.pytorch_utils as ptu
-from policies.rl.recurrent_critic import Critic_RNN
-from policies.rl.recurrent_actor import Actor_RNN
+from policies.models.recurrent_critic import Critic_RNN
+from policies.models.recurrent_actor import Actor_RNN
 from utils import logger
 
 
@@ -27,13 +26,15 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
     """
 
     ARCH = "memory"
+    Markov_Actor = False
+    Markov_Critic = False
 
     def __init__(
         self,
         obs_dim,
         action_dim,
         encoder,
-        algo,
+        algo_name,
         action_embedding_size,
         observ_embedding_size,
         reward_embedding_size,
@@ -44,15 +45,6 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         lr=3e-4,
         gamma=0.99,
         tau=5e-3,
-        # td3 params
-        exploration_noise=0.1,
-        target_noise=0.2,
-        target_noise_clip=0.5,
-        # sac params
-        entropy_alpha=0.2,
-        automatic_entropy_tuning=True,
-        target_entropy=None,
-        alpha_lr=3e-4,
         # pixel obs
         image_encoder_fn=lambda: None,
         **kwargs
@@ -64,15 +56,14 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         self.gamma = gamma
         self.tau = tau
 
-        assert algo in [TD3_name, SAC_name, SACD_name]
-        self.algo = algo
+        self.algo = RL_ALGORITHMS[algo_name](**kwargs[algo_name], action_dim=action_dim)
 
         # Critics
         self.critic = Critic_RNN(
             obs_dim,
             action_dim,
             encoder,
-            algo,
+            self.algo,
             action_embedding_size,
             observ_embedding_size,
             reward_embedding_size,
@@ -81,7 +72,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             rnn_num_layers,
             image_encoder=image_encoder_fn(),  # separate weight
         )
-
+        self.critic_optimizer = Adam(self.critic.parameters(), lr=lr)
         # target networks
         self.critic_target = deepcopy(self.critic)
 
@@ -90,7 +81,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             obs_dim,
             action_dim,
             encoder,
-            algo,
+            self.algo,
             action_embedding_size,
             observ_embedding_size,
             reward_embedding_size,
@@ -99,37 +90,9 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             rnn_num_layers,
             image_encoder=image_encoder_fn(),  # separate weight
         )
-
-        if self.algo == TD3_name:
-            # NOTE: td3 has a target policy (actor)
-            self.actor_target = deepcopy(self.actor)
-            self.exploration_noise = exploration_noise
-            self.target_noise = target_noise
-            self.target_noise_clip = target_noise_clip
-
-        else:
-            ## automatic entropy coefficient tuning (recommended)
-            self.automatic_entropy_tuning = automatic_entropy_tuning
-            if self.automatic_entropy_tuning:
-                if target_entropy is not None:
-                    if self.algo == SAC_name:
-                        self.target_entropy = float(target_entropy)
-                    else:  # sac-discrete: beta * log(|A|)
-                        self.target_entropy = float(target_entropy) * np.log(action_dim)
-                else:
-                    assert self.algo == SAC_name
-                    self.target_entropy = -float(action_dim)
-                self.log_alpha_entropy = torch.zeros(
-                    1, requires_grad=True, device=ptu.device
-                )
-                self.alpha_entropy_optim = Adam([self.log_alpha_entropy], lr=alpha_lr)
-                self.alpha_entropy = self.log_alpha_entropy.exp().detach().item()
-            else:
-                self.alpha_entropy = entropy_alpha
-
-        # use separate optimizers
-        self.critic_optimizer = Adam(self.critic.parameters(), lr=lr)
         self.actor_optimizer = Adam(self.actor.parameters(), lr=lr)
+        # target networks
+        self.actor_target = deepcopy(self.actor)
 
     @torch.no_grad()
     def get_initial_info(self):
@@ -156,7 +119,6 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
             obs=obs,
             deterministic=deterministic,
             return_log_prob=return_log_prob,
-            exploration_noise=self.exploration_noise if self.algo == TD3_name else 0.0,
         )
 
         return current_action_tuple, current_internal_state
@@ -189,72 +151,19 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         num_valid = torch.clamp(masks.sum(), min=1.0)  # as denominator of loss
 
         ### 1. Critic loss
-        # Q^tar(h(t+1), pi(h(t+1))) + H[pi(h(t+1))]
-        with torch.no_grad():
-            # first next_actions from target/current policy, (T+1, B, dim) including reaction to last obs
-            if self.algo == TD3_name:
-                new_actions, _ = self.actor_target(
-                    prev_actions=actions, rewards=rewards, observs=observs
-                )
-                action_noise = (
-                    torch.randn_like(new_actions) * self.target_noise
-                ).clamp(-self.target_noise_clip, self.target_noise_clip)
-                new_actions = (new_actions + action_noise).clamp(-1, 1)  # NOTE
-            elif self.algo == SAC_name:
-                new_actions, new_log_probs = self.actor(
-                    prev_actions=actions, rewards=rewards, observs=observs
-                )
-            else:
-                new_probs, new_log_probs = self.actor(
-                    prev_actions=actions, rewards=rewards, observs=observs
-                )
-
-            next_q1, next_q2 = self.critic_target(
-                prev_actions=actions,
-                rewards=rewards,
-                observs=observs,
-                current_actions=new_actions
-                if self.algo in [TD3_name, SAC_name]
-                else new_probs,
-            )  # (T+1, B, 1 or A)
-
-            min_next_q_target = torch.min(next_q1, next_q2)
-
-            if self.algo in [SAC_name, SACD_name]:
-                min_next_q_target += self.alpha_entropy * (
-                    -new_log_probs
-                )  # (T+1, B, 1 or A)
-
-            if self.algo == SACD_name:  # E_{a'\sim \pi}[Q(h',a')], (T+1, B, 1)
-                min_next_q_target = (new_probs * min_next_q_target).sum(
-                    dim=-1, keepdims=True
-                )
-
-            # q_target: (T, B, 1)
-            q_target = (
-                rewards + (1.0 - dones) * self.gamma * min_next_q_target
-            )  # next q
-            q_target = q_target[1:]  # (T, B, 1)
-
-        # Q(h(t), a(t)) (T, B, 1)
-        q1_pred, q2_pred = self.critic(
-            prev_actions=actions,
-            rewards=rewards,
+        (q1_pred, q2_pred), q_target = self.algo.critic_loss(
+            markov_actor=self.Markov_Actor,
+            markov_critic=self.Markov_Critic,
+            actor=self.actor,
+            actor_target=self.actor_target,
+            critic=self.critic,
+            critic_target=self.critic_target,
             observs=observs,
-            current_actions=actions[1:],
-        )  # (T, B, 1 or A)
-
-        if self.algo == SACD_name:
-            stored_actions = actions[1:]  # (T, B, A)
-            stored_actions = torch.argmax(
-                stored_actions, dim=-1, keepdims=True
-            )  # (T, B, 1)
-            q1_pred = q1_pred.gather(
-                dim=-1, index=stored_actions
-            )  # (T, B, A) -> (T, B, 1)
-            q2_pred = q2_pred.gather(
-                dim=-1, index=stored_actions
-            )  # (T, B, A) -> (T, B, 1)
+            actions=actions,
+            rewards=rewards,
+            dones=dones,
+            gamma=self.gamma,
+        )
 
         # masked Bellman error: masks (T,B,1) ignore the invalid error
         # this is not equal to masks * q1_pred, cuz the denominator in mean()
@@ -269,42 +178,17 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         self.critic_optimizer.step()
 
         ### 2. Actor loss
-        if self.algo == TD3_name:
-            new_actions, _ = self.actor(
-                prev_actions=actions, rewards=rewards, observs=observs
-            )  # (T+1, B, A)
-        elif self.algo == SAC_name:
-            new_actions, log_probs = self.actor(
-                prev_actions=actions, rewards=rewards, observs=observs
-            )  # (T+1, B, A)
-        else:
-            new_probs, log_probs = self.actor(
-                prev_actions=actions, rewards=rewards, observs=observs
-            )  # (T+1, B, A)
-
-        q1, q2 = self.critic(
-            prev_actions=actions,
-            rewards=rewards,
+        policy_loss, log_probs = self.algo.actor_loss(
+            markov_actor=self.Markov_Actor,
+            markov_critic=self.Markov_Critic,
+            actor=self.actor,
+            actor_target=self.actor_target,
+            critic=self.critic,
+            critic_target=self.critic_target,
             observs=observs,
-            current_actions=new_actions
-            if self.algo in [TD3_name, SAC_name]
-            else new_probs,
-        )  # (T+1, B, 1 or A)
-        min_q_new_actions = torch.min(q1, q2)  # (T+1,B,1 or A)
-
-        policy_loss = -min_q_new_actions
-        if self.algo in [
-            SAC_name,
-            SACD_name,
-        ]:  # Q(h(t), pi(h(t))) + H[pi(h(t))]
-            policy_loss += self.alpha_entropy * log_probs
-
-        if self.algo == SACD_name:  # E_{a\sim \pi}[Q(h,a)]
-            policy_loss = (new_probs * policy_loss).sum(
-                axis=-1, keepdims=True
-            )  # (T+1,B,1)
-
-        policy_loss = policy_loss[:-1]  # (T,B,1) remove the last obs
+            actions=actions,
+            rewards=rewards,
+        )
         # masked policy_loss
         policy_loss = (policy_loss * masks).sum() / num_valid
 
@@ -312,43 +196,30 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         policy_loss.backward()
         self.actor_optimizer.step()
 
-        ### 3. soft update
-        self.soft_target_update()
-
-        ### 4. update alpha
-        if self.algo in [SAC_name, SACD_name]:
-            # extract valid log_probs
-            if self.algo == SACD_name:  # -> negative entropy (T+1, B, 1)
-                log_probs = (new_probs * log_probs).sum(axis=-1, keepdims=True)
-            with torch.no_grad():
-                current_log_probs = (log_probs[:-1] * masks).sum() / num_valid
-                current_log_probs = current_log_probs.item()
-
-            if self.automatic_entropy_tuning:
-                alpha_entropy_loss = -self.log_alpha_entropy.exp() * (
-                    current_log_probs + self.target_entropy
-                )
-
-                self.alpha_entropy_optim.zero_grad()
-                alpha_entropy_loss.backward()
-                self.alpha_entropy_optim.step()
-
-                self.alpha_entropy = self.log_alpha_entropy.exp().item()
-
         outputs = {
             "qf1_loss": qf1_loss.item(),
             "qf2_loss": qf2_loss.item(),
             "policy_loss": policy_loss.item(),
         }
-        if self.algo in [SAC_name, SACD_name]:
-            outputs.update(
-                {"policy_entropy": -current_log_probs, "alpha": self.alpha_entropy}
-            )
+
+        ### 3. soft update
+        self.soft_target_update()
+
+        ### 4. update others like alpha
+        if log_probs is not None:
+            # extract valid log_probs
+            with torch.no_grad():
+                current_log_probs = (log_probs[:-1] * masks).sum() / num_valid
+                current_log_probs = current_log_probs.item()
+
+            other_info = self.algo.update_others(current_log_probs)
+            outputs.update(other_info)
+
         return outputs
 
     def soft_target_update(self):
         ptu.soft_update_from_to(self.critic, self.critic_target, self.tau)
-        if self.algo == TD3_name:
+        if self.algo.use_target_actor:
             ptu.soft_update_from_to(self.actor, self.actor_target, self.tau)
 
     def report_grad_norm(self):
@@ -364,7 +235,7 @@ class ModelFreeOffPolicy_Separate_RNN(nn.Module):
         # all are 3D tensor (T,B,dim)
         actions, rewards, dones = batch["act"], batch["rew"], batch["term"]
         _, batch_size, _ = actions.shape
-        if self.algo == SACD_name:
+        if not self.algo.continuous_action:
             # for discrete action space, convert to one-hot vectors
             actions = F.one_hot(
                 actions.squeeze(-1).long(), num_classes=self.action_dim
