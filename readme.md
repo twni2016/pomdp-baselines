@@ -22,7 +22,7 @@ There are many other (more complicated or specialized) methods for POMDPs and th
 
 ## CHANGE LOG
 
-* Jun 2022: Cleaned the code for camera ready.
+* Jun 2022: Cleaned and refactored the code for camera ready.
 * May 2022: this work has been accepted to **ICML 2022**! 
 * Mar 2022: introduce recurrent [SAC-discrete](https://arxiv.org/abs/1910.07207) for **discrete action** space and see [this PR for instructions](https://github.com/twni2016/pomdp-baselines/pull/1). As a baseline, it [greatly improves sample efficiency](https://github.com/twni2016/pomdp-baselines/pull/2), compared to a specialized method IMPALA+SR, on their long-term credit assignment benchmark.
 
@@ -77,7 +77,7 @@ python3 policies/main.py --cfg configs/<subarea>/<env_name>/<algo_name>.yml \
    --debug --seed <int> --cuda <int>
   ]
 ```
-where `algo_name` specifies the algorithm name:
+where `algo` specifies the algorithm name:
 - `mlp` correspond to **Markovian** policies
 - `rnn` correspond to **our implementation** of recurrent model-free RL
 - `ppo_rnn` and `a2c_rnn` correspond to [(Kostrikov, 2018)](https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail) implementation of recurrent model-free RL
