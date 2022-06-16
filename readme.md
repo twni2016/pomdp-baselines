@@ -1,4 +1,4 @@
-# Recurrent Model-Free RL can be a Strong Baseline for Many POMDPs
+# Recurrent Model-Free RL Can Be a Strong Baseline for Many POMDPs
 Welcome to the POMDP world! 
 
 This repository provides some simple baselines for POMDPs, specifically the **recurrent model-free RL**, on the benchmarks in **several subareas of POMDPs** (including meta RL, robust RL, generalization in RL, temporal credit assignment) for the following paper:
@@ -12,7 +12,7 @@ by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-e
 ### RL mostly studies on MDPs, why POMDPs?
 While MDPs prevail in RL research, POMDPs prevail in the real world and life. In many real problems (robotics, healthcare, finance, human interaction), we inevitably face partial observability, e.g. noisy sensors and lack of sensors. Can we observe "states"? Where do "states" come from? 
 
-Moreover, in RL research, many problems can be cast as POMDPs: meta RL, robust RL, and generalization in RL. Within a more suitable framework, we can develop better RL algorithms. 
+Moreover, in RL research, many problems can be cast as POMDPs: meta RL, robust RL, generalization in RL, and temporal credit assignment. Within a more suitable framework, we can develop better RL algorithms. 
 
 ### Why use recurrent model-free RL for POMDP? What about other methods? 
 It is an open research area on deep RL algorithms for POMDPs. Among them, recurrent model-free RL, developed with a long history, is simple to implement, easy to understand, and trained end-to-end. Nonetheless, there is a popular belief that it performs poorly in practice. This work revisits it and provides some guidelines on the design of its key components, to make it stronger. 
@@ -109,7 +109,7 @@ Please see [acknowledge.md](docs/acknowledge.md) for details.
 If you find our code useful to your work, please consider citing our paper:
 ```
 @article{ni2021recurrent,
-  title={Recurrent Model-Free RL can be a Strong Baseline for Many POMDPs},
+  title={Recurrent Model-Free RL Can Be a Strong Baseline for Many POMDPs},
   author={Ni, Tianwei and Eysenbach, Benjamin and Salakhutdinov, Ruslan},
   journal={arXiv preprint arXiv:2110.05038},
   year={2021}
