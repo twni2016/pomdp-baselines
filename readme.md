@@ -22,6 +22,7 @@ There are many other (more complicated or specialized) methods for POMDPs and th
 
 ## CHANGE LOG
 
+* Jul 2022: Move the code for the compared methods to [a new branch](https://github.com/twni2016/pomdp-baselines/tree/all-methods)
 * Jun 2022: Cleaned and refactored the code for camera ready.
 * May 2022: this work has been accepted to **ICML 2022**! 
 * Mar 2022: introduce recurrent [SAC-discrete](https://arxiv.org/abs/1910.07207) for **discrete action** space and see [this PR for instructions](https://github.com/twni2016/pomdp-baselines/pull/1). As a baseline, it [greatly improves sample efficiency](https://github.com/twni2016/pomdp-baselines/pull/2), compared to a specialized method IMPALA+SR, on their long-term credit assignment benchmark.
@@ -63,7 +64,12 @@ We support several benchmarks in different subareas of POMDPs (see `envs/` for d
 * Generalization in RL: SunBlaze benchmark in Roboschool
 * Temporal credit assignment: delayed rewards with pixel observation and discrete control
 
-See [run_commands.md](docs/run_commands.md) for our estimated difficulty levels of these environments.
+Before starting running any experiments, we suggest having a good plan of *environment series* based on difficulty level. As it is hard to analyze and varies from algorithm to algorithm, we provide some rough estimates:
+
+1. Extremely Simple as a Sanity Check: Pendulum-V (also shown in our minimal example jupyter notebook) and CartPole-V (for discrete action space)
+2. Simple, Fast, yet Non-trivial: Wind (require precise inference and control), Semi-Circle (sparse reward). Both are continuous gridworlds, thus very fast.
+3. Medium: Cheetah-Vel (1-dim stationary hidden state), `*`-Robust (2-dim stationary hidden state), `*`-P (could be roughly inferred by 2nd order MDP)
+4. Hard: `*`-Dir (relatively complicated dynamics), `*`-V (long-term inference), `*`-Generalize (extrapolation)
 
 ### General Form of Commands
 **We use `.yml` file in `configs/` folder for training, and then we can overwrite the config file with command-line arguments for our implementation.**
@@ -80,18 +86,104 @@ python3 policies/main.py --cfg configs/<subarea>/<env_name>/<algo_name>.yml \
 where `algo` specifies the algorithm name:
 - `mlp` correspond to **Markovian** policies
 - `rnn` correspond to **our implementation** of recurrent model-free RL
-- `ppo_rnn` and `a2c_rnn` correspond to [(Kostrikov, 2018)](https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail) implementation of recurrent model-free RL
-- `vrm` corresponds to [VRM](https://github.com/oist-cnru/Variational-Recurrent-Models) compared in "standard" POMDPs
-- `MRPO` correspond to [MRPO](https://proceedings.mlr.press/v139/jiang21c.html) compared in robust RL
 
-> We have merged the prior methods above into our repository (there is no need to install other repositories), so that future work can use this single repository to run several baselines besides ours: A2C-GRU, PPO-GRU, VRM, off-policy variBAD, MRPO. 
->
-> Since our code is heavily drawn from those prior works, we encourage authors to [cite those prior papers or implementations](docs/acknowledge.md).
->
+We have merged the prior methods above into our repository: please see [the `all-methods` branch](https://github.com/twni2016/pomdp-baselines/tree/all-methods).
 > For the compared methods, we use their open-sourced implementation with their default hyperparameters.
 
-### Specific Running Commands for Each Subarea
-Please see [run_commands.md](docs/run_commands.md) for details on running our implementation of recurrent model-free RL and also all the compared methods.
+
+### "Standard" POMDP
+
+{Ant,Cheetah,Hopper,Walker}-{P,V} in the paper, corresponding to `configs/pomdp/<ant|cheetah|hopper|walker>_blt/<p|v>`, which requires PyBullet. We also provide Pendulum environments for sanity check.
+
+Take Ant-P as an example:
+```bash
+# Run our implementation
+python policies/main.py --cfg configs/pomdp/ant_blt/p/rnn.yml --algo sac
+# Run Markovian
+python policies/main.py --cfg configs/pomdp/ant_blt/p/mlp.yml --algo sac
+# Oracle: we directly use Table 1 results (SAC w/ unstructured row) in https://arxiv.org/abs/2005.05719 as it is well-tuned
+``` 
+
+We also support recurrent SAC-discrete for POMDPs with **discrete action space**. Take CartPole-V as an example:
+```
+python policies/main.py --cfg configs/pomdp/cartpole/v/rnn.yml --target_entropy 0.7
+```
+See [this PR for detailed instructions](https://github.com/twni2016/pomdp-baselines/pull/1) and [this PR for results on a long-term credit assignment benchmark](https://github.com/twni2016/pomdp-baselines/pull/2).
+
+### Meta RL 
+
+{Semi-Circle, Wind, Cheetah-Vel} in the paper, corresponding to `configs/meta/<point_robot|wind|cheetah_vel|ant_dir>`. Among them, Cheetah-Vel requires MuJoCo, and Semi-Circle can serve as a sanity check. Wind looks simple but is not very easy to solve.
+
+Take Semi-Circle as an example:
+```bash
+# Run our implementation
+python policies/main.py --cfg configs/meta/point_robot/rnn.yml --algo td3
+# Run Markovian
+python policies/main.py --cfg configs/meta/point_robot/mlp.yml --algo sac
+# Run Oracle
+python policies/main.py --cfg configs/meta/point_robot/mlp.yml --algo sac --oracle
+```
+
+{Ant, Cheetah, Humanoid}-Dir in the paper, corresponding to `configs/meta/<ant_dir|cheetah_dir|humanoid_dir>`. They require MuJoCo and are hard to solve.
+Take Ant-Dir as an example:
+```bash
+# Run our implementation
+python policies/main.py --cfg configs/meta/ant_dir/rnn.yml --algo sac
+# Run Markovian
+python policies/main.py --cfg configs/meta/ant_dir/mlp.yml --algo sac
+# Run Oracle
+python policies/main.py --cfg configs/meta/ant_dir/mlp.yml --algo sac --oracle
+```
+
+### Robust RL
+Use roboschool. {Hopper,Walker,Cheetah}-Robust in the paper, corresponding to `configs/rmdp/<hopper|walker|cheetah>`. First, activate the roboschool docker env as introduced in the installation section. 
+
+Take Cheetah-Robust as an example:
+```bash
+## In the docker environment:
+# Run our implementation
+python3 policies/main.py --cfg configs/rmdp/cheetah/rnn.yml --algo td3
+# Run Markovian
+python3 policies/main.py --cfg configs/rmdp/cheetah/mlp.yml --algo sac
+# Run Oracle
+python3 policies/main.py --cfg configs/rmdp/cheetah/mlp.yml --algo sac --oracle
+```
+
+### Generalization in RL
+Use roboschool. {Hopper|Cheetah}-Generalize in the paper, corresponding to `configs/generalize/Sunblaze<Hopper|HalfCheetah>/<DD-DR-DE|RD-RR-RE>`. 
+First, activate the roboschool docker env as introduced in the installation section. 
+
+To train on Default environment and test on the all environments, use `*DD-DR-DE*.yml`; to train on Random environment and test on the all environments, use use `*RD-RR-RE*.yml`. Please see the [SunBlaze paper](https://arxiv.org/abs/1810.12282) for details. 
+
+Take running on `SunblazeHalfCheetahRandomNormal-v0` as an example:
+```bash
+## In the docker environment:
+# Run our implementation
+python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/RD-RR-RE/rnn.yml --algo td3
+# Run Markovian
+python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/RD-RR-RE/mlp.yml --algo sac
+# Run Oracle
+python3 policies/main.py --cfg configs/generalize/SunblazeHalfCheetah/RD-RR-RE/mlp.yml --algo sac --oracle
+```
+
+### Temporal Credit Assignment
+{Delayed-Catch, Key-to-Door} in the paper, corresponding to `configs/credit/<catch|keytodoor>`. Note that this is discrete control on pixel inputs, so the architecture is a bit different from the default one.
+
+To reproduce our results, please run:
+```bash
+python3 policies/main.py --cfg configs/credit/catch/rnn.yml
+python3 policies/main.py --cfg configs/credit/keytodoor/rnn.yml
+```
+
+### Atari
+Although Atari environments are **not** this paper's focus, we provide an implementation to train on a game, following the Dreamerv2 setting. The hyperparameters are **not** well-tuned, so the results are not expected to be good.
+
+```bash
+# train on Pong (confirmed it can work on Pong)
+python3 policies/main.py --cfg configs/atari/rnn.yml --env Pong
+```
+
+## Misc
 
 ### Draw and Download the Learning Curves 
 Please see [plot_curves.md](docs/plot_curves.md) for details on plotting. 
