@@ -1,11 +1,11 @@
 # Recurrent Model-Free RL Can Be a Strong Baseline for Many POMDPs
 Welcome to the POMDP world! 
 
-This repository provides some simple baselines for POMDPs, specifically the **recurrent model-free RL**, on the benchmarks in **several subareas of POMDPs** (including meta RL, robust RL, generalization in RL, temporal credit assignment) for the following paper:
+This repository provides some simple baselines for POMDPs, specifically the **recurrent model-free RL**, on the benchmarks in **several subareas of POMDPs** (including meta RL, robust RL, generalization in RL, temporal credit assignment) for the following paper accepted to **ICML 2022**: 
+
+*Recurrent Model-Free RL Can Be a Strong Baseline for Many POMDPs.* By [Tianwei Ni](https://twni2016.github.io/) (Mila, CMU), [Benjamin Eysenbach](https://ben-eysenbach.github.io/) (CMU) and [Ruslan Salakhutdinov](http://www.cs.cmu.edu/~rsalakhu/) (CMU).
 
 [[arXiv]](https://arxiv.org/abs/2110.05038) [[project site]](https://sites.google.com/view/pomdp-baselines) [[numeric results]](https://drive.google.com/file/d/1dfulN8acol-qaNR2h4PDpIaWBg9Ck4pY/view?usp=sharing)
-
-by [Tianwei Ni](https://twni2016.github.io/), [Benjamin Eysenbach](https://ben-eysenbach.github.io/) and [Ruslan Salakhutdinov](http://www.cs.cmu.edu/~rsalakhu/). **To appear in ICML 2022.**
 
 ## Motivation
 
@@ -108,11 +108,13 @@ Please see [acknowledge.md](docs/acknowledge.md) for details.
 ## Citation
 If you find our code useful to your work, please consider citing our paper:
 ```
-@article{ni2021recurrent,
-  title={Recurrent Model-Free RL Can Be a Strong Baseline for Many POMDPs},
+@inproceedings{ni2022recurrent,
+  title={Recurrent Model-Free {RL} Can Be a Strong Baseline for Many {POMDP}s},
   author={Ni, Tianwei and Eysenbach, Benjamin and Salakhutdinov, Ruslan},
-  journal={arXiv preprint arXiv:2110.05038},
-  year={2021}
+  booktitle={International Conference on Machine Learning},
+  pages={16691--16723},
+  year={2022},
+  organization={PMLR}
 }
 ```
 
