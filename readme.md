@@ -210,12 +210,21 @@ If you find our code useful to your work, please consider citing our paper:
 }
 ```
 
-## Contribution
+## Contributing
 Before pull request, please reformat your code:
 ```bash
 # avoid trailing commas issue after kwargs
 black . -t py35
 ```
+
+## Other Implementations
+You may find other PyTorch implementations on recurrent model-free RL useful:
+- [Recurrent Off-policy Baselines for Memory-based Continuous Control](https://github.com/zhihanyang2022/off-policy-continuous-control) has recurrent TD3/SAC
+- [Task-Agnostic Continual RL: In Praise of a Simple Baseline](https://github.com/amazon-research/replay-based-recurrent-rl) has recurrent SAC for task-agnostic continual RL
+- [Tianshou](https://github.com/thu-ml/tianshou) has recurrent support
+- [Stable Baselines3](https://github.com/DLR-RM/stable-baselines3) has recurrent PPO
+- [RLlib](https://docs.ray.io/en/master/rllib/rllib-algorithms.html) has recurrent PPO
+- [CleanRL](https://github.com/vwxyzjn/cleanrl) has recurrent PPO
 
 ## Contact
 If you have any questions, please create an issue in this repository or contact Tianwei Ni (tianwei.ni@mila.quebec)
