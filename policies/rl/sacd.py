@@ -123,7 +123,7 @@ class SACD(RLAlgorithmBase):
         if markov_critic:
             q1_pred = critic[0](observs)
             q2_pred = critic[1](observs)
-            action = action.long()  # (B, 1)
+            action = actions.long()  # (B, 1)
             q1_pred = q1_pred.gather(dim=-1, index=action)
             q2_pred = q2_pred.gather(dim=-1, index=action)
 
