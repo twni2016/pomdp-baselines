@@ -8,7 +8,7 @@ This repository provides some simple baselines for POMDPs, specifically the **re
 [[arXiv]](https://arxiv.org/abs/2110.05038) [[project site]](https://sites.google.com/view/pomdp-baselines) [[numeric results]](https://drive.google.com/file/d/1dfulN8acol-qaNR2h4PDpIaWBg9Ck4pY/view?usp=sharing)
 
 ## Interested in Transformer Model-Free RL?
-Check out our recent work on [When Do Transformers Shine in RL? Decoupling Memory from Credit Assignment](https://arxiv.org/abs/2307.03864) with the [code](https://github.com/twni2016/Memory-RL) based on this repository! 
+Check out our recent work on [When Do Transformers Shine in RL? Decoupling Memory from Credit Assignment](https://arxiv.org/abs/2307.03864) with the [code](https://github.com/twni2016/Memory-RL) (**NeurIPS 2023 oral**) based on this repository! 
 
 ## Motivation
 
