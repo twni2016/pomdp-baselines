@@ -49,7 +49,7 @@ if __name__ == "__main__":
         env_name = v["env"]["env_name"]
     exp_id += f"{env_type}/{env_name}/"
 
-    algo_name = v["policy"]["algo"]
+    algo_name = v["policy"]["algo_name"]
     assert algo_name in ["a2c", "ppo"] and algo_name == args.algo
     exp_id += f"{algo_name}_gru/"
 
