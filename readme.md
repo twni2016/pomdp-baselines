@@ -5,7 +5,7 @@ This repository provides some simple baselines for POMDPs, specifically the **re
 
 *Recurrent Model-Free RL Can Be a Strong Baseline for Many POMDPs.* By [Tianwei Ni](https://twni2016.github.io/) (Mila, CMU), [Benjamin Eysenbach](https://ben-eysenbach.github.io/) (CMU) and [Ruslan Salakhutdinov](http://www.cs.cmu.edu/~rsalakhu/) (CMU).
 
-[[arXiv]](https://arxiv.org/abs/2110.05038) [[project site]](https://sites.google.com/view/pomdp-baselines) [[numeric results]](https://drive.google.com/file/d/1dfulN8acol-qaNR2h4PDpIaWBg9Ck4pY/view?usp=sharing)
+[[arXiv]](https://arxiv.org/abs/2110.05038) [[project site]](https://sites.google.com/view/pomdp-baselines) [[numeric results]](https://drive.google.com/file/d/1syDNw_suIAgS-DxGp0luzepqy1pYB-5Q/view?usp=sharing)
 
 ## Interested in Transformer Model-Free RL?
 Check out our recent work on [When Do Transformers Shine in RL? Decoupling Memory from Credit Assignment](https://arxiv.org/abs/2307.03864) (**NeurIPS 2023 oral**) with the [code](https://github.com/twni2016/Memory-RL) based on this repository! It is shown to be especially powerful in long-term memory tasks.
@@ -46,7 +46,7 @@ conda activate pomdp
 
 The `environments.yml` file includes all the dependencies (e.g. MuJoCo, PyTorch, PyBullet) used in our experiments (including the compared methods), where we use `mujoco-py=2.1` as [it is free to use without license](https://github.com/openai/mujoco-py/releases/tag/v2.1.2.14).
 
-However, to run robust RL and generalization in RL experiments, you have to install [Roboschool](https://github.com/openai/roboschool). We found it hard to install Roboschool from scratch, therefore we provide a docker file `roboschool.sif` in [google drive](https://drive.google.com/file/d/1KpTpVwoU02AI7uQrk2T9hQ6s15EISRTa/view?usp=sharing) that contains Roboschool and the other necessary libraries, adapted from [SunBlaze repo](https://github.com/sunblaze-ucb/rl-generalization). 
+However, to run robust RL and generalization in RL experiments, you have to install [Roboschool](https://github.com/openai/roboschool). We found it hard to install Roboschool from scratch, therefore we provide a docker file `roboschool.sif` in [google drive](https://drive.google.com/file/d/15y0jDJuO2TgvbCms-7wOyTVMpJDVyaxx/view?usp=sharing) that contains Roboschool and the other necessary libraries, adapted from [SunBlaze repo](https://github.com/sunblaze-ucb/rl-generalization). 
   - To download and activate the docker file by singularity (tested in v3.7) on a cluster (on a single server should be similar):
     ```bash
     # download roboschool.sif from the google drive to envs/rl-generalization/roboschool.sif
